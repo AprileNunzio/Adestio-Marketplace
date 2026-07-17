@@ -1,0 +1,25 @@
+[
+  {
+    "id": "presa_di_servizio",
+    "name": "Presa di Servizio",
+    "version": "1.0.0",
+    "author": "AprileNunzio",
+    "description": "Applicazione per la gestione delle presenze e turnazioni.",
+    "long_description": "Presa di Servizio è lo strumento ufficiale per la registrazione delle entrate, uscite e turni di lavoro dei dipendenti. Integrata con il sistema HR di Adestio.",
+    "category": "hr",
+    "icon": "icon.png",
+    "folder": "presa_di_servizio",
+    "main": "main.js",
+    "backend": "backend.js",
+    "downloadUrl": "https://github.com/AprileNunzio/Adestio-App-PresaDiServizio/releases/download/v1.0.0/presa_di_servizio.zip",
+    "ipc": {
+      "namespace": "presa_di_servizio",
+      "handlers": ["punchIn", "punchOut", "getRecords"]
+    },
+    "legal_info": "Sottostà alle norme del GDPR europeo sulla conservazione dei log presenze.",
+    "links": [
+      { "rel": "Sito Web", "href": "https://github.com/AprileNunzio" },
+      { "rel": "Documentazione", "href": "https://github.com/AprileNunzio/Adestio-App-PresaDiServizio" }
+    ]
+  }
+]
