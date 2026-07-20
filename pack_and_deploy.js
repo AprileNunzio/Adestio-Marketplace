@@ -92,7 +92,7 @@ async function runDeploy() {
                 version: manifest.version,
                 description: manifest.description,
                 icon: manifest.icon,
-                downloadUrl: `ftp://${zipName}`,
+                downloadUrl: `https://nunziotech.it/software/adestio/${zipName}`,
                 ui_injections: manifest.ui_injections || []
             };
 
@@ -105,13 +105,15 @@ async function runDeploy() {
             fs.writeFileSync(marketplacePath, JSON.stringify(marketData, null, 2));
             console.log(`[PROD] ✅ marketplace.json aggiornato.`);
 
-            // Auto-push su GitHub
-            console.log(`[PROD] Avvio auto-commit e push su GitHub...`);
+            // Auto-push su GitHub e Creazione Tag (Release)
+            console.log(`[PROD] Avvio auto-commit, tag e push su GitHub...`);
             const { execSync } = require('child_process');
             execSync(`git add .`);
             execSync(`git commit -m "chore: release ${manifest.id} v${version}"`);
+            try { execSync(`git tag v${version}`); } catch(e) {} // Ignora se il tag esiste già
             execSync(`git push`);
-            console.log(`[PROD] ✅ Release v${version} pushata con successo su GitHub!`);
+            execSync(`git push --tags`);
+            console.log(`[PROD] ✅ Release v${version} (Commit & Tag) pushata con successo su GitHub!`);
 
         } catch (e) {
             console.error('[PROD] ❌ Errore durante il deploy:', e);
