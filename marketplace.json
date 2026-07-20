@@ -4,22 +4,46 @@
     "name": "Presa di Servizio",
     "version": "1.0.0",
     "author": "AprileNunzio",
-    "description": "Applicazione per la gestione delle presenze e turnazioni.",
+    "description": "Raccogli i dati del personale (modulo Excel offline o via email), importali e genera automaticamente la presa di servizio ATA o Docenti.",
     "long_description": "Presa di Servizio è lo strumento ufficiale per la registrazione delle entrate, uscite e turni di lavoro dei dipendenti. Integrata con il sistema HR di Adestio.",
     "category": "hr",
-    "icon": "icon.png",
+    "icon": "assignment_turned_in",
     "folder": "presa_di_servizio",
     "main": "main.js",
     "backend": "backend.js",
-    "downloadUrl": "https://github.com/AprileNunzio/Adestio-App-PresaDiServizio/releases/download/v1.0.0/presa_di_servizio.zip",
+    "downloadUrl": "ftp://presa_di_servizio_v1.0.0.zip",
     "ipc": {
       "namespace": "presa_di_servizio",
-      "handlers": ["punchIn", "punchOut", "getRecords"]
+      "handlers": [
+        "punchIn",
+        "punchOut",
+        "getRecords"
+      ]
     },
     "legal_info": "Sottostà alle norme del GDPR europeo sulla conservazione dei log presenze.",
     "links": [
-      { "rel": "Sito Web", "href": "https://github.com/AprileNunzio" },
-      { "rel": "Documentazione", "href": "https://github.com/AprileNunzio/Adestio-App-PresaDiServizio" }
+      {
+        "rel": "Sito Web",
+        "href": "https://github.com/AprileNunzio"
+      },
+      {
+        "rel": "Documentazione",
+        "href": "https://github.com/AprileNunzio/Adestio-App-PresaDiServizio"
+      }
+    ],
+    "ui_injections": [
+      {
+        "target": "dashboard",
+        "type": "card",
+        "src": "index.html"
+      },
+      {
+        "target": "sidebar_menu",
+        "type": "menu_item",
+        "label": "Presa di Servizio",
+        "icon": "assignment",
+        "src": "index.html"
+      }
     ]
   }
 ]
