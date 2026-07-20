@@ -9,7 +9,7 @@
     "category": "hr",
     "icon": "assignment_turned_in",
     "folder": "presa_di_servizio",
-    "main": "main.js",
+    "main": "app.js",
     "backend": "backend.js",
     "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v1.0.1.zip",
     "ipc": {
