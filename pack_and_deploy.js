@@ -26,8 +26,21 @@ async function runDeploy() {
         process.exit(1);
     }
 
-    const manifest = require(manifestPath);
-    const version = manifest.version || '1.0.0';
+    let manifest = require(manifestPath);
+    let version = manifest.version || '1.0.0';
+
+    // Auto-incremento della patch version solo in PROD
+    if (IS_PROD) {
+        const parts = version.split('.');
+        parts[2] = parseInt(parts[2] || 0) + 1;
+        version = parts.join('.');
+        manifest.version = version;
+        
+        // Salva il nuovo manifest.json
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4));
+        console.log(`[PROD] Versione auto-incrementata a ${version} in ${manifestPath}`);
+    }
+
     const zipName = `${manifest.id}_v${version}.zip`;
     const zipPath = path.join(__dirname, zipName);
 
@@ -39,9 +52,6 @@ async function runDeploy() {
 
     if (IS_TEST) {
         console.log(`[TEST] Installazione locale in corso...`);
-        // Simula un'installazione estraendo nella userData directory di Adestio (Windows predefinita o scratch)
-        // Per test locale, usiamo una cartella fittizia per evitare path assoluti dipendenti dalla macchina,
-        // ma idealmente la mettiamo nella AppData dell'utente.
         const appData = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Application Support' : process.env.HOME + '/.config');
         const adestioUserData = path.join(appData, 'Adestio', 'installed_apps', manifest.id);
         
@@ -93,10 +103,18 @@ async function runDeploy() {
             }
             
             fs.writeFileSync(marketplacePath, JSON.stringify(marketData, null, 2));
-            console.log(`[PROD] ✅ marketplace.json aggiornato. Ora fai git commit e git push!`);
+            console.log(`[PROD] ✅ marketplace.json aggiornato.`);
+
+            // Auto-push su GitHub
+            console.log(`[PROD] Avvio auto-commit e push su GitHub...`);
+            const { execSync } = require('child_process');
+            execSync(`git add .`);
+            execSync(`git commit -m "chore: release ${manifest.id} v${version}"`);
+            execSync(`git push`);
+            console.log(`[PROD] ✅ Release v${version} pushata con successo su GitHub!`);
 
         } catch (e) {
-            console.error('[PROD] ❌ Errore FTP:', e);
+            console.error('[PROD] ❌ Errore durante il deploy:', e);
         } finally {
             client.close();
         }
