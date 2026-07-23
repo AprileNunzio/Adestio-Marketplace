@@ -2,7 +2,7 @@
   {
     "id": "presa_di_servizio",
     "name": "Presa di Servizio",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "author": "AprileNunzio",
     "description": "Raccogli i dati del personale (modulo Excel offline o via email), importali e genera automaticamente la presa di servizio ATA o Docenti.",
     "long_description": "Presa di Servizio è lo strumento ufficiale per la registrazione delle entrate, uscite e turni di lavoro dei dipendenti. Integrata con il sistema HR di Adestio.",
@@ -11,15 +11,19 @@
     "folder": "presa_di_servizio",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v1.0.1.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v1.0.3.zip",
     "ipc": {
       "namespace": "presa_di_servizio",
       "handlers": [
-        "punchIn",
-        "punchOut",
-        "getRecords"
+        "exportTemplate",
+        "importXlsx"
       ]
     },
+    "permissions": [
+      "anagrafica:*",
+      "datiAzienda:*",
+      "presaServizio:*"
+    ],
     "legal_info": "Sottostà alle norme del GDPR europeo sulla conservazione dei log presenze.",
     "links": [
       {
