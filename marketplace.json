@@ -49,5 +49,64 @@
         "src": "index.html"
       }
     ]
+  },
+  {
+    "id": "adestio_business_suite",
+    "name": "Adestio Business Suite",
+    "version": "1.0.2",
+    "author": "NunzioTech",
+    "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
+    "long_description": "Adestio Business Suite è la soluzione completa e flessibile per gestire l'intero ciclo commerciale aziendale: preventivazione con simulatore margini, emissione ed esportazione fatture elettroniche XML SDI, anagrafiche clienti/fornitori, gestione magazzino e POS per schermi touch.",
+    "category": "erp",
+    "icon": "business_center",
+    "folder": "adestio_business_suite",
+    "main": "app.js",
+    "backend": "backend.js",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.2.zip",
+    "ipc": {
+      "namespace": "businessSuite",
+      "handlers": [
+        "getStats",
+        "getQuotes",
+        "saveQuote",
+        "getInvoices",
+        "generateFatturaXML",
+        "getCustomers",
+        "saveCustomer",
+        "getInventory",
+        "saveProduct",
+        "processPOSSale"
+      ]
+    },
+    "permissions": [
+      "businessSuite:*",
+      "anagrafica:*",
+      "datiAzienda:*"
+    ],
+    "legal_info": "Conforme agli standard dell'Agenzia delle Entrate per la fatturazione elettronica PA/B2B e alla normativa GDPR.",
+    "links": [
+      {
+        "rel": "Sito Web",
+        "href": "https://github.com/AprileNunzio"
+      },
+      {
+        "rel": "Documentazione",
+        "href": "https://github.com/AprileNunzio/Adestio-App-BusinessSuite"
+      }
+    ],
+    "ui_injections": [
+      {
+        "target": "dashboard",
+        "type": "card",
+        "src": "index.html"
+      },
+      {
+        "target": "sidebar_menu",
+        "type": "menu_item",
+        "label": "Business Suite",
+        "icon": "business_center",
+        "src": "index.html"
+      }
+    ]
   }
 ]

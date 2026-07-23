@@ -1,0 +1,59 @@
+{
+    "id": "adestio_business_suite",
+    "name": "Adestio Business Suite",
+    "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
+    "icon": "business_center",
+    "main": "app.js",
+    "color": "#6366F1",
+    "version": "1.0.2",
+    "author": "NunzioTech",
+    "category": "erp",
+    "tags": [
+        "gestionale",
+        "preventivi",
+        "fatturazione",
+        "magazzino",
+        "pos",
+        "sdi"
+    ],
+    "backend": "backend.js",
+    "ipc": {
+        "namespace": "businessSuite"
+    },
+    "apis": [
+        "anagrafica_persone",
+        "anagrafica_aziende",
+        "documenti_fiscali"
+    ],
+    "ui_injections": [
+        {
+            "target": "dashboard",
+            "type": "card",
+            "src": "index.html"
+        },
+        {
+            "target": "sidebar_menu",
+            "type": "menu_item",
+            "label": "Business Suite",
+            "icon": "business_center",
+            "src": "index.html"
+        }
+    ],
+    "links": [
+        {
+            "rel": "help",
+            "href": "https://adestio.nunziotech.com/docs/business_suite"
+        }
+    ],
+    "licensing": {
+        "type": "premium"
+    },
+    "dependencies": {
+        "core": ">=1.0.0"
+    },
+    "permissions": [
+        "businessSuite:*",
+        "anagrafica:*",
+        "datiAzienda:*"
+    ]
+}
