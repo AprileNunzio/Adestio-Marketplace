@@ -55,6 +55,7 @@ const APP_STYLES = `
     display: flex;
     align-items: center;
     gap: 14px;
+    cursor: pointer;
 }
 
 .bs-brand-icon {
@@ -93,13 +94,13 @@ const APP_STYLES = `
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 20px;
-    min-height: var(--touch-min-size);
+    padding: 10px 18px;
+    min-height: 44px;
     border: none;
     background: transparent;
     color: var(--text-secondary);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: var(--transition);
@@ -135,6 +136,74 @@ const APP_STYLES = `
 @keyframes bsFadeIn {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.bs-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.bs-hub-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+}
+
+.bs-hub-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--accent-primary);
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
+}
+
+.bs-hub-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.bs-hub-card.disabled:hover {
+    transform: none;
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-soft);
+}
+
+.bs-hub-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.bs-hub-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.bs-hub-desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
 }
 
 .bs-stats-grid {
@@ -372,7 +441,8 @@ const APP_STYLES = `
 `;
 
 const state = {
-    currentTab: 'dashboard',
+    currentTab: 'hub',
+    userPerms: [],
     quotes: [],
     invoices: [],
     customers: [],
@@ -444,16 +514,22 @@ function mockBackend(channel, payload) {
 export default {
     render: async (el, params = {}) => {
         try {
+            await fetchUserPermissions();
+
             el.innerHTML = `
                 <style>${APP_STYLES}</style>
                 <div class="bs-wrapper">
                     <header class="bs-header">
-                        <div class="bs-brand">
+                        <div class="bs-brand" id="btn-home-hub">
                             <div class="bs-brand-icon">💼</div>
-                            <div class="bs-brand-title">Adestio Business Suite</div>
+                            <div>
+                                <div class="bs-brand-title">Adestio Business Suite</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Enterprise Suite</div>
+                            </div>
                         </div>
                         <nav class="bs-nav-tabs">
-                            <button class="bs-tab-btn active" id="tab-btn-dashboard">📊 Dashboard</button>
+                            <button class="bs-tab-btn active" id="tab-btn-hub">🏠 Hub Card</button>
+                            <button class="bs-tab-btn" id="tab-btn-dashboard">📊 Dashboard</button>
                             <button class="bs-tab-btn" id="tab-btn-quotes">📝 Preventivi</button>
                             <button class="bs-tab-btn" id="tab-btn-invoices">📑 Fatturazione SDI</button>
                             <button class="bs-tab-btn" id="tab-btn-customers">👥 Anagrafica</button>
@@ -463,7 +539,16 @@ export default {
                     </header>
 
                     <main class="bs-main-content">
-                        <section id="tab-dashboard" class="bs-tab-pane active">
+                        <section id="tab-hub" class="bs-tab-pane active">
+                            <div style="margin-bottom: 2rem;">
+                                <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.4rem;">Applicazioni Enterprise</h1>
+                                <p style="color: var(--text-secondary); font-size: 1rem;">Seleziona un modulo operativo per accedere alla sua area di lavoro.</p>
+                            </div>
+
+                            <div class="bs-hub-grid" id="hub-cards-container"></div>
+                        </section>
+
+                        <section id="tab-dashboard" class="bs-tab-pane">
                             <div class="bs-stats-grid">
                                 <div class="bs-stat-card">
                                     <div class="bs-stat-icon" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">💰</div>
@@ -712,6 +797,7 @@ export default {
                 </div>
             `;
 
+            renderHubCards(el);
             setupEventListeners(el);
             addQuoteItemRow(el);
             await loadAllData(el);
@@ -721,6 +807,116 @@ export default {
     }
 };
 
+async function fetchUserPermissions() {
+    try {
+        if (window.electronAPI && window.electronAPI.rbac) {
+            const userId = sessionStorage.getItem('currentUserId');
+            if (userId) {
+                state.userPerms = await window.electronAPI.rbac.getEffectiveUserPermissions(userId);
+            }
+        }
+    } catch (e) {
+        state.userPerms = ['*'];
+    }
+}
+
+function hasModulePermission(permId) {
+    try {
+        if (!state.userPerms || state.userPerms.length === 0) return true;
+        if (state.userPerms.includes('*') || state.userPerms.includes('adestio_business_suite:*')) return true;
+        return state.userPerms.includes(permId) || state.userPerms.includes(`adestio_business_suite:${permId}`);
+    } catch (e) {
+        return true;
+    }
+}
+
+function renderHubCards(el) {
+    try {
+        const container = el.querySelector('#hub-cards-container');
+        if (!container) return;
+
+        const modules = [
+            {
+                id: 'dashboard',
+                name: 'Dashboard & KPI',
+                desc: 'Panoramica finanziaria, fatturato annuale, KPI in tempo reale e registro attività recenti.',
+                icon: '📊',
+                bgColor: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                perm: 'dashboard'
+            },
+            {
+                id: 'quotes',
+                name: 'Preventivi & Margini',
+                desc: 'Simulatore margini di guadagno, preventivazione rapida e conversione automatica in fattura.',
+                icon: '📝',
+                bgColor: 'linear-gradient(135deg, #10b981, #059669)',
+                perm: 'quotes'
+            },
+            {
+                id: 'invoices',
+                name: 'Fatturazione SDI',
+                desc: 'Emissione fatture elettroniche, generazione XML norma SDI e controllo stato invio.',
+                icon: '📑',
+                bgColor: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                perm: 'invoices'
+            },
+            {
+                id: 'customers',
+                name: 'Anagrafica Clienti',
+                desc: 'Registro unico clienti e fornitori, Partite IVA, PEC e Codici Destinatario SDI.',
+                icon: '👥',
+                bgColor: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                perm: 'customers'
+            },
+            {
+                id: 'inventory',
+                name: 'Magazzino & Stock',
+                desc: 'Catalogo prodotti, prezzi di listino, monitoraggio scorte e giacenze di magazzino.',
+                icon: '📦',
+                bgColor: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                perm: 'inventory'
+            },
+            {
+                id: 'pos',
+                name: 'POS Cassa Touch',
+                desc: 'Punto vendita touch screen per vendite immediate al banco, carrello e scontrino rapido.',
+                icon: '🛒',
+                bgColor: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                perm: 'pos'
+            }
+        ];
+
+        container.innerHTML = modules.map(m => {
+            const isAllowed = hasModulePermission(m.perm);
+            return `
+                <div class="bs-hub-card ${isAllowed ? '' : 'disabled'}" data-tab="${m.id}">
+                    <div class="bs-hub-icon" style="background: ${m.bgColor};">
+                        ${m.icon}
+                    </div>
+                    <div class="bs-hub-title">
+                        <span>${m.name}</span>
+                        ${isAllowed ? '<span style="font-size: 1.2rem; opacity: 0.6;">➔</span>' : '<span style="font-size: 0.8rem; background: rgba(239,68,68,0.2); color: #ef4444; padding: 2px 8px; border-radius: 6px;">Bloccato</span>'}
+                    </div>
+                    <div class="bs-hub-desc">${m.desc}</div>
+                </div>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.bs-hub-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                const tabId = e.currentTarget.getAttribute('data-tab');
+                if (hasModulePermission(modules.find(m => m.id === tabId)?.perm)) {
+                    switchTab(el, tabId);
+                } else {
+                    alert("Non possiedi i permessi per accedere a questo modulo aziendale.");
+                }
+            });
+        });
+    } catch (error) {
+        console.error("renderHubCards error:", error);
+    }
+}
+
 function setupEventListeners(el) {
     try {
         const bindTab = (btnId, tabId) => {
@@ -728,6 +924,8 @@ function setupEventListeners(el) {
             if (btn) btn.addEventListener('click', () => switchTab(el, tabId));
         };
 
+        el.querySelector('#btn-home-hub')?.addEventListener('click', () => switchTab(el, 'hub'));
+        bindTab('tab-btn-hub', 'hub');
         bindTab('tab-btn-dashboard', 'dashboard');
         bindTab('tab-btn-quotes', 'quotes');
         bindTab('tab-btn-invoices', 'invoices');
