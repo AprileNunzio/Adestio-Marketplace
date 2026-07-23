@@ -1,3 +1,376 @@
+const APP_STYLES = `
+:root {
+    --bg-primary: hsl(222, 47%, 11%);
+    --bg-secondary: hsl(217, 33%, 17%);
+    --bg-surface: hsl(215, 25%, 27%);
+    --bg-glass: rgba(15, 23, 42, 0.95);
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-glow: rgba(99, 102, 241, 0.35);
+    --text-primary: hsl(210, 40%, 98%);
+    --text-secondary: hsl(215, 20%, 65%);
+    --accent-primary: hsl(238, 84%, 67%);
+    --accent-hover: hsl(238, 84%, 57%);
+    --accent-success: hsl(160, 84%, 39%);
+    --accent-warning: hsl(38, 92%, 50%);
+    --accent-danger: hsl(354, 84%, 57%);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --shadow-soft: 0 12px 32px -4px rgba(0, 0, 0, 0.4);
+    --touch-min-size: 52px;
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bs-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: radial-gradient(circle at 90% 10%, rgba(99, 102, 241, 0.18), transparent 45%),
+                radial-gradient(circle at 10% 90%, rgba(16, 185, 129, 0.14), transparent 45%),
+                var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+    box-sizing: border-box;
+}
+
+.bs-wrapper * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.bs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color);
+    min-height: 72px;
+}
+
+.bs-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.bs-brand-icon {
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(135deg, var(--accent-primary), hsl(260, 84%, 60%));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+}
+
+.bs-brand-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #ffffff, var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.bs-nav-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(30, 41, 59, 0.8);
+    padding: 6px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+}
+
+.bs-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    min-height: var(--touch-min-size);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.bs-tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.bs-tab-btn.active {
+    background: linear-gradient(135deg, var(--accent-primary), hsl(240, 80%, 60%));
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.bs-main-content {
+    flex: 1;
+    padding: 28px;
+    overflow-y: auto;
+}
+
+.bs-tab-pane {
+    display: none;
+}
+
+.bs-tab-pane.active {
+    display: block;
+    animation: bsFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bsFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.bs-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.bs-stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition);
+}
+
+.bs-stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-glow);
+}
+
+.bs-stat-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.bs-stat-val {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.bs-stat-lbl {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.bs-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 28px;
+}
+
+.bs-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.bs-card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.bs-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: var(--touch-min-size);
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.bs-btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary), hsl(240, 80%, 60%));
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+}
+
+.bs-btn-success {
+    background: linear-gradient(135deg, var(--accent-success), hsl(160, 84%, 30%));
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+}
+
+.bs-btn-danger {
+    background: linear-gradient(135deg, var(--accent-danger), hsl(354, 84%, 47%));
+    color: #ffffff;
+}
+
+.bs-btn-secondary {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.bs-table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--radius-sm);
+}
+
+.bs-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.bs-data-table th, .bs-data-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bs-data-table th {
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    background: rgba(15, 23, 42, 0.4);
+}
+
+.bs-data-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.bs-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.bs-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bs-form-group label {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.bs-form-control {
+    min-height: var(--touch-min-size);
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+.bs-form-control:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+}
+
+.bs-pos-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 960px) {
+    .bs-pos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.bs-product-touch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+
+.bs-touch-product-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.bs-touch-product-card:active {
+    transform: scale(0.95);
+    background: var(--accent-primary);
+}
+
+.bs-touch-product-name {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 6px;
+}
+
+.bs-touch-product-price {
+    color: var(--accent-success);
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.bs-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.bs-badge-success { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.4); }
+.bs-badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+.bs-badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.4); }
+`;
+
 const state = {
     currentTab: 'dashboard',
     quotes: [],
@@ -72,62 +445,63 @@ export default {
     render: async (el, params = {}) => {
         try {
             el.innerHTML = `
-                <div class="app-container">
-                    <header class="app-header">
-                        <div class="brand">
-                            <div class="brand-icon">💼</div>
-                            <div class="brand-title">Adestio Business Suite</div>
+                <style>${APP_STYLES}</style>
+                <div class="bs-wrapper">
+                    <header class="bs-header">
+                        <div class="bs-brand">
+                            <div class="bs-brand-icon">💼</div>
+                            <div class="bs-brand-title">Adestio Business Suite</div>
                         </div>
-                        <nav class="nav-tabs">
-                            <button class="tab-btn active" id="tab-btn-dashboard">📊 Dashboard</button>
-                            <button class="tab-btn" id="tab-btn-quotes">📝 Preventivi</button>
-                            <button class="tab-btn" id="tab-btn-invoices">📑 Fatturazione SDI</button>
-                            <button class="tab-btn" id="tab-btn-customers">👥 Anagrafica</button>
-                            <button class="tab-btn" id="tab-btn-inventory">📦 Magazzino</button>
-                            <button class="tab-btn" id="tab-btn-pos">🛒 POS Touch</button>
+                        <nav class="bs-nav-tabs">
+                            <button class="bs-tab-btn active" id="tab-btn-dashboard">📊 Dashboard</button>
+                            <button class="bs-tab-btn" id="tab-btn-quotes">📝 Preventivi</button>
+                            <button class="bs-tab-btn" id="tab-btn-invoices">📑 Fatturazione SDI</button>
+                            <button class="bs-tab-btn" id="tab-btn-customers">👥 Anagrafica</button>
+                            <button class="bs-tab-btn" id="tab-btn-inventory">📦 Magazzino</button>
+                            <button class="bs-tab-btn" id="tab-btn-pos">🛒 POS Touch</button>
                         </nav>
                     </header>
 
-                    <main class="main-content">
-                        <section id="tab-dashboard" class="tab-pane active">
-                            <div class="stats-grid">
-                                <div class="stat-card">
-                                    <div class="stat-icon" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">💰</div>
+                    <main class="bs-main-content">
+                        <section id="tab-dashboard" class="bs-tab-pane active">
+                            <div class="bs-stats-grid">
+                                <div class="bs-stat-card">
+                                    <div class="bs-stat-icon" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">💰</div>
                                     <div>
-                                        <div class="stat-val" id="stat-revenue">€ 0.00</div>
-                                        <div class="stat-lbl">Fatturato Anno</div>
+                                        <div class="bs-stat-val" id="stat-revenue">€ 0.00</div>
+                                        <div class="bs-stat-lbl">Fatturato Anno</div>
                                     </div>
                                 </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">📑</div>
+                                <div class="bs-stat-card">
+                                    <div class="bs-stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">📑</div>
                                     <div>
-                                        <div class="stat-val" id="stat-quotes-count">0</div>
-                                        <div class="stat-lbl">Preventivi Attivi</div>
+                                        <div class="bs-stat-val" id="stat-quotes-count">0</div>
+                                        <div class="bs-stat-lbl">Preventivi Attivi</div>
                                     </div>
                                 </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">👥</div>
+                                <div class="bs-stat-card">
+                                    <div class="bs-stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">👥</div>
                                     <div>
-                                        <div class="stat-val" id="stat-customers-count">0</div>
-                                        <div class="stat-lbl">Clienti In Anagrafica</div>
+                                        <div class="bs-stat-val" id="stat-customers-count">0</div>
+                                        <div class="bs-stat-lbl">Clienti In Anagrafica</div>
                                     </div>
                                 </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">📦</div>
+                                <div class="bs-stat-card">
+                                    <div class="bs-stat-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">📦</div>
                                     <div>
-                                        <div class="stat-val" id="stat-inventory-count">0</div>
-                                        <div class="stat-lbl">Articoli a Magazzino</div>
+                                        <div class="bs-stat-val" id="stat-inventory-count">0</div>
+                                        <div class="bs-stat-lbl">Articoli a Magazzino</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Attività Recenti</div>
-                                    <button class="btn btn-secondary" id="btn-refresh-dashboard">🔄 Aggiorna</button>
+                            <div class="bs-card">
+                                <div class="bs-card-header">
+                                    <div class="bs-card-title">Attività Recenti</div>
+                                    <button class="bs-btn bs-btn-secondary" id="btn-refresh-dashboard">🔄 Aggiorna</button>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="data-table">
+                                <div class="bs-table-responsive">
+                                    <table class="bs-data-table">
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -148,34 +522,34 @@ export default {
                             </div>
                         </section>
 
-                        <section id="tab-quotes" class="tab-pane">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Nuovo Preventivo & Simulatore Margini</div>
-                                    <button class="btn btn-primary" id="btn-save-quote">💾 Salva Preventivo</button>
+                        <section id="tab-quotes" class="bs-tab-pane">
+                            <div class="bs-card">
+                                <div class="bs-card-header">
+                                    <div class="bs-card-title">Nuovo Preventivo & Simulatore Margini</div>
+                                    <button class="bs-btn bs-btn-primary" id="btn-save-quote">💾 Salva Preventivo</button>
                                 </div>
-                                <div class="form-grid">
-                                    <div class="form-group">
+                                <div class="bs-form-grid">
+                                    <div class="bs-form-group">
                                         <label>Cliente</label>
-                                        <select id="quote-customer-select" class="form-control"></select>
+                                        <select id="quote-customer-select" class="bs-form-control"></select>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Oggetto / Oggetto Lavoro</label>
-                                        <input type="text" id="quote-subject" class="form-control" placeholder="Es. Fornitura software e servizi">
+                                        <input type="text" id="quote-subject" class="bs-form-control" placeholder="Es. Fornitura software e servizi">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Sconto (%)</label>
-                                        <input type="number" id="quote-discount" class="form-control" value="0">
+                                        <input type="number" id="quote-discount" class="bs-form-control" value="0">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Aliquota IVA (%)</label>
-                                        <input type="number" id="quote-vat" class="form-control" value="22">
+                                        <input type="number" id="quote-vat" class="bs-form-control" value="22">
                                     </div>
                                 </div>
 
-                                <div class="card-title" style="margin: 20px 0 10px 0;">Voci di Costo / Articoli</div>
+                                <div class="bs-card-title" style="margin: 20px 0 10px 0;">Voci di Costo / Articoli</div>
                                 <div id="quote-items-container"></div>
-                                <button class="btn btn-secondary" id="btn-add-quote-row" style="margin-top: 10px;">➕ Aggiungi Riga</button>
+                                <button class="bs-btn bs-btn-secondary" id="btn-add-quote-row" style="margin-top: 10px;">➕ Aggiungi Riga</button>
 
                                 <div style="display: flex; justify-content: flex-end; gap: 20px; margin-top: 20px; font-size: 1.1rem; font-weight: 700;">
                                     <div>Subtotale: <span id="quote-subtotal">€ 0.00</span></div>
@@ -184,12 +558,12 @@ export default {
                                 </div>
                             </div>
 
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Elenco Preventivi</div>
+                            <div class="bs-card">
+                                <div class="bs-card-header">
+                                    <div class="bs-card-title">Elenco Preventivi</div>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="data-table">
+                                <div class="bs-table-responsive">
+                                    <table class="bs-data-table">
                                         <thead>
                                             <tr>
                                                 <th>Numero</th>
@@ -206,14 +580,14 @@ export default {
                             </div>
                         </section>
 
-                        <section id="tab-invoices" class="tab-pane">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Registro Fatture & XML SDI</div>
-                                    <button class="btn btn-primary" id="btn-new-invoice">➕ Nuova Fattura</button>
+                        <section id="tab-invoices" class="bs-tab-pane">
+                            <div class="bs-card">
+                                <div class="bs-card-header">
+                                    <div class="bs-card-title">Registro Fatture & XML SDI</div>
+                                    <button class="bs-btn bs-btn-primary" id="btn-new-invoice">➕ Nuova Fattura</button>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="data-table">
+                                <div class="bs-table-responsive">
+                                    <table class="bs-data-table">
                                         <thead>
                                             <tr>
                                                 <th>N. Fattura</th>
@@ -230,35 +604,35 @@ export default {
                             </div>
                         </section>
 
-                        <section id="tab-customers" class="tab-pane">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Anagrafica Clienti & Fornitori</div>
-                                    <button class="btn btn-primary" id="btn-save-customer">💾 Salva Anagrafica</button>
+                        <section id="tab-customers" class="bs-tab-pane">
+                            <div class="bs-card">
+                                <div class="bs-card-header">
+                                    <div class="bs-card-title">Anagrafica Clienti & Fornitori</div>
+                                    <button class="bs-btn bs-btn-primary" id="btn-save-customer">💾 Salva Anagrafica</button>
                                 </div>
-                                <div class="form-grid">
-                                    <div class="form-group">
+                                <div class="bs-form-grid">
+                                    <div class="bs-form-group">
                                         <label>Ragione Sociale / Nome</label>
-                                        <input type="text" id="cust-name" class="form-control">
+                                        <input type="text" id="cust-name" class="bs-form-control">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Partita IVA / Codice Fiscale</label>
-                                        <input type="text" id="cust-vat" class="form-control">
+                                        <input type="text" id="cust-vat" class="bs-form-control">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Codice Destinatario SDI / PEC</label>
-                                        <input type="text" id="cust-sdi" class="form-control">
+                                        <input type="text" id="cust-sdi" class="bs-form-control">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Email / Telefono</label>
-                                        <input type="text" id="cust-contact" class="form-control">
+                                        <input type="text" id="cust-contact" class="bs-form-control">
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="card">
-                                <div class="table-responsive">
-                                    <table class="data-table">
+                            <div class="bs-card">
+                                <div class="bs-table-responsive">
+                                    <table class="bs-data-table">
                                         <thead>
                                             <tr>
                                                 <th>Ragione Sociale</th>
@@ -273,35 +647,35 @@ export default {
                             </div>
                         </section>
 
-                        <section id="tab-inventory" class="tab-pane">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Gestione Magazzino</div>
-                                    <button class="btn btn-primary" id="btn-save-product">💾 Salva Articolo</button>
+                        <section id="tab-inventory" class="bs-tab-pane">
+                            <div class="bs-card">
+                                <div class="bs-card-header">
+                                    <div class="bs-card-title">Gestione Magazzino</div>
+                                    <button class="bs-btn bs-btn-primary" id="btn-save-product">💾 Salva Articolo</button>
                                 </div>
-                                <div class="form-grid">
-                                    <div class="form-group">
+                                <div class="bs-form-grid">
+                                    <div class="bs-form-group">
                                         <label>Codice Articolo</label>
-                                        <input type="text" id="prod-code" class="form-control">
+                                        <input type="text" id="prod-code" class="bs-form-control">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Descrizione</label>
-                                        <input type="text" id="prod-name" class="form-control">
+                                        <input type="text" id="prod-name" class="bs-form-control">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Prezzo Vendita (€)</label>
-                                        <input type="number" id="prod-price" class="form-control" step="0.01">
+                                        <input type="number" id="prod-price" class="bs-form-control" step="0.01">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="bs-form-group">
                                         <label>Giacenza Stock</label>
-                                        <input type="number" id="prod-stock" class="form-control" value="0">
+                                        <input type="number" id="prod-stock" class="bs-form-control" value="0">
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="card">
-                                <div class="table-responsive">
-                                    <table class="data-table">
+                            <div class="bs-card">
+                                <div class="bs-table-responsive">
+                                    <table class="bs-data-table">
                                         <thead>
                                             <tr>
                                                 <th>Codice</th>
@@ -316,21 +690,21 @@ export default {
                             </div>
                         </section>
 
-                        <section id="tab-pos" class="tab-pane">
-                            <div class="pos-grid">
-                                <div class="card">
-                                    <div class="card-title" style="margin-bottom: 16px;">Seleziona Prodotti (Touch)</div>
-                                    <div class="product-touch-grid" id="pos-products-touch"></div>
+                        <section id="tab-pos" class="bs-tab-pane">
+                            <div class="bs-pos-grid">
+                                <div class="bs-card">
+                                    <div class="bs-card-title" style="margin-bottom: 16px;">Seleziona Prodotti (Touch)</div>
+                                    <div class="bs-product-touch-grid" id="pos-products-touch"></div>
                                 </div>
 
-                                <div class="card">
-                                    <div class="card-title" style="margin-bottom: 16px;">Carrello Cassa</div>
+                                <div class="bs-card">
+                                    <div class="bs-card-title" style="margin-bottom: 16px;">Carrello Cassa</div>
                                     <div id="pos-cart-items" style="min-height: 200px; margin-bottom: 20px;"></div>
                                     <div style="font-size: 1.4rem; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 20px;">
                                         <span>Totale:</span>
                                         <span id="pos-total-amount" style="color: var(--accent-success);">€ 0.00</span>
                                     </div>
-                                    <button class="btn btn-success" style="width: 100%; min-height: 54px; font-size: 1.1rem;" id="btn-checkout-pos">💳 Incassa Ora</button>
+                                    <button class="bs-btn bs-btn-success" style="width: 100%; min-height: 54px; font-size: 1.1rem;" id="btn-checkout-pos">💳 Incassa Ora</button>
                                 </div>
                             </div>
                         </section>
@@ -378,8 +752,8 @@ function setupEventListeners(el) {
 function switchTab(el, tabId) {
     try {
         state.currentTab = tabId;
-        el.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        el.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+        el.querySelectorAll('.bs-tab-btn').forEach(btn => btn.classList.remove('active'));
+        el.querySelectorAll('.bs-tab-pane').forEach(pane => pane.classList.remove('active'));
 
         const activeBtn = el.querySelector(`#tab-btn-${tabId}`);
         if (activeBtn) activeBtn.classList.add('active');
@@ -433,7 +807,7 @@ async function loadDashboardData(el) {
                         <td>${item.type}</td>
                         <td>${item.customer}</td>
                         <td>${item.amount}</td>
-                        <td><span class="badge badge-success">${item.status}</span></td>
+                        <td><span class="bs-badge bs-badge-success">${item.status}</span></td>
                         <td>${item.date}</td>
                     </tr>
                 `).join('');
@@ -534,7 +908,7 @@ function renderInventoryTab(el) {
                 <td><strong>${p.code}</strong></td>
                 <td>${p.name}</td>
                 <td>€ ${p.price.toFixed(2)}</td>
-                <td><span class="badge ${p.stock > 10 ? 'badge-success' : 'badge-warning'}">${p.stock}</span></td>
+                <td><span class="bs-badge ${p.stock > 10 ? 'bs-badge-success' : 'bs-badge-warning'}">${p.stock}</span></td>
             </tr>
         `).join('');
     } catch (error) {
@@ -576,20 +950,20 @@ function addQuoteItemRow(el) {
         if (!container) return;
         const rowId = `quote-row-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const row = document.createElement('div');
-        row.className = 'form-grid';
+        row.className = 'bs-form-grid';
         row.id = rowId;
         row.innerHTML = `
-            <div class="form-group" style="grid-column: span 2;">
-                <input type="text" class="form-control item-desc" placeholder="Descrizione articolo/servizio">
+            <div class="bs-form-group" style="grid-column: span 2;">
+                <input type="text" class="bs-form-control item-desc" placeholder="Descrizione articolo/servizio">
             </div>
-            <div class="form-group">
-                <input type="number" class="form-control item-qty" value="1" min="1">
+            <div class="bs-form-group">
+                <input type="number" class="bs-form-control item-qty" value="1" min="1">
             </div>
-            <div class="form-group">
-                <input type="number" class="form-control item-price" value="0.00" step="0.01">
+            <div class="bs-form-group">
+                <input type="number" class="bs-form-control item-price" value="0.00" step="0.01">
             </div>
-            <div class="form-group" style="justify-content: flex-end;">
-                <button class="btn btn-danger btn-remove-row">🗑️</button>
+            <div class="bs-form-group" style="justify-content: flex-end;">
+                <button class="bs-btn bs-btn-danger btn-remove-row">🗑️</button>
             </div>
         `;
         container.appendChild(row);
@@ -608,7 +982,7 @@ function addQuoteItemRow(el) {
 function calculateQuoteTotals(el) {
     try {
         let subtotal = 0;
-        const rows = el.querySelectorAll('#quote-items-container .form-grid');
+        const rows = el.querySelectorAll('#quote-items-container .bs-form-grid');
         rows.forEach(r => {
             const qty = parseFloat(r.querySelector('.item-qty').value) || 0;
             const price = parseFloat(r.querySelector('.item-price').value) || 0;
@@ -679,9 +1053,9 @@ function renderQuotesTab(el) {
                 <td>${q.customer}</td>
                 <td>${q.subject}</td>
                 <td><strong>${q.total}</strong></td>
-                <td><span class="badge badge-warning">${q.status}</span></td>
+                <td><span class="bs-badge bs-badge-warning">${q.status}</span></td>
                 <td>
-                    <button class="btn btn-secondary btn-convert-quote" data-id="${q.id}" style="min-height: 36px; padding: 4px 10px;">📑 Converti in Fattura</button>
+                    <button class="bs-btn bs-btn-secondary btn-convert-quote" data-id="${q.id}" style="min-height: 36px; padding: 4px 10px;">📑 Converti in Fattura</button>
                 </td>
             </tr>
         `).join('');
@@ -719,9 +1093,9 @@ function renderInvoicesTab(el) {
                 <td>${inv.date}</td>
                 <td>${inv.customer}</td>
                 <td><strong>${inv.total}</strong></td>
-                <td><span class="badge badge-success">${inv.sdiStatus || 'Pronta per Invio'}</span></td>
+                <td><span class="bs-badge bs-badge-success">${inv.sdiStatus || 'Pronta per Invio'}</span></td>
                 <td>
-                    <button class="btn btn-primary btn-export-xml" data-number="${inv.number}" style="min-height: 36px; padding: 4px 10px;">⚡ XML SDI</button>
+                    <button class="bs-btn bs-btn-primary btn-export-xml" data-number="${inv.number}" style="min-height: 36px; padding: 4px 10px;">⚡ XML SDI</button>
                 </td>
             </tr>
         `).join('');
@@ -779,13 +1153,13 @@ function renderPOSTab(el) {
         const container = el.querySelector('#pos-products-touch');
         if (!container) return;
         container.innerHTML = state.inventory.map(p => `
-            <div class="touch-product-card" data-code="${p.code}">
-                <div class="touch-product-name">${p.name}</div>
-                <div class="touch-product-price">€ ${p.price.toFixed(2)}</div>
+            <div class="bs-touch-product-card" data-code="${p.code}">
+                <div class="bs-touch-product-name">${p.name}</div>
+                <div class="bs-touch-product-price">€ ${p.price.toFixed(2)}</div>
             </div>
         `).join('');
 
-        container.querySelectorAll('.touch-product-card').forEach(card => {
+        container.querySelectorAll('.bs-touch-product-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 const code = e.currentTarget.getAttribute('data-code');
                 addToPOSCart(el, code);
