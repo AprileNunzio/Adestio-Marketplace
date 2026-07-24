@@ -1,5 +1,10 @@
 'use strict';
 
+// Base assoluta della cartella di questa app (es. "adestio-app://adestio_business_suite/").
+// Un <img src="relativo"> dentro HTML iniettato via innerHTML si risolve rispetto al
+// documento principale di Adestio, non rispetto a questo modulo: serve un URL assoluto.
+const APP_BASE = new URL('.', import.meta.url).href;
+
 const MODULES = [
     {
         id: 'dashboard',
@@ -147,7 +152,7 @@ export default {
                             card.style.animationDelay = `${idx * 0.06}s`;
                             card.innerHTML = `
                                 ${!allowed ? '<span class="badge-locked">Bloccato</span>' : ''}
-                                <img src="icons/${mod.id}.png" class="app-icon" data-fallback-icon="${mod.icon}">
+                                <img src="${APP_BASE}icons/${mod.id}.png" class="app-icon" data-fallback-icon="${mod.icon}">
                                 <div class="app-title">${mod.label}</div>
                                 <div class="app-desc">${mod.desc}</div>
                             `;
