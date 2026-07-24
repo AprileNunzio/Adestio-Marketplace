@@ -1,0 +1,10 @@
+{
+    "name": "adestio-business-suite",
+    "version": "1.0.0",
+    "description": "Dipendenze proprie dell'app Adestio Business Suite (bundlate nello zip di distribuzione: nessun modulo nativo, solo pacchetti puri JS).",
+    "private": true,
+    "dependencies": {
+        "pdfkit": "^0.19.1",
+        "xlsx": "^0.18.5"
+    }
+}

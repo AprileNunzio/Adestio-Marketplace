@@ -1,141 +1,127 @@
-const db = require('./backend/db');
-const pdfGen = require('./backend/pdf-generator');
-const fatturaXml = require('./backend/fattura-xml');
+'use strict';
 
-function registerBackendHandlers(ipcMain, app) {
+const dbUtils = require('./backend/db_utils');
+const clienti = require('./backend/clienti');
+const fornitori = require('./backend/fornitori');
+const prodotti = require('./backend/prodotti');
+const collaboratori = require('./backend/collaboratori');
+const preventivi = require('./backend/preventivi');
+const fatture = require('./backend/fatture');
+const fatturapaXml = require('./backend/fatturapa_xml');
+const ddt = require('./backend/ddt');
+const finanze = require('./backend/finanze');
+const impostazioni = require('./backend/impostazioni');
+const documenti = require('./backend/documenti');
+
+const NS = 'businessSuite';
+
+// registerApi(action, fn): iniettato da AppLoader.js, inoltra le chiamate del
+// frontend arrivate via window.adestioNative.callAppApi (nessun canale ipcMain
+// proprio: il preload.js di Adestio non conosce in anticipo le azioni di
+// un'app di terze parti, quindi tutto passa dal ponte generico capabilityBroker).
+function registerBackendHandlers(registerApi, app, adestioDb) {
     try {
-        db.initDatabase(app);
+        dbUtils.configure(adestioDb);
 
-        ipcMain.handle('businessSuite:getStats', async (event, args) => {
-            try {
-                const quotes = await db.queryAll('SELECT COUNT(*) as cnt FROM preventivi');
-                const customers = await db.queryAll('SELECT COUNT(*) as cnt FROM clienti');
-                const inventory = await db.queryAll('SELECT COUNT(*) as cnt FROM prodotti_magazzino');
-                const revRow = await db.queryAll('SELECT SUM(totale_fattura) as rev FROM fatture');
-                const recent = await db.queryAll('SELECT id, codice as id_code, "Preventivo" as type, cliente_nome as customer, totale_ivato as amount, stato, data_creazione as date FROM preventivi ORDER BY id DESC LIMIT 5');
+        function on(channel, fn) {
+            registerApi(`${NS}:${channel}`, (event, args) => fn(event, args));
+        }
 
-                return {
-                    success: true,
-                    revenue: revRow[0]?.rev || 0,
-                    quotesCount: quotes[0]?.cnt || 0,
-                    customersCount: customers[0]?.cnt || 0,
-                    inventoryCount: inventory[0]?.cnt || 0,
-                    recent: recent.map(r => ({
-                        id: r.id_code,
-                        type: r.type,
-                        customer: r.customer,
-                        amount: `€ ${(r.amount || 0).toFixed(2)}`,
-                        status: r.stato,
-                        date: r.date
-                    }))
-                };
-            } catch (error) {
-                console.error("businessSuite:getStats error:", error);
-                return { success: false, error: error.message };
-            }
-        });
+        on('clienti:getAll', clienti.getAll);
+        on('clienti:getById', clienti.getById);
+        on('clienti:search', clienti.search);
+        on('clienti:create', clienti.create);
+        on('clienti:update', clienti.update);
+        on('clienti:remove', clienti.remove);
+        on('clienti:restore', clienti.restore);
 
-        ipcMain.handle('businessSuite:getClienti', async () => {
-            try {
-                const data = await db.queryAll('SELECT * FROM clienti ORDER BY id DESC');
-                return { success: true, data };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('fornitori:getAll', fornitori.getAll);
+        on('fornitori:getById', fornitori.getById);
+        on('fornitori:search', fornitori.search);
+        on('fornitori:create', fornitori.create);
+        on('fornitori:update', fornitori.update);
+        on('fornitori:remove', fornitori.remove);
+        on('fornitori:restore', fornitori.restore);
 
-        ipcMain.handle('businessSuite:saveCliente', async (event, c) => {
-            try {
-                if (c.id && typeof c.id === 'number' && c.id < 1000000000000) {
-                    await db.queryRun(`UPDATE clienti SET nome=?, ragione_sociale=?, piva=?, cf=?, email=?, telefono=?, indirizzo=?, sdi=?, pec=?, is_pa=? WHERE id=?`,
-                        [c.name, c.ragione_sociale || c.name, c.vat, c.cf || '', c.contact, c.telefono || '', c.indirizzo || '', c.sdi, c.pec || '', c.is_pa ? 1 : 0, c.id]);
-                } else {
-                    await db.queryRun(`INSERT INTO clienti (nome, ragione_sociale, piva, cf, email, codice_destinatario, is_pa) VALUES (?,?,?,?,?,?,?)`,
-                        [c.name, c.ragione_sociale || c.name, c.vat, c.cf || '', c.contact, c.sdi || '0000000', c.is_pa ? 1 : 0]);
-                }
-                return { success: true };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('prodotti:getAll', prodotti.getAll);
+        on('prodotti:getById', prodotti.getById);
+        on('prodotti:search', prodotti.search);
+        on('prodotti:create', prodotti.create);
+        on('prodotti:update', prodotti.update);
+        on('prodotti:remove', prodotti.remove);
+        on('prodotti:restore', prodotti.restore);
+        on('prodotti:getAllCategorie', prodotti.getAllCategorie);
+        on('prodotti:createCategoria', prodotti.createCategoria);
+        on('prodotti:updateCategoria', prodotti.updateCategoria);
+        on('prodotti:removeCategoria', prodotti.removeCategoria);
 
-        ipcMain.handle('businessSuite:getMagazzino', async () => {
-            try {
-                const data = await db.queryAll('SELECT * FROM prodotti_magazzino ORDER BY id DESC');
-                return { success: true, data };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('collaboratori:getAll', collaboratori.getAll);
+        on('collaboratori:getById', collaboratori.getById);
+        on('collaboratori:create', collaboratori.create);
+        on('collaboratori:update', collaboratori.update);
+        on('collaboratori:remove', collaboratori.remove);
+        on('collaboratori:restore', collaboratori.restore);
+        on('collaboratori:getLedger', collaboratori.getLedger);
+        on('collaboratori:addPagamento', collaboratori.addPagamento);
+        on('collaboratori:removePagamento', collaboratori.removePagamento);
 
-        ipcMain.handle('businessSuite:saveProdotto', async (event, p) => {
-            try {
-                await db.queryRun(`INSERT INTO prodotti_magazzino (codice_articolo, descrizione, prezzo_vendita, giacenza) VALUES (?,?,?,?) ON CONFLICT(codice_articolo) DO UPDATE SET descrizione=excluded.descrizione, prezzo_vendita=excluded.prezzo_vendita, giacenza=excluded.giacenza`,
-                    [p.code, p.name, p.price, p.stock]);
-                return { success: true };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('preventivi:getAll', preventivi.getAll);
+        on('preventivi:getById', preventivi.getById);
+        on('preventivi:create', preventivi.create);
+        on('preventivi:update', preventivi.update);
+        on('preventivi:setStato', preventivi.setStato);
+        on('preventivi:remove', preventivi.remove);
+        on('preventivi:duplica', preventivi.duplica);
+        on('preventivi:addVoce', preventivi.addVoce);
+        on('preventivi:updateVoce', preventivi.updateVoce);
+        on('preventivi:removeVoce', preventivi.removeVoce);
+        on('preventivi:addAssegnazione', preventivi.addAssegnazione);
+        on('preventivi:updateAssegnazione', preventivi.updateAssegnazione);
+        on('preventivi:removeAssegnazione', preventivi.removeAssegnazione);
+        on('preventivi:createRevision', preventivi.createRevision);
+        on('preventivi:getRevisions', preventivi.getRevisions);
 
-        ipcMain.handle('businessSuite:getPreventivi', async () => {
-            try {
-                const data = await db.queryAll('SELECT * FROM preventivi ORDER BY id DESC');
-                return { success: true, data };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('fatture:getAll', fatture.getAll);
+        on('fatture:getById', fatture.getById);
+        on('fatture:create', fatture.create);
+        on('fatture:createFromPreventivo', fatture.createFromPreventivo);
+        on('fatture:update', fatture.update);
+        on('fatture:setStato', fatture.setStato);
+        on('fatture:remove', fatture.remove);
+        on('fatture:addVoce', fatture.addVoce);
+        on('fatture:updateVoce', fatture.updateVoce);
+        on('fatture:removeVoce', fatture.removeVoce);
+        on('fatture:getScadenze', fatture.getScadenze);
+        on('fatture:registraIncasso', fatture.registraIncasso);
+        on('fatture:exportFatturaPA', fatturapaXml.exportFatturaPA);
 
-        ipcMain.handle('businessSuite:savePreventivo', async (event, q) => {
-            try {
-                const res = await db.queryRun(`INSERT INTO preventivi (codice, titolo, cliente_nome, data_creazione, totale_imponibile, totale_iva, totale_ivato, stato) VALUES (?,?,?,?,?,?,?,?)`,
-                    [q.id, q.subject, q.customer, q.date, q.subtotal || 0, q.vatAmount || 0, q.grandTotal || 0, q.status || 'bozza']);
-                return { success: true, lastID: res.lastID };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('ddt:getAll', ddt.getAll);
+        on('ddt:getById', ddt.getById);
+        on('ddt:create', ddt.create);
+        on('ddt:update', ddt.update);
+        on('ddt:remove', ddt.remove);
+        on('ddt:addVoce', ddt.addVoce);
+        on('ddt:removeVoce', ddt.removeVoce);
 
-        ipcMain.handle('businessSuite:getFatture', async () => {
-            try {
-                const data = await db.queryAll('SELECT * FROM fatture ORDER BY id DESC');
-                return { success: true, data };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('finanze:getAll', finanze.getAll);
+        on('finanze:create', finanze.create);
+        on('finanze:update', finanze.update);
+        on('finanze:remove', finanze.remove);
+        on('finanze:getStats', finanze.getStats);
 
-        ipcMain.handle('businessSuite:generateFatturaXML', async (event, args) => {
-            try {
-                return fatturaXml.createFatturaPAXML(args || {});
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('impostazioni:getAll', impostazioni.getAll);
+        on('impostazioni:setMultiple', impostazioni.setMultiple);
 
-        ipcMain.handle('businessSuite:generatePDF', async (event, args) => {
-            try {
-                return pdfGen.generateDocumentPDF(args.type || 'preventivo', args.data, args.outputPath);
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
+        on('documenti:generatePreventivoPdf', documenti.generatePreventivoPdf);
+        on('documenti:generateFatturaPdf', documenti.generateFatturaPdf);
+        on('documenti:generatePreventivoExcel', documenti.generatePreventivoExcel);
+        on('documenti:generateFatturaExcel', documenti.generateFatturaExcel);
+        on('documenti:salvaFile', documenti.salvaFile);
 
-        ipcMain.handle('businessSuite:processPOSSale', async (event, args) => {
-            try {
-                const scontrinoNum = `SCO-${Date.now().toString().slice(-6)}`;
-                await db.queryRun(`INSERT INTO pos_scontrini (numero_scontrino, totale_lordo, metodo_pagamento) VALUES (?,?,?)`,
-                    [scontrinoNum, parseFloat(args.total.replace('€', '').trim()) || 0, 'CONTANTI']);
-                return { success: true, scontrinoNum };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        });
-
+        console.log('[BusinessSuite] Backend registrato con successo.');
         return true;
     } catch (error) {
-        console.error("registerBackendHandlers failure:", error);
+        console.error('[BusinessSuite] registerBackendHandlers failure:', error);
         return false;
     }
 }

@@ -53,7 +53,7 @@ async function runDeploy() {
     if (IS_TEST) {
         console.log(`[TEST] Installazione locale in corso...`);
         const appData = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Application Support' : process.env.HOME + '/.config');
-        const adestioUserData = path.join(appData, 'Adestio', 'installed_apps', manifest.id);
+        const adestioUserData = path.join(appData, 'NunzioTech', 'Adestio', 'installed_apps', manifest.id);
         
         if (fs.existsSync(adestioUserData)) fs.rmSync(adestioUserData, { recursive: true, force: true });
         fs.mkdirSync(adestioUserData, { recursive: true });

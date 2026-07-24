@@ -1,2 +1,33 @@
+# ── Dipendenze ──────────────────────────────────────────────
 node_modules/
-presa_di_servizio_v*.zip
+
+# ── Pacchetti generati (build artifact, rigenerabili con pack_and_deploy.js) ──
+# I file .zip vengono creati da pack_and_deploy.js e caricati via FTP in fase
+# di --prod: non devono restare nella cronologia git (gonfiano il repo e
+# duplicano contenuto gia' presente nelle cartelle App-*).
+*.zip
+
+# ── Variabili d'Ambiente e Segreti ───────────────────────────
+.env
+.env.local
+.env.*.local
+*.key
+
+# ── Log e File Temporanei ────────────────────────────────────
+*.log
+logs/
+*.tmp
+*.bak
+*~
+npm-debug.log*
+
+# ── File di Sistema e IDE ────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# ── AI Assistants (sessioni personali, non il config di progetto) ──
+.agents/
+.claude/

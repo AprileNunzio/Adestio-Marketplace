@@ -17,6 +17,10 @@
         "sdi"
     ],
     "backend": "backend.js",
+    "db": {
+        "namespace": "adestio_business_suite",
+        "migrations": "./migrations.js"
+    },
     "ipc": {
         "namespace": "businessSuite"
     },
