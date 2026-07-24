@@ -57,6 +57,7 @@ Punti da non sbagliare:
 - `"icon"`: se non contiene un punto (niente estensione), viene trattato come nome di icona Material Symbols (`business_center`, `request_quote`, ...) — non serve un file immagine.
 - `"db.migrations"` è **relativo alla cartella dell'app**, non a `Adestio/backend/migrations/`. Il file `migrations.js` va messo alla radice della cartella dell'app.
 - **Non** aggiungere mai `"bundled": true` al manifest reale — è una scorciatoia di solo-test (vedi §8) che rompe il caricamento del frontend se lasciata per sbaglio.
+- **`"permissions"` non è per il sistema RBAC**: è l'elenco di scope-string che il `capabilityBroker` mette dentro il token dell'app (`generateAppToken`, `backend/security/capabilityBroker.js`) — stringhe semplici tipo `"nomeUnivoco:*"`, mai oggetti. Se la tua app vuole invece dei toggle per-funzionalità nella schermata Amministratore → RBAC (visibili/gestibili da un admin per utente o gruppo), usa un campo **separato** `"rbacPermissions"`, formato `[{ "id": "view", "label": "Visualizza", "default": true }, ...]` — è opzionale e va aggiunto solo se ti serve davvero quel livello di granularità; `syncPermissionsFromManifests` (`Adestio/backend/handlers/rbac.js`) lo legge sia dalle app core sia da quelle di terze parti installate. Non confondere i due campi: mescolarli produceva in passato voci fantasma tipo `"<tuoId>:undefined"` nella tabella permessi.
 
 ## 3. Il database — isolato, cifrato, senza driver nativi
 
@@ -165,6 +166,7 @@ Questo **è un rilascio reale**: incrementa la versione, carica lo zip via FTP, 
 ## Checklist finale prima di dire "è pronta"
 
 - [ ] Il manifest ha `db.namespace`/`db.migrations` e **non** ha `bundled: true`.
+- [ ] `"permissions"` contiene solo stringhe di scope per il `capabilityBroker` (es. `"nomeUnivoco:*"`); eventuali toggle RBAC per-funzionalità vanno nel campo separato `"rbacPermissions"` (oggetti `{id,label,default}`), mai mescolati nello stesso array.
 - [ ] `migrations.js` contiene solo `CREATE TABLE IF NOT EXISTS`/`CREATE INDEX IF NOT EXISTS`, zero `INSERT`.
 - [ ] `backend.js` esporta `registerBackendHandlers(registerApi, app, adestioDb)` e ritorna `true`.
 - [ ] Nessuna dipendenza nativa (sqlite3, better-sqlite3, ecc.) nel `package.json` dell'app — solo librerie pure JS.

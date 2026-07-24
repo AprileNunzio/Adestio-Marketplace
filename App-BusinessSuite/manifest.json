@@ -57,5 +57,10 @@
         "businessSuite:*",
         "anagrafica:*",
         "datiAzienda:*"
+    ],
+    "rbacPermissions": [
+        { "id": "view", "label": "Lettura (visualizza e consulta)" },
+        { "id": "create", "label": "Scrittura (crea nuovi record)" },
+        { "id": "edit", "label": "Modifica (aggiorna record esistenti)" }
     ]
 }
