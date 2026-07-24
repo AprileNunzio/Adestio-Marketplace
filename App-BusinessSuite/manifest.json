@@ -2,7 +2,7 @@
     "id": "adestio_business_suite",
     "name": "Adestio Business Suite",
     "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
-    "icon": "business_center",
+    "icon": "icon.png",
     "main": "app.js",
     "color": "#6366F1",
     "version": "1.0.27",
