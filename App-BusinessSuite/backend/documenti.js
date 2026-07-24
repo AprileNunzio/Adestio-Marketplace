@@ -8,22 +8,23 @@ const PDFDocument = require('pdfkit');
 const XLSX = require('xlsx');
 const fs = require('fs');
 const { db } = require('./db_utils');
+const impostazioni = require('./impostazioni');
 
-function getImpostazioni() {
-    const rows = db().query('SELECT key_name, key_value FROM impostazioni_business_suite');
-    const map = {};
-    rows.forEach(r => { map[r.key_name] = r.key_value; });
-    return map;
+// Unica fonte per i dati del mittente: identita' fiscale sola-lettura da Adestio
+// + indirizzo/parametri propri di Business Suite (vedi impostazioni.js).
+async function getImpostazioni() {
+    const res = await impostazioni.getAll();
+    return (res && res.success) ? res.data : {};
 }
 
 function euro(n) {
     return (Number(n) || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
-function buildDocumentoPdf({ tipoLabel, numero, data, cliente, righe, totali, note, condizioniPagamento }) {
+async function buildDocumentoPdf({ tipoLabel, numero, data, cliente, righe, totali, note, condizioniPagamento }) {
+    const cfg = await getImpostazioni();
     return new Promise((resolve, reject) => {
         try {
-            const cfg = getImpostazioni();
             const doc = new PDFDocument({ size: 'A4', margin: 40 });
             const chunks = [];
             doc.on('data', c => chunks.push(c));

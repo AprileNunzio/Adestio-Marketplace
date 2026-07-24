@@ -6,6 +6,7 @@
 // che richiede accreditamento e progressivo di trasmissione ufficiale.
 
 const { db } = require('./db_utils');
+const impostazioni = require('./impostazioni');
 
 function esc(v) {
     return String(v === undefined || v === null ? '' : v)
@@ -16,15 +17,15 @@ function esc(v) {
         .replace(/'/g, '&apos;');
 }
 
-function getImpostazioni() {
-    const rows = db().query('SELECT key_name, key_value FROM impostazioni_business_suite');
-    const map = {};
-    rows.forEach(r => { map[r.key_name] = r.key_value; });
-    return map;
+// Unica fonte per i dati del Cedente/Prestatore: identita' fiscale sola-lettura
+// da Adestio + indirizzo/parametri fiscali propri di Business Suite (vedi impostazioni.js).
+async function getImpostazioni() {
+    const res = await impostazioni.getAll();
+    return (res && res.success) ? res.data : {};
 }
 
-function buildFatturaPAXml(fattura, voci) {
-    const cfg = getImpostazioni();
+async function buildFatturaPAXml(fattura, voci) {
+    const cfg = await getImpostazioni();
     const progressivoInvio = String(fattura.progressivo || 1).padStart(5, '0');
     const codiceDestinatario = fattura.cliente_codice_destinatario || '0000000';
 
@@ -141,8 +142,9 @@ async function exportFatturaPA(event, args = {}) {
         const rows = db().query('SELECT * FROM fatture WHERE id = ?', [id]);
         if (rows.length === 0) return { success: false, error: 'Fattura non trovata' };
         const voci = db().query('SELECT * FROM voci_fatture WHERE fattura_id = ? AND is_deleted = 0 ORDER BY ordine ASC', [id]);
-        const xml = buildFatturaPAXml(rows[0], voci);
-        const fileName = `IT${(getImpostazioni().piva_azienda || 'XXXXXXXXXXX')}_${String(rows[0].progressivo || 1).padStart(5, '0')}.xml`;
+        const xml = await buildFatturaPAXml(rows[0], voci);
+        const cfg = await getImpostazioni();
+        const fileName = `IT${(cfg.piva_azienda || 'XXXXXXXXXXX')}_${String(rows[0].progressivo || 1).padStart(5, '0')}.xml`;
         return { success: true, data: { xml, fileName } };
     } catch (e) {
         console.error('[BusinessSuite:fatturapa] exportFatturaPA error:', e.message);

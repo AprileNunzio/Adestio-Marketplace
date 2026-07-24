@@ -103,12 +103,13 @@ export function campoHtml(field, value, idPrefix = 'crud-field-') {
     const inputType = field.type === 'date' ? 'date' : (field.type || 'text');
     const step = field.type === 'number' ? `step="${field.step || 'any'}"` : '';
     const upper = field.uppercase ? 'style="text-transform:uppercase;"' : '';
+    const readonly = field.readonly ? 'disabled' : '';
     return `
         <div class="ak-field" ${flex}>
             ${labelRow}
             <div class="ak-inputbox">
                 <span class="material-symbols-rounded ak-ficon" aria-hidden="true">${esc(field.icon || 'edit_note')}</span>
-                <input type="${inputType}" id="${id}" class="ak-input" placeholder="${esc(field.placeholder || '')}" value="${esc(val)}" ${field.required ? 'required' : ''} ${step} ${describedBy} ${upper}>
+                <input type="${inputType}" id="${id}" class="ak-input" placeholder="${esc(field.placeholder || '')}" value="${esc(val)}" ${field.required ? 'required' : ''} ${step} ${describedBy} ${upper} ${readonly}>
             </div>
             ${hint}
         </div>

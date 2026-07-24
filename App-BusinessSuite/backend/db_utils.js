@@ -22,6 +22,29 @@ async function persist() {
     await _adestioDb.saveDB(DB_DOMAIN);
 }
 
+// Ragione sociale, P.IVA e Codice Fiscale sono l'identita' fiscale della STESSA
+// azienda gia' configurata in Adestio > Amministratore > Dati Azienda: non ha
+// senso che l'utente li reinserisca qui, e tenerne una copia locale li farebbe
+// andare fuori sincro alla prima modifica in Amministrazione. Si leggono quindi
+// sempre dal vivo, in sola lettura (readConfig e' l'unica funzione iniettata
+// da AppLoader per questo scopo: niente saveConfig, quindi nessuna scrittura
+// possibile da qui). Indirizzo/CAP/Citta/Provincia restano invece propri di
+// Business Suite: FatturaPA li richiede come campi separati, mentre in Adestio
+// e' un unico indirizzo libero non strutturato.
+function getAdestioIdentita() {
+    try {
+        if (!_adestioDb || typeof _adestioDb.readConfig !== 'function') return {};
+        const cfg = _adestioDb.readConfig() || {};
+        return {
+            ragione_sociale_azienda: cfg.istituto_nome || '',
+            piva_azienda: cfg.istituto_piva || '',
+            codice_fiscale_azienda: cfg.istituto_cf || ''
+        };
+    } catch (e) {
+        return {};
+    }
+}
+
 function newId() {
     return crypto.randomUUID();
 }
@@ -122,4 +145,4 @@ function buildSimpleCrud(tableName, fields, options = {}) {
     return { getAll, getById, create, update, remove, restore };
 }
 
-module.exports = { configure, db, persist, newId, now, DB_DOMAIN, buildSimpleCrud };
+module.exports = { configure, db, persist, newId, now, DB_DOMAIN, buildSimpleCrud, getAdestioIdentita };
