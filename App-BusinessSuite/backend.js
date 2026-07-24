@@ -15,16 +15,20 @@ const documenti = require('./backend/documenti');
 
 const NS = 'businessSuite';
 
-// registerApi(action, fn): iniettato da AppLoader.js, inoltra le chiamate del
-// frontend arrivate via window.adestioNative.callAppApi (nessun canale ipcMain
-// proprio: il preload.js di Adestio non conosce in anticipo le azioni di
-// un'app di terze parti, quindi tutto passa dal ponte generico capabilityBroker).
 function registerBackendHandlers(registerApi, app, adestioDb) {
     try {
         dbUtils.configure(adestioDb);
 
         function on(channel, fn) {
-            registerApi(`${NS}:${channel}`, (event, args) => fn(event, args));
+            try {
+                registerApi(`${NS}:${channel}`, (event, args) => {
+                    try {
+                        return fn(event, args);
+                    } catch (eFn) {
+                        return { success: false, error: eFn.message };
+                    }
+                });
+            } catch (eOn) {}
         }
 
         on('clienti:getAll', clienti.getAll);
@@ -118,10 +122,8 @@ function registerBackendHandlers(registerApi, app, adestioDb) {
         on('documenti:generateFatturaExcel', documenti.generateFatturaExcel);
         on('documenti:salvaFile', documenti.salvaFile);
 
-        console.log('[BusinessSuite] Backend registrato con successo.');
         return true;
     } catch (error) {
-        console.error('[BusinessSuite] registerBackendHandlers failure:', error);
         return false;
     }
 }
