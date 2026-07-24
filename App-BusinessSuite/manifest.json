@@ -5,7 +5,7 @@
   "icon": "icon.png",
   "main": "app.js",
   "color": "#6366F1",
-  "version": "1.0.33",
+  "version": "1.0.34",
   "author": "NunzioTech",
   "category": "erp",
   "minCoreVersion": "1.0.0",
@@ -61,6 +61,10 @@
     "datiAzienda:*"
   ],
   "rbacPermissions": [
+    {
+      "id": "card_view",
+      "label": "Dashboard & Menu: Visualizzazione card e icona applicazione"
+    },
     {
       "id": "clienti_view",
       "label": "Clienti: Visualizzazione anagrafica"
@@ -142,5 +146,5 @@
       "label": "Documenti: Generazione ed esportazione PDF/Excel"
     }
   ],
-  "integrity_hash": "8c0bf335e1fb251c99a45b3880fa99a178fc97d50a3ce1e8ad3421dbc9031f8e"
+  "integrity_hash": "4584021e69bdfc766178785e3c2af366c96e370c1150ad0834c35dc8b1950de4"
 }
