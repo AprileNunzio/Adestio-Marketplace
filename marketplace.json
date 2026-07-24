@@ -2,7 +2,7 @@
   {
     "id": "presa_di_servizio",
     "name": "Presa di Servizio",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "author": "AprileNunzio",
@@ -13,7 +13,7 @@
     "folder": "presa_di_servizio",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v1.0.5.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v1.0.6.zip",
     "ipc": {
       "namespace": "presa_di_servizio",
       "handlers": [
@@ -51,12 +51,12 @@
         "src": "index.html"
       }
     ],
-    "sha256": "d8810d027118fe8da0682502ad3892ad0468abc437de00619e93b489fbf4e42b"
+    "sha256": "97a1ae97563190eb1a0bc359d90e02255fa0c1fbf88515a5d7fe53b80997f9e3"
   },
   {
     "id": "adestio_business_suite",
     "name": "Adestio Business Suite",
-    "version": "1.0.34",
+    "version": "1.0.35",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "author": "NunzioTech",
@@ -67,7 +67,7 @@
     "folder": "adestio_business_suite",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.34.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.35.zip",
     "ipc": {
       "namespace": "businessSuite",
       "handlers": [
@@ -113,6 +113,6 @@
         "src": "index.html"
       }
     ],
-    "sha256": "307ca4e41c35a306399d531896aafbc3ced0cafa7623ebacb05334ae0504a2e3"
+    "sha256": "22dd7ed7ccdbe83185e015c883e88af970b4d9efb49ac39b0ee5c0a28169c232"
   }
 ]
