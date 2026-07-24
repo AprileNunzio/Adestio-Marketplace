@@ -147,10 +147,19 @@ export default {
                             card.style.animationDelay = `${idx * 0.06}s`;
                             card.innerHTML = `
                                 ${!allowed ? '<span class="badge-locked">Bloccato</span>' : ''}
-                                <span class="material-symbols-rounded app-icon">${mod.icon}</span>
+                                <img src="icons/${mod.id}.png" class="app-icon" data-fallback-icon="${mod.icon}">
                                 <div class="app-title">${mod.label}</div>
                                 <div class="app-desc">${mod.desc}</div>
                             `;
+                            const iconImg = card.querySelector('img.app-icon');
+                            if (iconImg) {
+                                iconImg.addEventListener('error', () => {
+                                    const fallback = document.createElement('span');
+                                    fallback.className = 'material-symbols-rounded app-icon';
+                                    fallback.textContent = iconImg.dataset.fallbackIcon;
+                                    iconImg.replaceWith(fallback);
+                                }, { once: true });
+                            }
                             if (allowed) {
                                 card.addEventListener('click', () => {
                                     try {
