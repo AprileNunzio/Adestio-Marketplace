@@ -53,7 +53,7 @@
   {
     "id": "adestio_business_suite",
     "name": "Adestio Business Suite",
-    "version": "1.0.29",
+    "version": "1.0.30",
     "author": "NunzioTech",
     "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
     "long_description": "Adestio Business Suite è la soluzione completa e flessibile per gestire l'intero ciclo commerciale aziendale: preventivazione con simulatore margini, emissione ed esportazione fatture elettroniche XML SDI, anagrafiche clienti/fornitori, gestione magazzino e POS per schermi touch.",
@@ -62,7 +62,7 @@
     "folder": "adestio_business_suite",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.29.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.30.zip",
     "ipc": {
       "namespace": "businessSuite",
       "handlers": [
