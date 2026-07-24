@@ -1,145 +1,146 @@
 {
-    "id": "adestio_business_suite",
-    "name": "Adestio Business Suite",
-    "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
-    "icon": "icon.png",
-    "main": "app.js",
-    "color": "#6366F1",
-    "version": "1.0.32",
-    "author": "NunzioTech",
-    "category": "erp",
-    "minCoreVersion": "1.0.0",
-    "api_version": "1.0",
-    "tags": [
-        "gestionale",
-        "preventivi",
-        "fatturazione",
-        "magazzino",
-        "pos",
-        "sdi"
-    ],
-    "backend": "backend.js",
-    "db": {
-        "namespace": "adestio_business_suite",
-        "migrations": "./migrations.js"
+  "id": "adestio_business_suite",
+  "name": "Adestio Business Suite",
+  "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
+  "icon": "icon.png",
+  "main": "app.js",
+  "color": "#6366F1",
+  "version": "1.0.33",
+  "author": "NunzioTech",
+  "category": "erp",
+  "minCoreVersion": "1.0.0",
+  "api_version": "1.0",
+  "tags": [
+    "gestionale",
+    "preventivi",
+    "fatturazione",
+    "magazzino",
+    "pos",
+    "sdi"
+  ],
+  "backend": "backend.js",
+  "db": {
+    "namespace": "adestio_business_suite",
+    "migrations": "./migrations.js"
+  },
+  "ipc": {
+    "namespace": "businessSuite"
+  },
+  "apis": [
+    "anagrafica_persone",
+    "anagrafica_aziende",
+    "documenti_fiscali"
+  ],
+  "ui_injections": [
+    {
+      "target": "dashboard",
+      "type": "card",
+      "src": "index.html"
     },
-    "ipc": {
-        "namespace": "businessSuite"
+    {
+      "target": "sidebar_menu",
+      "type": "menu_item",
+      "label": "Business Suite",
+      "icon": "business_center",
+      "src": "index.html"
+    }
+  ],
+  "links": [
+    {
+      "rel": "help",
+      "href": "https://adestio.nunziotech.com/docs/business_suite"
+    }
+  ],
+  "licensing": {
+    "type": "premium"
+  },
+  "dependencies": {},
+  "permissions": [
+    "businessSuite:*",
+    "anagrafica:*",
+    "datiAzienda:*"
+  ],
+  "rbacPermissions": [
+    {
+      "id": "clienti_view",
+      "label": "Clienti: Visualizzazione anagrafica"
     },
-    "apis": [
-        "anagrafica_persone",
-        "anagrafica_aziende",
-        "documenti_fiscali"
-    ],
-    "ui_injections": [
-        {
-            "target": "dashboard",
-            "type": "card",
-            "src": "index.html"
-        },
-        {
-            "target": "sidebar_menu",
-            "type": "menu_item",
-            "label": "Business Suite",
-            "icon": "business_center",
-            "src": "index.html"
-        }
-    ],
-    "links": [
-        {
-            "rel": "help",
-            "href": "https://adestio.nunziotech.com/docs/business_suite"
-        }
-    ],
-    "licensing": {
-        "type": "premium"
+    {
+      "id": "clienti_edit",
+      "label": "Clienti: Creazione e modifica schede"
     },
-    "dependencies": {},
-    "permissions": [
-        "businessSuite:*",
-        "anagrafica:*",
-        "datiAzienda:*"
-    ],
-    "rbacPermissions": [
-        {
-            "id": "clienti_view",
-            "label": "Clienti: Visualizzazione anagrafica"
-        },
-        {
-            "id": "clienti_edit",
-            "label": "Clienti: Creazione e modifica schede"
-        },
-        {
-            "id": "fornitori_view",
-            "label": "Fornitori: Visualizzazione elenchi"
-        },
-        {
-            "id": "fornitori_edit",
-            "label": "Fornitori: Creazione e modifica"
-        },
-        {
-            "id": "prodotti_view",
-            "label": "Magazzino: Consulta articoli e giacenze"
-        },
-        {
-            "id": "prodotti_edit",
-            "label": "Magazzino: Inserimento e rettifica articoli"
-        },
-        {
-            "id": "preventivi_view",
-            "label": "Preventivi: Visualizza storico e simulazioni"
-        },
-        {
-            "id": "preventivi_edit",
-            "label": "Preventivi: Emissione e modifica preventivi"
-        },
-        {
-            "id": "preventivi_delete",
-            "label": "Preventivi: Cancellazione e annullamento"
-        },
-        {
-            "id": "fatture_view",
-            "label": "Fatture: Visualizza storico fatture e scadenze"
-        },
-        {
-            "id": "fatture_edit",
-            "label": "Fatture: Creazione ed emissione fatture"
-        },
-        {
-            "id": "fatture_export_xml",
-            "label": "Fatture: Esportazione XML SDI Agenzia delle Entrate"
-        },
-        {
-            "id": "fatture_incasso",
-            "label": "Fatture: Registrazione incassi e pagamenti"
-        },
-        {
-            "id": "ddt_view",
-            "label": "DDT: Consulta Documenti di Trasporto"
-        },
-        {
-            "id": "ddt_edit",
-            "label": "DDT: Emissione e modifica DDT"
-        },
-        {
-            "id": "pos_sell",
-            "label": "Cassa POS: Vendita diretta e scontrino"
-        },
-        {
-            "id": "pos_discount",
-            "label": "Cassa POS: Applica sconti manuali in cassa"
-        },
-        {
-            "id": "pos_close_till",
-            "label": "Cassa POS: Chiusura cassa e z-report"
-        },
-        {
-            "id": "finanze_view",
-            "label": "Finanze & Statistiche: Visualizza report ed economia"
-        },
-        {
-            "id": "documenti_export",
-            "label": "Documenti: Generazione ed esportazione PDF/Excel"
-        }
-    ]
+    {
+      "id": "fornitori_view",
+      "label": "Fornitori: Visualizzazione elenchi"
+    },
+    {
+      "id": "fornitori_edit",
+      "label": "Fornitori: Creazione e modifica"
+    },
+    {
+      "id": "prodotti_view",
+      "label": "Magazzino: Consulta articoli e giacenze"
+    },
+    {
+      "id": "prodotti_edit",
+      "label": "Magazzino: Inserimento e rettifica articoli"
+    },
+    {
+      "id": "preventivi_view",
+      "label": "Preventivi: Visualizza storico e simulazioni"
+    },
+    {
+      "id": "preventivi_edit",
+      "label": "Preventivi: Emissione e modifica preventivi"
+    },
+    {
+      "id": "preventivi_delete",
+      "label": "Preventivi: Cancellazione e annullamento"
+    },
+    {
+      "id": "fatture_view",
+      "label": "Fatture: Visualizza storico fatture e scadenze"
+    },
+    {
+      "id": "fatture_edit",
+      "label": "Fatture: Creazione ed emissione fatture"
+    },
+    {
+      "id": "fatture_export_xml",
+      "label": "Fatture: Esportazione XML SDI Agenzia delle Entrate"
+    },
+    {
+      "id": "fatture_incasso",
+      "label": "Fatture: Registrazione incassi e pagamenti"
+    },
+    {
+      "id": "ddt_view",
+      "label": "DDT: Consulta Documenti di Trasporto"
+    },
+    {
+      "id": "ddt_edit",
+      "label": "DDT: Emissione e modifica DDT"
+    },
+    {
+      "id": "pos_sell",
+      "label": "Cassa POS: Vendita diretta e scontrino"
+    },
+    {
+      "id": "pos_discount",
+      "label": "Cassa POS: Applica sconti manuali in cassa"
+    },
+    {
+      "id": "pos_close_till",
+      "label": "Cassa POS: Chiusura cassa e z-report"
+    },
+    {
+      "id": "finanze_view",
+      "label": "Finanze & Statistiche: Visualizza report ed economia"
+    },
+    {
+      "id": "documenti_export",
+      "label": "Documenti: Generazione ed esportazione PDF/Excel"
+    }
+  ],
+  "integrity_hash": "8c0bf335e1fb251c99a45b3880fa99a178fc97d50a3ce1e8ad3421dbc9031f8e"
 }
