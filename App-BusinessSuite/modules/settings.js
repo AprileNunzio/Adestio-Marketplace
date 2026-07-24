@@ -12,6 +12,15 @@ const AZIENDA_FIELDS = [
     { key: 'provincia_azienda', label: 'Provincia', icon: 'map', hint: 'Sigla, es. RM' }
 ];
 
+// Mappa i campi azienda di Business Suite ai corrispondenti campi già configurati
+// in Adestio > Amministratore > Dati Azienda, cosi' l'utente non deve reinserirli.
+const ADESTIO_AZIENDA_MAP = {
+    ragione_sociale_azienda: 'istituto_nome',
+    piva_azienda: 'istituto_piva',
+    codice_fiscale_azienda: 'istituto_cf',
+    indirizzo_azienda: 'istituto_indirizzo'
+};
+
 const FISCALI_FIELDS = [
     { key: 'iva_default', label: 'Aliquota IVA di default (%)', icon: 'percent', type: 'number' },
     { key: 'margine_default', label: 'Margine di default (%)', icon: 'trending_up', type: 'number', hint: 'Usato per suggerire il prezzo di vendita in catalogo' },
@@ -57,11 +66,31 @@ export async function render(el) {
 
     async function load() {
         const res = await callApi('impostazioni:getAll');
-        if (!res || !res.success) return;
+        const savedData = (res && res.success) ? res.data : {};
+
+        // Seed una tantum: se l'azienda non e' MAI stata configurata qui (ragione
+        // sociale assente = nessun salvataggio precedente), precompila i campi
+        // azienda con i dati gia' inseriti in Adestio > Amministratore > Dati Azienda.
+        // Dopo il primo salvataggio i dati salvati qui vincono sempre, anche se
+        // lasciati vuoti di proposito: non sovrascriviamo mai una scelta esplicita.
+        const neverConfigured = !savedData.ragione_sociale_azienda;
+        let adestioConfig = {};
+        if (neverConfigured) {
+            try {
+                if (window.electronAPI && typeof window.electronAPI.readConfig === 'function') {
+                    adestioConfig = await window.electronAPI.readConfig() || {};
+                }
+            } catch (e) {}
+        }
+
         allFields.forEach(f => {
             const input = el.querySelector(`#crud-field-${f.key}`);
             if (!input) return;
-            const value = res.data[f.key];
+            let value = savedData[f.key];
+            const fallbackKey = ADESTIO_AZIENDA_MAP[f.key];
+            if (neverConfigured && fallbackKey && adestioConfig[fallbackKey]) {
+                value = adestioConfig[fallbackKey];
+            }
             if (f.type === 'checkbox') input.checked = value === 'true' || value === true;
             else input.value = value !== undefined ? value : '';
         });
