@@ -105,6 +105,18 @@ async function runDeploy() {
             fs.writeFileSync(marketplacePath, JSON.stringify(marketData, null, 2));
             console.log(`[PROD] ✅ marketplace.json aggiornato.`);
 
+            // Carica anche marketplace.json sull'FTP: Adestio legge PRIMA da
+            // https://nunziotech.it/software/adestio/marketplace.json e usa
+            // GitHub solo come fallback se quella richiesta fallisce del tutto.
+            // Senza questo upload, il file su nunziotech.it resta bloccato alla
+            // versione dell'ultimo upload manuale e lo Store non vede mai gli
+            // aggiornamenti successivi, anche se marketplace.json su GitHub e'
+            // corretto (bug reale riscontrato: v1.0.25 pubblicata ma lo Store
+            // continuava a mostrare v1.0.24).
+            console.log(`[PROD] Uploading marketplace.json su FTP...`);
+            await client.uploadFrom(marketplacePath, 'marketplace.json');
+            console.log(`[PROD] ✅ marketplace.json caricato su FTP.`);
+
             // Auto-push su GitHub e Creazione Tag (Release)
             console.log(`[PROD] Avvio auto-commit, tag e push su GitHub...`);
             const { execSync } = require('child_process');
