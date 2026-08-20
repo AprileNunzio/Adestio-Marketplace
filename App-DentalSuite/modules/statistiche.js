@@ -1,8 +1,10 @@
 import { callApi } from '../shared/api.js';
 import { renderHero, renderStatCard, formatCurrency } from '../shared/ui_kit.js';
 import { checkPermission } from '../shared/rbac_guard.js';
-import { computeMonthlyTrends, computeCashflowForecast, computeCategoryDistribution, computePaymentMethodsDistribution } from '../domain/financial_analytics.js';
-import { renderBarTrendChart, renderDonutChart, renderForecastCard } from '../components/chart_renderer.js';
+import { computeMonthlyTrends, computeCategoryDistribution, computePaymentMethodsDistribution } from '../domain/financial_analytics.js';
+import { computeSmartCashflow } from '../domain/smart_cashflow_engine.js';
+import { renderBarTrendChart, renderDonutChart } from '../components/chart_renderer.js';
+import { renderCashflowAnalyticsView } from '../components/cashflow_analytics_view.js';
 
 export default {
     render: async (el, onNavigate) => {
@@ -31,13 +33,16 @@ export default {
                 return;
             }
 
-            const [statRes, incRes, speseRes, prevRes, tratRes, prestRes] = await Promise.all([
+            const [statRes, incRes, speseRes, prevRes, tratRes, prestRes, rateRes, appRes, staffRes] = await Promise.all([
                 callApi('statistiche:getKpi'),
                 callApi('contabilita:getIncassi'),
                 callApi('contabilita:getSpese'),
                 callApi('contabilita:getPreventivi'),
                 callApi('pazienti:getTrattamenti'),
-                callApi('prestazioni:getAll')
+                callApi('prestazioni:getAll'),
+                callApi('rate:getAllScadenziario'),
+                callApi('agenda:getAppuntamenti', { dateFrom: Date.now(), dateTo: Date.now() + 60 * 86400000 }),
+                callApi('staff:getAll')
             ]);
 
             const kpi = (statRes && statRes.success) ? statRes.data : {};
@@ -46,9 +51,20 @@ export default {
             const preventivi = (prevRes && prevRes.success) ? prevRes.data : [];
             const trattamenti = (tratRes && tratRes.success) ? tratRes.data : [];
             const prestazioni = (prestRes && prestRes.success) ? prestRes.data : [];
+            const rate = (rateRes && rateRes.success) ? rateRes.data : [];
+            const appuntamenti = (appRes && appRes.success) ? appRes.data : [];
+            const staff = (staffRes && staffRes.success) ? staffRes.data : [];
 
             const monthlyTrends = computeMonthlyTrends(incassi, spese, 6);
-            const cashflowForecast = computeCashflowForecast([], preventivi, incassi);
+            const smartForecast = computeSmartCashflow({
+                rate,
+                preventivi,
+                incassi,
+                spese,
+                appuntamenti,
+                prestazioni,
+                staff
+            });
             const categoryDist = computeCategoryDistribution(trattamenti, prestazioni);
             const paymentMethodsDist = computePaymentMethodsDistribution(incassi);
 
@@ -61,7 +77,7 @@ export default {
                 <div class="ds-root fade-in-up">
                     ${renderHero({
                         title: 'Statistiche Economiche & Previsioni di Cassa',
-                        subtitle: 'Analisi andamenti, cashflow predittivo, margini operativi e scomposizione per branca odontoiatrica.',
+                        subtitle: 'Analisi andamenti, cashflow predittivo multi-variabile, margini e scomposizione clinica.',
                         icon: 'monitoring',
                         actionsHtml: `<button class="ds-btn ds-btn-hero" id="ds-btn-refresh-stats"><span class="material-symbols-rounded">sync</span>Aggiorna Dati</button>`
                     })}
@@ -100,23 +116,23 @@ export default {
                     <div class="ds-panel">
                         <div class="ds-panel-header">
                             <div class="ds-panel-title">
-                                <span class="material-symbols-rounded" style="color:var(--ds-teal);">bar_chart</span>
-                                Andamento Mensile Incassi vs Spese (Ultimi 6 Mesi)
+                                <span class="material-symbols-rounded" style="color:var(--ds-purple);">insights</span>
+                                Previsioni di Cassa & Cashflow Forecasting Intelligente
                             </div>
-                            <span class="ds-badge ds-badge-teal">Trend Economico Reale</span>
+                            <span class="ds-badge ds-badge-purple">Algoritmo Multi-Vettore</span>
                         </div>
-                        ${renderBarTrendChart({ months: monthlyTrends, height: 230 })}
+                        <div id="ds-smart-forecast-outlet"></div>
                     </div>
 
                     <div class="ds-panel">
                         <div class="ds-panel-header">
                             <div class="ds-panel-title">
-                                <span class="material-symbols-rounded" style="color:var(--ds-purple);">insights</span>
-                                Previsioni di Cassa & Cashflow Forecasting (Prossimi 3 Mesi)
+                                <span class="material-symbols-rounded" style="color:var(--ds-teal);">bar_chart</span>
+                                Andamento Storico Mensile Incassi vs Spese (Ultimi 6 Mesi)
                             </div>
-                            <span class="ds-badge ds-badge-purple">Algoritmo Predittivo</span>
+                            <span class="ds-badge ds-badge-teal">Trend Economico Reale</span>
                         </div>
-                        ${renderForecastCard({ forecastData: cashflowForecast })}
+                        ${renderBarTrendChart({ months: monthlyTrends, height: 230 })}
                     </div>
 
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.2rem;">
@@ -182,6 +198,11 @@ export default {
                     </div>
                 </div>
             `;
+
+            const forecastContainer = el.querySelector('#ds-smart-forecast-outlet');
+            if (forecastContainer) {
+                renderCashflowAnalyticsView(forecastContainer, smartForecast);
+            }
 
             const btnRef = el.querySelector('#ds-btn-refresh-stats');
             if (btnRef) btnRef.addEventListener('click', () => onNavigate('statistiche'));
