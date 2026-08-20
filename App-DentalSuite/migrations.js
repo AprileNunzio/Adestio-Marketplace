@@ -197,6 +197,7 @@ module.exports = [
                 paziente_id TEXT NOT NULL,
                 preventivo_id TEXT DEFAULT '',
                 trattamento_id TEXT DEFAULT '',
+                rata_id TEXT DEFAULT '',
                 data_pagamento TEXT NOT NULL,
                 importo REAL NOT NULL,
                 metodo_pagamento TEXT NOT NULL DEFAULT 'pos',
@@ -238,6 +239,52 @@ module.exports = [
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS piani_rateali (
+                id TEXT PRIMARY KEY,
+                preventivo_id TEXT DEFAULT '',
+                paziente_id TEXT NOT NULL,
+                numero_rate INTEGER NOT NULL DEFAULT 3,
+                totale_importo REAL NOT NULL DEFAULT 0,
+                acconto_versato REAL NOT NULL DEFAULT 0,
+                stato TEXT NOT NULL DEFAULT 'attivo',
+                note TEXT DEFAULT '',
+                created_at INTEGER NOT NULL,
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_piani_paziente ON piani_rateali(paziente_id);
+
+            CREATE TABLE IF NOT EXISTS rate_scadenziario (
+                id TEXT PRIMARY KEY,
+                piano_id TEXT NOT NULL,
+                paziente_id TEXT NOT NULL,
+                numero_rata INTEGER NOT NULL,
+                importo REAL NOT NULL,
+                data_scadenza TEXT NOT NULL,
+                data_pagamento TEXT DEFAULT '',
+                stato TEXT NOT NULL DEFAULT 'in_scadenza',
+                note TEXT DEFAULT '',
+                created_at INTEGER NOT NULL,
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_rate_piano ON rate_scadenziario(piano_id);
+
+            CREATE TABLE IF NOT EXISTS log_notifiche (
+                id TEXT PRIMARY KEY,
+                paziente_id TEXT NOT NULL,
+                appuntamento_id TEXT DEFAULT '',
+                tipo_canale TEXT NOT NULL,
+                destinatario TEXT NOT NULL,
+                template_usato TEXT DEFAULT '',
+                messaggio TEXT NOT NULL,
+                data_invio TEXT NOT NULL,
+                stato_esito TEXT NOT NULL DEFAULT 'inviato',
+                created_at INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_notifiche_paziente ON log_notifiche(paziente_id);
         `
     }
 ];

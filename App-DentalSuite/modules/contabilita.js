@@ -1,5 +1,7 @@
 import { callApi } from '../shared/api.js';
 import { renderHero, renderModal, formatCurrency, formatDate } from '../shared/ui_kit.js';
+import { openInstallmentPlanModal } from '../components/installment_modal.js';
+import { openNotificationModal } from '../components/notification_modal.js';
 
 export default {
     render: async (el, onNavigate) => {
@@ -29,17 +31,18 @@ export default {
                     <div class="ds-root fade-in-up">
                         ${renderHero({
                             title: 'Contabilità Studio & Incassi Pazienti',
-                            subtitle: 'Ricevute sanitarie, fatture, rateizzazioni, acquisto materiali dentali e spese di gestione.',
+                            subtitle: 'Ricevute sanitarie, rateizzazioni, acconti, acquisto materiali dentali e spese di gestione.',
                             icon: 'account_balance_wallet',
                             actionsHtml: `
-                                <button class="ds-btn ds-btn-hero" id="ds-btn-new-incasso"><span class="material-symbols-rounded">add_card</span>Emetti Ricevuta / Incasso</button>
+                                <button class="ds-btn ds-btn-hero" id="ds-btn-new-incasso"><span class="material-symbols-rounded">add_card</span>Emetti Ricevuta / Acconto</button>
+                                <button class="ds-btn ds-btn-hero" id="ds-btn-new-plan"><span class="material-symbols-rounded">credit_card</span>Nuovo Piano Rateale</button>
                                 <button class="ds-btn ds-btn-hero" id="ds-btn-new-spesa"><span class="material-symbols-rounded">shopping_cart</span>Registra Spesa</button>
                             `
                         })}
 
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
                             <div class="ds-nav">
-                                <button class="ds-nav-btn ${subTab === 'incassi' ? 'active' : ''}" data-sub="incassi"><span class="material-symbols-rounded">payments</span>Incassi Pazienti (${incassi.length})</button>
+                                <button class="ds-nav-btn ${subTab === 'incassi' ? 'active' : ''}" data-sub="incassi"><span class="material-symbols-rounded">payments</span>Incassi & Ricevute (${incassi.length})</button>
                                 <button class="ds-nav-btn ${subTab === 'preventivi' ? 'active' : ''}" data-sub="preventivi"><span class="material-symbols-rounded">request_quote</span>Preventivi (${preventivi.length})</button>
                                 <button class="ds-nav-btn ${subTab === 'spese' ? 'active' : ''}" data-sub="spese"><span class="material-symbols-rounded">shopping_bag</span>Spese & Uscite Studio (${spese.length})</button>
                             </div>
@@ -63,6 +66,13 @@ export default {
 
                 el.querySelector('#ds-btn-new-incasso').addEventListener('click', () => openIncassoModal());
                 el.querySelector('#ds-btn-new-spesa').addEventListener('click', () => openSpesaModal());
+                el.querySelector('#ds-btn-new-plan').addEventListener('click', () => {
+                    if (pazienti.length === 0) { alert('Nessun paziente presente.'); return; }
+                    openInstallmentPlanModal({
+                        pazienteId: pazienti[0].id,
+                        onCreated: () => renderScreen()
+                    });
+                });
 
                 const contentEl = el.querySelector('#ds-contab-content');
 
@@ -79,17 +89,19 @@ export default {
                                             <th>Numero Documento</th>
                                             <th>Data</th>
                                             <th>Paziente</th>
+                                            <th>Tipo Documento</th>
                                             <th>Metodo</th>
                                             <th>Importo Incassato</th>
                                             <th>Note</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${incassi.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessun incasso registrato.</td></tr>' : incassi.map(inc => `
+                                        ${incassi.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessun incasso registrato.</td></tr>' : incassi.map(inc => `
                                             <tr>
                                                 <td><strong style="color:var(--ds-teal);">${inc.numero_documento}</strong></td>
                                                 <td>${formatDate(inc.data_pagamento)}</td>
                                                 <td><strong>${inc.paziente_cognome || ''} ${inc.paziente_nome || ''}</strong><br><small style="color:var(--md-on-surface-variant);">${inc.paziente_cf || ''}</small></td>
+                                                <td><span class="ds-badge ds-badge-${inc.tipo_documento === 'acconto' ? 'blue' : (inc.tipo_documento === 'rata' ? 'purple' : 'teal')}">${inc.tipo_documento.toUpperCase()}</span></td>
                                                 <td><span class="ds-badge ds-badge-teal">${inc.metodo_pagamento.toUpperCase()}</span></td>
                                                 <td style="font-weight:800; color:var(--ds-green); font-size:0.95rem;">${formatCurrency(inc.importo)}</td>
                                                 <td style="color:var(--md-on-surface-variant);">${inc.note || '-'}</td>
@@ -116,10 +128,11 @@ export default {
                                             <th>Medico Referente</th>
                                             <th>Stato</th>
                                             <th>Totale Netto</th>
+                                            <th style="text-align:right;">Azioni</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${preventivi.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessun preventivo registrato.</td></tr>' : preventivi.map(pr => `
+                                        ${preventivi.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessun preventivo registrato.</td></tr>' : preventivi.map(pr => `
                                             <tr>
                                                 <td><strong style="color:var(--ds-blue);">${pr.numero_preventivo}</strong></td>
                                                 <td>${formatDate(pr.data_emissione)}</td>
@@ -127,6 +140,9 @@ export default {
                                                 <td>${pr.medico_cognome ? 'Dr. ' + pr.medico_cognome : '-'}</td>
                                                 <td><span class="ds-badge ds-badge-${pr.stato === 'accettato' ? 'green' : (pr.stato === 'bozza' ? 'amber' : 'rose')}">${pr.stato.toUpperCase()}</span></td>
                                                 <td style="font-weight:800; font-size:0.95rem;">${formatCurrency(pr.totale_netto)}</td>
+                                                <td style="text-align:right;">
+                                                    <button class="ds-btn ds-btn-primary ds-rateizza-prev" data-id="${pr.id}" style="padding:0.35rem 0.6rem; font-size:0.8rem;"><span class="material-symbols-rounded" style="font-size:1rem;">credit_card</span> Rateizza</button>
+                                                </td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -134,6 +150,19 @@ export default {
                             </div>
                         </div>
                     `;
+
+                    contentEl.querySelectorAll('.ds-rateizza-prev').forEach(b => {
+                        b.addEventListener('click', () => {
+                            const pr = preventivi.find(p => p.id === b.dataset.id);
+                            if (pr) {
+                                openInstallmentPlanModal({
+                                    pazienteId: pr.paziente_id,
+                                    preventivo: pr,
+                                    onCreated: () => renderScreen()
+                                });
+                            }
+                        });
+                    });
                 } else if (subTab === 'spese') {
                     contentEl.innerHTML = `
                         <div class="ds-panel">
@@ -177,7 +206,7 @@ export default {
                         b.addEventListener('click', async () => {
                             if (!confirm('Rimuovere questa spesa?')) return;
                             await callApi('contabilita:deleteSpesa', { id: b.dataset.id });
-                            this.render(el, onNavigate);
+                            renderScreen();
                         });
                     });
                 }
@@ -190,7 +219,7 @@ export default {
 
                 const modalHtml = renderModal({
                     id: 'ds-modal-incasso',
-                    title: 'Emissione Ricevuta / Incasso Paziente',
+                    title: 'Emissione Ricevuta / Acconto Paziente',
                     icon: 'add_card',
                     bodyHtml: `
                         <form id="ds-form-incasso">
@@ -220,7 +249,7 @@ export default {
                                     <label>Tipo Documento</label>
                                     <select name="tipo_documento" class="ds-select">
                                         <option value="ricevuta_sanitaria">Ricevuta Sanitaria</option>
-                                        <option value="acconto">Acconto</option>
+                                        <option value="acconto">Acconto / Anticipo</option>
                                         <option value="saldo">Saldo Finale</option>
                                         <option value="fattura">Fattura Fiscale</option>
                                     </select>
@@ -231,7 +260,7 @@ export default {
                                 </div>
                                 <div class="ds-form-field" style="grid-column:1/-1;">
                                     <label>Note Ricevuta</label>
-                                    <input type="text" name="note" class="ds-input" placeholder="Es. Acconto prima seduta...">
+                                    <input type="text" name="note" class="ds-input" placeholder="Es. Acconto su preventivo, Prima seduta...">
                                 </div>
                             </div>
                         </form>
@@ -259,7 +288,7 @@ export default {
                         const res = await callApi('contabilita:registraIncasso', payload);
                         if (res && res.success) {
                             close();
-                            this.render(el, onNavigate);
+                            renderScreen();
                         } else {
                             alert(res.error || 'Errore');
                         }
@@ -297,7 +326,7 @@ export default {
                                 </div>
                                 <div class="ds-form-field" style="grid-column:1/-1;">
                                     <label>Descrizione Spesa *</label>
-                                    <input type="text" name="descrizione" class="ds-input" required placeholder="Es. Fornitura impianti in titanio, Ceramiche...">
+                                    <input type="text" name="descrizione" class="ds-input" required placeholder="Es. Fornitura impianti, Compositi...">
                                 </div>
                                 <div class="ds-form-field">
                                     <label>Fornitore</label>
@@ -346,7 +375,7 @@ export default {
                         const res = await callApi('contabilita:registraSpesa', payload);
                         if (res && res.success) {
                             close();
-                            this.render(el, onNavigate);
+                            renderScreen();
                         } else {
                             alert(res.error || 'Errore');
                         }

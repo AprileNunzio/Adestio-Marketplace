@@ -6,6 +6,8 @@ const staffBackend = require('./backend/staff_backend');
 const contabilitaBackend = require('./backend/contabilita_backend');
 const statisticheBackend = require('./backend/statistiche_backend');
 const allegatiBackend = require('./backend/allegati_backend');
+const notificheHandler = require('./backend/notifiche_handler');
+const rateHandler = require('./backend/rate_handler');
 
 function registerBackendHandlers(registerApi, app, adestioDb) {
     try {
@@ -65,6 +67,13 @@ function registerBackendHandlers(registerApi, app, adestioDb) {
         on('allegati:upload', allegatiBackend.uploadAllegato);
         on('allegati:delete', allegatiBackend.deleteAllegato);
         on('allegati:open', allegatiBackend.openAllegato);
+
+        on('notifiche:log', notificheHandler.logNotification);
+        on('notifiche:getByPaziente', notificheHandler.getLogsByPaziente);
+
+        on('rate:creaPiano', rateHandler.creaPianoRateale);
+        on('rate:getPianiByPaziente', rateHandler.getPianiByPaziente);
+        on('rate:pagaRata', rateHandler.pagaRata);
 
         return true;
     } catch (e) {
