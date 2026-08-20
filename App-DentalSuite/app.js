@@ -183,7 +183,8 @@ export default {
                     }
 
                     try {
-                        const mod = await import(modulePath);
+                        const bust = Date.now();
+                        const mod = await import(`${modulePath}?v=${bust}`);
                         const targetRender = (mod && mod.default && typeof mod.default.render === 'function') 
                             ? mod.default.render 
                             : (mod && typeof mod.render === 'function' ? mod.render : null);
