@@ -8,7 +8,7 @@ import { can } from '../../security/permissions.js';
 import * as fmt from '../../kernel/format.js';
 import { elenco } from '../shared/vista.js';
 import { apriPreventivo } from './preventivo_editor.js';
-import { selettorePaziente } from './selettore_paziente.js';
+import { selettorePaziente } from '../shared/selettore_paziente.js';
 
 const TONI = {
     bozza: 'neutral', inviato: 'info', accettato: 'success',

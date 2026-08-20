@@ -63,6 +63,9 @@ function creaHost(opzioni = {}) {
                     .run(utenteId, `adestio_dental_suite:${permesso}`);
             });
         },
+        alteraDocumentoFirmato(id) {
+            appDb.prepare("UPDATE documenti_firmati SET testo = testo || ' [riga aggiunta dopo la firma]' WHERE id = ?").run(id);
+        },
         manomettiAudit() {
             appDb.prepare("UPDATE log_audit SET esito = 'consentito' WHERE esito = 'negato'").run();
         },

@@ -80,6 +80,16 @@
         "consensi.revoca": { "handler": "consensi", "method": "revoca", "permission": "consensi_manage", "mutates": true },
         "audit.list": { "handler": "audit", "method": "list", "permission": "audit_view", "mutates": false },
         "audit.riepilogo": { "handler": "audit", "method": "riepilogo", "permission": "audit_view", "mutates": false },
-        "audit.verificaIntegrita": { "handler": "audit", "method": "verificaIntegrita", "permission": "audit_view", "mutates": false }
+        "audit.verificaIntegrita": { "handler": "audit", "method": "verificaIntegrita", "permission": "audit_view", "mutates": false },
+        "firme.listByPaziente": { "handler": "firme", "method": "listByPaziente", "permission": "firme_view", "mutates": false },
+        "firme.get": { "handler": "firme", "method": "get", "permission": "firme_view", "mutates": false },
+        "firme.verifica": { "handler": "firme", "method": "verifica", "permission": "firme_view", "mutates": false },
+        "firme.registra": { "handler": "firme", "method": "registra", "permission": "firme_sign", "mutates": true },
+        "firme.revoca": { "handler": "firme", "method": "revoca", "permission": "firme_sign", "mutates": true },
+        "privacy.valutaCancellazione": { "handler": "privacy", "method": "valutaCancellazione", "permission": "privacy_erase", "mutates": false },
+        "privacy.anonimizzaPaziente": { "handler": "privacy", "method": "anonimizzaPaziente", "permission": "privacy_erase", "mutates": true },
+        "privacy.registroCancellazioni": { "handler": "privacy", "method": "registroCancellazioni", "permission": "privacy_erase", "mutates": false },
+        "privacy.anteprimaEsportazione": { "handler": "privacy", "method": "anteprimaEsportazione", "permission": "privacy_export", "mutates": false },
+        "privacy.esportaPaziente": { "handler": "privacy", "method": "esportaPaziente", "permission": "privacy_export", "mutates": false }
     }
 }

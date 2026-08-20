@@ -8,7 +8,7 @@ import { can } from '../../security/permissions.js';
 import * as fmt from '../../kernel/format.js';
 import { oggetto } from '../shared/vista.js';
 import { apriForm } from '../shared/form_modale.js';
-import { selettorePaziente } from './selettore_paziente.js';
+import { selettorePaziente } from '../shared/selettore_paziente.js';
 
 const METODI = [
     { valore: 'contanti', etichetta: 'Contanti' },

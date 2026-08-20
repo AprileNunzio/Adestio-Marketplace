@@ -1,7 +1,7 @@
 import { el, rimpiazza } from '../../components/dom.js';
 import { apriModale } from '../../components/modale.js';
 import { call } from '../../kernel/transport.js';
-import { elenco } from '../shared/vista.js';
+import { elenco } from './vista.js';
 
 const MASSIMO_RISULTATI = 40;
 

@@ -203,5 +203,25 @@
         "id": "audit_view",
         "label": "Registro accessi: consultazione tracciabilita sanitaria (Titolare del trattamento)",
         "default": false
+    },
+    {
+        "id": "firme_view",
+        "label": "Firme: consultazione documenti firmati e verifica integrita",
+        "default": true
+    },
+    {
+        "id": "firme_sign",
+        "label": "Firme: acquisizione firma grafometrica su documenti clinici",
+        "default": false
+    },
+    {
+        "id": "privacy_export",
+        "label": "Privacy: esportazione dei dati del paziente (portabilita GDPR)",
+        "default": false
+    },
+    {
+        "id": "privacy_erase",
+        "label": "Privacy: anonimizzazione su richiesta di cancellazione (diritto all oblio)",
+        "default": false
     }
 ]

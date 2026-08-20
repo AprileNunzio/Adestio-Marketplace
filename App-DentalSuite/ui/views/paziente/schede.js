@@ -49,6 +49,13 @@ export const SCHEDE = [
         modulo: () => import('./consensi.js')
     },
     {
+        id: 'documenti',
+        titolo: 'Documenti firmati',
+        simbolo: 'draw',
+        permesso: 'firme_view',
+        modulo: () => import('./documenti.js')
+    },
+    {
         id: 'economia',
         titolo: 'Piano economico',
         simbolo: 'receipt_long',

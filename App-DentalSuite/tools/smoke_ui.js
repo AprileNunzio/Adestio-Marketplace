@@ -165,7 +165,7 @@ async function main() {
     await shell.naviga('conformita');
     await attendiRender();
     const schedeConformita = radice.querySelectorAll('.ds-tab');
-    verifica('Conformita con 2 schede', schedeConformita.length === 2, `${schedeConformita.length}`);
+    verifica('Conformita con 3 schede', schedeConformita.length === 3, `${schedeConformita.length}`);
     for (const scheda of schedeConformita) {
         await scheda.emetti('click');
         await attendiRender();

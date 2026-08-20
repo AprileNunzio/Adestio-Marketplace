@@ -11,6 +11,13 @@ const SCHEDE = [
         modulo: () => import('./conformita/modelli.js')
     },
     {
+        id: 'privacy',
+        titolo: 'Diritti degli interessati',
+        simbolo: 'gavel',
+        permesso: 'privacy_export',
+        modulo: () => import('./conformita/privacy.js')
+    },
+    {
         id: 'registro',
         titolo: 'Registro accessi',
         simbolo: 'history',

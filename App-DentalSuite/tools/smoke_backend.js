@@ -27,7 +27,8 @@ const PERMESSI = [
     'prestazioni_view', 'prestazioni_edit', 'prestazioni_delete', 'staff_view', 'staff_edit',
     'compensi_view', 'compensi_settle', 'preventivi_view', 'preventivi_edit',
     'incassi_view', 'incassi_edit', 'spese_view', 'spese_edit', 'rate_view', 'rate_edit',
-    'statistiche_view', 'consensi_view', 'consensi_manage', 'audit_view'
+    'statistiche_view', 'consensi_view', 'consensi_manage', 'audit_view',
+    'firme_view', 'firme_sign', 'privacy_export', 'privacy_erase'
 ];
 
 async function main() {
@@ -38,7 +39,7 @@ async function main() {
     host.concedi(PERMESSI);
     const caricato = backend.registerBackendHandlers(broker.registerApi, host.electronApp, host.adestioDb);
     verifica('registerBackendHandlers ritorna true', caricato === true);
-    verifica('78 canali registrati', broker.conteggio() === 78, `registrati: ${broker.conteggio()}`);
+    verifica('88 canali registrati', broker.conteggio() === 88, `registrati: ${broker.conteggio()}`);
 
     const chiama = (azione, payload) => broker.invoca(azione, payload);
 
@@ -287,6 +288,88 @@ async function main() {
         dopoManomissione.integra === false
         && dopoManomissione.anomalie.some(voce => voce.tipo === 'contenuto alterato dopo la scrittura'),
         JSON.stringify(dopoManomissione.anomalie.slice(0, 2)));
+
+
+    const FIRMA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==';
+
+    assertKo('Firma senza tracciato rifiutata', await chiama('firme.registra', {
+        paziente_id: paziente.id, tipo_documento: 'consenso', firmatario: 'Mario Rossi',
+        testo: 'Testo del consenso informato', firma_immagine: ''
+    }), 'VALIDATION');
+
+    assertKo('Firma su documento vuoto rifiutata', await chiama('firme.registra', {
+        paziente_id: paziente.id, tipo_documento: 'consenso', firmatario: 'Mario Rossi',
+        testo: '', firma_immagine: FIRMA
+    }), 'VALIDATION');
+
+    const firmato = assertOk('Documento firmato registrato', await chiama('firme.registra', {
+        paziente_id: paziente.id, tipo_documento: 'consenso', titolo: 'Consenso implantologia',
+        firmatario: 'Mario Rossi', ruolo_firmatario: 'paziente',
+        testo: 'Dichiaro di essere stato informato sui rischi della procedura implantare.',
+        firma_immagine: FIRMA
+    }));
+    verifica('La firma produce un impronta del documento',
+        typeof firmato.impronta_documento === 'string' && firmato.impronta_documento.length === 64);
+
+    const verificaFirma = assertOk('Integrita del documento firmato', await chiama('firme.verifica', { id: firmato.id }));
+    verifica('Documento firmato integro', verificaFirma.integro === true);
+
+    host.alteraDocumentoFirmato(firmato.id);
+    const dopoAlterazione = assertOk('Verifica dopo alterazione del testo', await chiama('firme.verifica', { id: firmato.id }));
+    verifica('Alterazione del testo firmato rilevata',
+        dopoAlterazione.integro === false && dopoAlterazione.testo_integro === false);
+
+    const valutazione = assertOk('Valutazione cancellazione', await chiama('privacy.valutaCancellazione', {
+        paziente_id: paziente.id
+    }));
+    verifica('Obbligo di conservazione clinica rilevato',
+        valutazione.obbligo_conservazione_attivo === true
+        && valutazione.impedimenti.some(voce => voce.tipo === 'conservazione_clinica'),
+        JSON.stringify(valutazione.impedimenti.map(v => v.tipo)));
+    verifica('Cancellazione totale non ammessa', valutazione.cancellazione_totale_possibile === false);
+    verifica('Anonimizzazione bloccata da rate e appuntamenti aperti',
+        valutazione.anonimizzazione_possibile === false);
+
+    assertKo('Anonimizzazione rifiutata con rapporti aperti', await chiama('privacy.anonimizzaPaziente', {
+        paziente_id: paziente.id, motivo: 'Richiesta dell interessato'
+    }), 'CONFLICT');
+    assertKo('Anonimizzazione senza motivo rifiutata', await chiama('privacy.anonimizzaPaziente', {
+        paziente_id: paziente.id
+    }), 'VALIDATION');
+
+    const anteprima = assertOk('Anteprima di portabilita', await chiama('privacy.anteprimaEsportazione', {
+        paziente_id: paziente.id
+    }));
+    verifica('L anteprima elenca le sezioni esportate',
+        anteprima.sezioni.length === 7 && anteprima.sezioni.some(voce => voce.totale > 0));
+
+    const pazienteLibero = assertOk('Secondo paziente senza rapporti aperti', await chiama('pazienti.create', {
+        nome: 'Lucia', cognome: 'Verdi', telefono: '3339998877'
+    }));
+    const valutazioneLibera = assertOk('Valutazione paziente senza vincoli', await chiama('privacy.valutaCancellazione', {
+        paziente_id: pazienteLibero.id
+    }));
+    verifica('Senza atti clinici la cancellazione e ammessa',
+        valutazioneLibera.cancellazione_totale_possibile === true);
+
+    const anonimizzato = assertOk('Anonimizzazione eseguita', await chiama('privacy.anonimizzaPaziente', {
+        paziente_id: pazienteLibero.id, motivo: 'Richiesta di cancellazione dell interessato'
+    }));
+    verifica('Tutti i campi identificativi sono stati cancellati', anonimizzato.campi_anonimizzati === 24,
+        `${anonimizzato.campi_anonimizzati}`);
+
+    const dopoOblio = assertOk('Paziente riletto dopo anonimizzazione', await chiama('pazienti.get', {
+        id: pazienteLibero.id
+    }));
+    verifica('Nome e telefono non sono piu presenti',
+        dopoOblio.nome === '' && dopoOblio.telefono === '' && dopoOblio.cognome.includes('cancellato'),
+        `${dopoOblio.cognome}`);
+    verifica('La cartella e archiviata dopo la cancellazione', Number(dopoOblio.is_deleted) === 1);
+
+    const registroOblio = assertOk('Registro cancellazioni', await chiama('privacy.registroCancellazioni', {}));
+    verifica('La cancellazione e tracciata con il nominativo originale',
+        registroOblio.length === 1 && registroOblio[0].nominativo_cancellato === 'Verdi Lucia',
+        registroOblio[0] ? registroOblio[0].nominativo_cancellato : 'nessuna riga');
 
 
     host.revocaTutto();
