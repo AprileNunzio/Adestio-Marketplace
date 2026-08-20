@@ -1,6 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderHero, formatCurrency } from '../shared/ui_kit.js';
-import { openPrestazioneModal } from '../components/prestazione_modal.js';
+import { renderHero, formatCurrency, showNotification } from '../shared/ui_kit.js';
 
 export default {
     render: async (el, onNavigate) => {
@@ -125,21 +124,22 @@ export default {
                 }
 
                 el.querySelector('#ds-btn-new-prest')?.addEventListener('click', () => {
-                    openPrestazioneModal({ onSaved: loadAndRender });
+                    if (onNavigate) onNavigate('prestazione_editor');
                 });
 
                 el.querySelectorAll('.ds-edit-prest').forEach(b => {
                     b.addEventListener('click', () => {
-                        const item = allPrestazioni.find(p => p.id === b.dataset.id);
-                        if (item) openPrestazioneModal({ prestazione: item, onSaved: loadAndRender });
+                        if (onNavigate) onNavigate('prestazione_editor', { prestazioneId: b.dataset.id });
                     });
                 });
 
                 el.querySelectorAll('.ds-del-prest').forEach(b => {
                     b.addEventListener('click', async () => {
-                        if (!confirm('Rimuovere questa prestazione dal listino?')) return;
-                        await callApi('prestazioni:remove', { id: b.dataset.id });
-                        loadAndRender();
+                        const res = await callApi('prestazioni:remove', { id: b.dataset.id });
+                        if (res && res.success) {
+                            showNotification('Prestazione rimossa dal listino', 'info');
+                            loadAndRender();
+                        }
                     });
                 });
             }

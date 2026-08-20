@@ -4,7 +4,9 @@ import pazienteEditorModule from './modules/paziente_editor.js';
 import agendaModule from './modules/agenda.js';
 import strutturaModule from './modules/struttura.js';
 import prestazioniModule from './modules/prestazioni.js';
+import prestazioneEditorModule from './modules/prestazione_editor.js';
 import staffModule from './modules/staff.js';
+import staffEditorModule from './modules/staff_editor.js';
 import contabilitaModule from './modules/contabilita.js';
 import statisticheModule from './modules/statistiche.js';
 
@@ -20,7 +22,9 @@ export default {
                 agenda: { label: 'Agenda Poltrone', icon: 'calendar_month', module: agendaModule },
                 struttura: { label: 'Sedi, Sale & Poltrone', icon: 'domain', module: strutturaModule },
                 prestazioni: { label: 'Listino Prestazioni', icon: 'list_alt', module: prestazioniModule },
+                prestazione_editor: { label: 'Scheda Prestazione', icon: 'edit_note', module: prestazioneEditorModule },
                 staff: { label: 'Staff & Collaboratori', icon: 'badge', module: staffModule },
+                staff_editor: { label: 'Scheda Collaboratore', icon: 'person_add', module: staffEditorModule },
                 contabilita: { label: 'Finanze & Contabilità', icon: 'account_balance_wallet', module: contabilitaModule },
                 statistiche: { label: 'Statistiche Direzione', icon: 'monitoring', module: statisticheModule }
             };
