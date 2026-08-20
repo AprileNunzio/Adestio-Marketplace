@@ -5,7 +5,7 @@
   "icon": "icon.png",
   "main": "app.js",
   "color": "#6366F1",
-  "version": "1.0.38",
+  "version": "1.0.47",
   "author": "NunzioTech",
   "category": "erp",
   "minCoreVersion": "1.0.0",
@@ -145,6 +145,5 @@
       "id": "documenti_export",
       "label": "Documenti: Generazione ed esportazione PDF/Excel"
     }
-  ],
-  "integrity_hash": "fdbeaea1f92944b81eee77026a75ec25cd21ebc3656631ee424f96301a81e3d5"
+  ]
 }

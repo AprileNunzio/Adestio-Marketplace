@@ -58,12 +58,12 @@
   {
     "id": "adestio_business_suite",
     "name": "Adestio Business Suite",
-    "version": "1.0.46",
+    "version": "1.0.47",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "author": "NunzioTech",
-    "published_at": "2026-08-20T12:06:54.944Z",
-    "updated_at": "2026-08-20T12:06:54.945Z",
+    "published_at": "2026-08-20T18:18:09.928Z",
+    "updated_at": "2026-08-20T18:18:09.928Z",
     "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
     "long_description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
     "category": "erp",
@@ -71,7 +71,7 @@
     "folder": "adestio_business_suite",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.46.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.47.zip",
     "ipc": {
       "namespace": "businessSuite",
       "handlers": [
@@ -113,7 +113,7 @@
         "src": "index.html"
       }
     ],
-    "sha256": "6f132b1287f79d054fb44490cecdd4fbc620f58a0a35f9b408d34bd7456426d6",
+    "sha256": "e1ad41d7dd5d661c8e7ad2f6099063fe43b16ceb17ac0089cc384e7cb203981d",
     "color": "#6366F1"
   },
   {
