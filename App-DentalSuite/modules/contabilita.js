@@ -275,7 +275,7 @@ export default {
                     bodyHtml: `
                         <form id="ds-form-incasso">
                             <div class="ds-form-grid">
-                                <div class="ds-form-field" style="grid-column:1/-1;" id="ds-inc-patient-picker-slot"></div>
+                                <div style="grid-column:1/-1;" id="ds-inc-patient-picker-slot"></div>
                                 <div class="ds-form-field">
                                     <label>Importo (€) *</label>
                                     <input type="number" step="0.01" name="importo" class="ds-input" required placeholder="0.00">

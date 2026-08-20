@@ -51,6 +51,8 @@
     border-radius: 18px;
     color: #ffffff;
     box-shadow: 0 10px 25px -8px rgba(13, 148, 136, 0.35);
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 .ds-hero-info { display: flex; align-items: center; gap: 1.2rem; }
 .ds-hero-icon {
@@ -62,10 +64,10 @@
     align-items: center;
     justify-content: center;
 }
-.ds-hero-icon .material-symbols-rounded { font-size: 2.2rem; }
+.ds-hero-icon .material-symbols-rounded { font-size: 2.2rem; color: #ffffff; }
 .ds-hero-title { font-size: 1.5rem; font-weight: 800; margin: 0; line-height: 1.2; color: #ffffff; }
 .ds-hero-subtitle { font-size: 0.88rem; opacity: 0.9; margin-top: 0.25rem; color: #f0fdfa; }
-.ds-hero-actions { display: flex; gap: 0.6rem; align-items: center; }
+.ds-hero-actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
 
 .ds-btn {
     display: inline-flex;
@@ -81,6 +83,7 @@
     transition: all 0.2s ease;
     text-decoration: none;
     line-height: 1.2;
+    box-sizing: border-box;
 }
 .ds-btn-primary { background: var(--ds-teal); color: #fff; }
 .ds-btn-primary:hover { background: var(--ds-teal-dark); box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4); }
@@ -139,9 +142,9 @@
 .ds-stat-val { font-size: 1.4rem; font-weight: 800; color: var(--md-on-surface); line-height: 1.1; }
 .ds-stat-lbl { font-size: 0.76rem; font-weight: 700; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.2rem; }
 
-.ds-panel { background: var(--md-surface); border: 1px solid var(--md-outline-variant); border-radius: 18px; padding: 1.3rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-.ds-panel-header { display: flex; justify-content: space-between; align-items: center; }
-.ds-panel-title { font-size: 1.1rem; font-weight: 800; color: var(--md-on-surface); display: flex; align-items: center; gap: 0.5rem; }
+.ds-panel { background: var(--md-surface); border: 1.5px solid var(--md-outline-variant); border-radius: 18px; padding: 1.3rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.ds-panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
+.ds-panel-title { font-size: 1.1rem; font-weight: 800; color: var(--md-on-surface); display: flex; align-items: center; gap: 0.5rem; margin: 0; }
 
 .ds-table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--md-outline-variant); }
 .ds-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left; }
@@ -158,67 +161,83 @@
 .ds-badge-teal { background: #ccfbf1; color: #0f766e; }
 .ds-badge-purple { background: #f3e8ff; color: #7e22ce; }
 
-.ds-odontogram-wrap { background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline-variant); border-radius: 18px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem; }
-.ds-odontogram-arch { display: flex; justify-content: center; gap: 0.4rem; flex-wrap: wrap; }
-.ds-tooth-card { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.5rem; background: var(--md-surface); border: 1.5px solid var(--md-outline-variant); border-radius: 12px; cursor: pointer; transition: all 0.18s ease; min-width: 44px; }
-.ds-tooth-card:hover { border-color: var(--ds-teal); transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0,0,0,0.1); }
-.ds-tooth-card.selected { border-color: var(--ds-teal); background: var(--ds-teal-soft); }
-.ds-tooth-num { font-size: 0.75rem; font-weight: 800; color: var(--md-on-surface); }
-.ds-tooth-icon { font-size: 1.3rem; color: var(--md-on-surface-variant); }
-.ds-tooth-card[data-state="carie"] .ds-tooth-icon { color: var(--ds-rose); }
-.ds-tooth-card[data-state="otturazione"] .ds-tooth-icon { color: var(--ds-blue); }
-.ds-tooth-card[data-state="devitalizzato"] .ds-tooth-icon { color: var(--ds-purple); }
-.ds-tooth-card[data-state="corona"] .ds-tooth-icon { color: var(--ds-amber); }
-.ds-tooth-card[data-state="impianto"] .ds-tooth-icon { color: var(--ds-cyan); }
-.ds-tooth-card[data-state="mancante"] { opacity: 0.4; }
-
 .ds-modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    backdrop-filter: blur(5px);
-    padding: 1.5rem;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.65) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 99999 !important;
+    backdrop-filter: blur(6px) !important;
+    padding: 1.2rem !important;
+    box-sizing: border-box !important;
 }
 .ds-modal-card {
-    background: var(--md-surface);
-    border-radius: 20px;
-    width: 100%;
-    max-width: 620px;
-    max-height: 90vh;
-    overflow-y: auto;
-    border: 1.5px solid var(--md-outline-variant);
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
-    display: flex;
-    flex-direction: column;
+    background: var(--md-surface, #ffffff) !important;
+    border-radius: 20px !important;
+    width: 100% !important;
+    max-width: 620px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    border: 1.5px solid var(--md-outline-variant) !important;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
 }
-.ds-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.2rem 1.5rem;
-    border-bottom: 1.5px solid var(--md-outline-variant);
+.ds-modal-header, .ds-modal-head {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1.2rem 1.6rem !important;
+    border-bottom: 1.5px solid var(--md-outline-variant) !important;
+    gap: 1rem !important;
+    box-sizing: border-box !important;
 }
-.ds-modal-title {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--md-on-surface);
-    margin: 0;
+.ds-modal-title, .ds-modal-head h3 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    color: var(--md-on-surface) !important;
+    margin: 0 !important;
+    flex: 1 !important;
 }
-.ds-modal-card form {
-    padding: 1.4rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
+.ds-modal-close {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--md-surface-container-high) !important;
+    border: 1px solid var(--md-outline-variant) !important;
+    color: var(--md-on-surface) !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
 }
-.ds-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
-.ds-form-field { display: flex; flex-direction: column; gap: 0.35rem; }
+.ds-modal-close:hover { background: var(--md-surface-container-highest) !important; color: var(--ds-rose) !important; }
+.ds-modal-body {
+    padding: 1.4rem 1.6rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.1rem !important;
+    box-sizing: border-box !important;
+}
+.ds-modal-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 0.8rem !important;
+    padding: 1.1rem 1.6rem !important;
+    border-top: 1.5px solid var(--md-outline-variant) !important;
+    box-sizing: border-box !important;
+}
+.ds-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; width: 100%; box-sizing: border-box; }
+.ds-form-field { display: flex; flex-direction: column; gap: 0.35rem; width: 100%; box-sizing: border-box; }
 .ds-form-field label { font-size: 0.78rem; font-weight: 700; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 0.04em; }
 .ds-input, .ds-select, .ds-textarea {
     padding: 0.7rem 0.9rem;
@@ -231,16 +250,17 @@
     outline: none;
     transition: border-color 0.16s ease;
     box-sizing: border-box;
+    width: 100%;
 }
 .ds-input:focus, .ds-select:focus, .ds-textarea:focus { border-color: var(--ds-teal); }
 
-.ds-picker-wrapper { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
-.ds-picker-input-wrap { position: relative; display: flex; align-items: center; width: 100%; }
+.ds-picker-wrapper { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; box-sizing: border-box; }
+.ds-picker-input-wrap { position: relative; display: flex; align-items: center; width: 100%; box-sizing: border-box; }
 .ds-picker-icon { position: absolute; left: 0.8rem; color: var(--md-on-surface-variant); font-size: 1.2rem; pointer-events: none; }
 .ds-picker-input { width: 100%; padding-left: 2.5rem; padding-right: 2.2rem; box-sizing: border-box; }
 .ds-picker-clear-btn { position: absolute; right: 0.6rem; background: transparent; border: none; cursor: pointer; color: var(--md-on-surface-variant); padding: 0.2rem; display: flex; align-items: center; border-radius: 50%; }
 .ds-picker-clear-btn:hover { background: var(--md-surface-container-high); color: var(--md-on-surface); }
-.ds-picker-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--md-surface); border: 1.5px solid var(--md-outline-variant); border-radius: 14px; max-height: 250px; overflow-y: auto; z-index: 10000; margin-top: 0.35rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+.ds-picker-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--md-surface); border: 1.5px solid var(--md-outline-variant); border-radius: 14px; max-height: 250px; overflow-y: auto; z-index: 100000; margin-top: 0.35rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); }
 .ds-picker-item { padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--md-outline-variant); cursor: pointer; transition: background 0.15s ease; }
 .ds-picker-item:last-child { border-bottom: none; }
 .ds-picker-item:hover { background: var(--ds-teal-soft); }

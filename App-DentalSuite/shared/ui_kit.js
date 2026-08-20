@@ -80,15 +80,18 @@ export function renderModal({ id, title, icon = 'edit', bodyHtml = '', footerHtm
     try {
         return `
             <div id="${id}" class="ds-modal-overlay" style="display:none;">
-                <div class="ds-modal-card">
-                    <div class="ds-modal-head">
-                        <h3><span class="material-symbols-rounded">${icon}</span>${title}</h3>
-                        <button class="ds-btn ds-btn-ghost ds-modal-close" style="padding:0.4rem; border-radius:50%;"><span class="material-symbols-rounded">close</span></button>
+                <div class="ds-modal-card fade-in-up">
+                    <div class="ds-modal-header">
+                        <div class="ds-modal-title">
+                            <span class="material-symbols-rounded" style="color:var(--ds-teal);">${icon}</span>
+                            ${title}
+                        </div>
+                        <button type="button" class="ds-modal-close"><span class="material-symbols-rounded">close</span></button>
                     </div>
                     <div class="ds-modal-body">
                         ${bodyHtml}
                     </div>
-                    ${footerHtml ? `<div class="ds-modal-head" style="justify-content:flex-end; gap:0.6rem; border-top:1px solid var(--md-outline-variant); border-bottom:none;">${footerHtml}</div>` : ''}
+                    ${footerHtml ? `<div class="ds-modal-footer">${footerHtml}</div>` : ''}
                 </div>
             </div>
         `;
