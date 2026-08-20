@@ -8,6 +8,7 @@ import { renderTrattamentiTab } from '../components/trattamenti_tab.js';
 import { renderPrescrizioniTab } from '../components/prescrizioni_tab.js';
 import { renderAllegatiTab } from '../components/allegati_tab.js';
 import { renderRateTab } from '../components/rate_tab.js';
+import { formatPatientDemographics } from '../shared/formatters.js';
 
 export default {
     render: async (el, onNavigate, params = {}) => {
@@ -45,7 +46,7 @@ export default {
                             <div class="ds-panel">
                                 <div class="ds-panel-header">
                                     <div style="position:relative; flex:1; max-width:400px;">
-                                        <input type="text" id="ds-search-pazienti" class="ds-input" style="width:100%; padding-left:2.4rem;" placeholder="Cerca per cognome, nome, CF o telefono...">
+                                        <input type="text" id="ds-search-pazienti" class="ds-input" style="width:100%; padding-left:2.4rem;" placeholder="Cerca tra oltre 1.000 pazienti per cognome, nome, CF...">
                                         <span class="material-symbols-rounded" style="position:absolute; left:0.8rem; top:50%; transform:translateY(-50%); color:var(--md-on-surface-variant); font-size:1.2rem;">search</span>
                                     </div>
                                     <span class="ds-badge ds-badge-teal">${pazienti.length} Pazienti in Archivio</span>
@@ -56,9 +57,9 @@ export default {
                                         <thead>
                                             <tr>
                                                 <th>Cognome e Nome</th>
+                                                <th>Dati Anagrafici & Età</th>
                                                 <th>Codice Fiscale</th>
                                                 <th>Recapiti</th>
-                                                <th>Città</th>
                                                 <th>Fondo Sanitario</th>
                                                 <th style="text-align:right;">Azioni</th>
                                             </tr>
@@ -102,18 +103,21 @@ export default {
                 if (!list || list.length === 0) {
                     return '<tr><td colspan="6" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessun paziente trovato.</td></tr>';
                 }
-                return list.map(p => `
-                    <tr style="cursor:pointer;" class="ds-paziente-row" data-id="${p.id}">
-                        <td><strong>${p.cognome} ${p.nome}</strong></td>
-                        <td><code style="font-family:monospace; font-weight:700;">${p.codice_fiscale || '-'}</code></td>
-                        <td>${p.telefono || p.email || '-'}</td>
-                        <td>${p.citta ? p.citta + (p.provincia ? ' (' + p.provincia + ')' : '') : '-'}</td>
-                        <td>${p.assicurazione ? `<span class="ds-badge ds-badge-blue">${p.assicurazione}</span>` : '-'}</td>
-                        <td style="text-align:right;">
-                            <button class="ds-btn ds-btn-primary ds-btn-apri-scheda" data-id="${p.id}" style="padding:0.4rem 0.8rem; font-size:0.8rem;"><span class="material-symbols-rounded" style="font-size:1rem;">folder_open</span> Cartella</button>
-                        </td>
-                    </tr>
-                `).join('');
+                return list.map(p => {
+                    const demo = formatPatientDemographics(p);
+                    return `
+                        <tr style="cursor:pointer;" class="ds-paziente-row" data-id="${p.id}">
+                            <td><strong>${p.cognome} ${p.nome}</strong></td>
+                            <td>${demo ? `<span class="ds-badge ds-badge-teal">${demo}</span>` : '-'}</td>
+                            <td><code style="font-family:monospace; font-weight:700;">${p.codice_fiscale || '-'}</code></td>
+                            <td>${p.telefono || p.email || '-'}</td>
+                            <td>${p.assicurazione ? `<span class="ds-badge ds-badge-blue">${p.assicurazione}</span>` : '-'}</td>
+                            <td style="text-align:right;">
+                                <button class="ds-btn ds-btn-primary ds-btn-apri-scheda" data-id="${p.id}" style="padding:0.4rem 0.8rem; font-size:0.8rem;"><span class="material-symbols-rounded" style="font-size:1rem;">folder_open</span> Cartella</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
 
             function attachRowEvents() {
@@ -159,6 +163,7 @@ export default {
                     const trattamenti = data.trattamenti || [];
                     const prescrizioni = data.prescrizioni || [];
                     const allegati = data.allegati || [];
+                    const demo = formatPatientDemographics(p);
 
                     const rateList = (rateRes && rateRes.success && rateRes.data) ? rateRes.data.rate || [] : [];
                     const notificheLog = (notifRes && notifRes.success) ? notifRes.data || [] : [];
@@ -167,7 +172,7 @@ export default {
                         <div class="ds-root fade-in-up">
                             ${renderHero({
                                 title: `${p.cognome} ${p.nome}`,
-                                subtitle: `CF: ${p.codice_fiscale || '-'} • Nato/a: ${formatDate(p.data_nascita)} • Tel: ${p.telefono || '-'}`,
+                                subtitle: `${demo ? demo + ' • ' : ''}CF: ${p.codice_fiscale || '-'} • Tel: ${p.telefono || '-'}`,
                                 icon: 'folder_shared',
                                 actionsHtml: `
                                     <button class="ds-btn ds-btn-hero" id="ds-btn-back"><span class="material-symbols-rounded">arrow_back</span>Elenco</button>
@@ -221,6 +226,7 @@ export default {
                                     <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">badge</span>Dati Anagrafici e Previdenziali</div>
                                     <div class="ds-form-grid">
                                         <div><strong>Nome e Cognome:</strong> ${p.nome} ${p.cognome}</div>
+                                        <div><strong>Anagrafica & Età:</strong> ${demo ? `<span class="ds-badge ds-badge-teal">${demo}</span>` : '-'}</div>
                                         <div><strong>Codice Fiscale:</strong> ${p.codice_fiscale || '-'}</div>
                                         <div><strong>Data di Nascita:</strong> ${formatDate(p.data_nascita)}</div>
                                         <div><strong>Luogo di Nascita:</strong> ${p.luogo_nascita || '-'}</div>

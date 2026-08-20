@@ -1,6 +1,7 @@
 import { callApi } from '../shared/api.js';
 import { renderHero, renderModal, formatCurrency, formatDate } from '../shared/ui_kit.js';
 import { openInstallmentPlanModal } from '../components/installment_modal.js';
+import { createPatientSearchPicker } from '../components/patient_search_picker.js';
 
 export default {
     render: async (el, onNavigate) => {
@@ -87,9 +88,7 @@ export default {
                 el.querySelector('#ds-btn-new-incasso').addEventListener('click', () => openIncassoModal());
                 el.querySelector('#ds-btn-new-spesa').addEventListener('click', () => openSpesaModal());
                 el.querySelector('#ds-btn-new-plan').addEventListener('click', () => {
-                    if (pazienti.length === 0) { alert('Nessun paziente presente.'); return; }
                     openInstallmentPlanModal({
-                        pazienteId: pazienti[0].id,
                         onCreated: () => renderScreen()
                     });
                 });
@@ -269,8 +268,6 @@ export default {
             renderScreen();
 
             function openIncassoModal() {
-                const pazOptions = pazienti.map(p => `<option value="${p.id}">${p.cognome} ${p.nome} (${p.codice_fiscale || ''})</option>`).join('');
-
                 const modalHtml = renderModal({
                     id: 'ds-modal-incasso',
                     title: 'Emissione Ricevuta / Acconto Paziente',
@@ -278,13 +275,7 @@ export default {
                     bodyHtml: `
                         <form id="ds-form-incasso">
                             <div class="ds-form-grid">
-                                <div class="ds-form-field" style="grid-column:1/-1;">
-                                    <label>Paziente *</label>
-                                    <select name="paziente_id" class="ds-select" required>
-                                        <option value="">-- Seleziona Paziente --</option>
-                                        ${pazOptions}
-                                    </select>
-                                </div>
+                                <div class="ds-form-field" style="grid-column:1/-1;" id="ds-inc-patient-picker-slot"></div>
                                 <div class="ds-form-field">
                                     <label>Importo (€) *</label>
                                     <input type="number" step="0.01" name="importo" class="ds-input" required placeholder="0.00">
@@ -334,11 +325,25 @@ export default {
                 const close = () => { modalContainer.remove(); };
                 mEl.querySelectorAll('.ds-modal-close, .ds-modal-cancel').forEach(b => b.addEventListener('click', close));
 
+                const patientPicker = createPatientSearchPicker({
+                    pazienti: pazienti
+                });
+                const pickerSlot = mEl.querySelector('#ds-inc-patient-picker-slot');
+                if (pickerSlot) pickerSlot.appendChild(patientPicker.element);
+
                 mEl.querySelector('#ds-save-incasso-btn').addEventListener('click', async () => {
                     try {
+                        const selPazId = patientPicker.getSelectedPazienteId();
+                        if (!selPazId) {
+                            alert('Seleziona un paziente.');
+                            return;
+                        }
+
                         const form = mEl.querySelector('#ds-form-incasso');
                         const formData = new FormData(form);
                         const payload = Object.fromEntries(formData.entries());
+                        payload.paziente_id = selPazId;
+
                         const res = await callApi('contabilita:registraIncasso', payload);
                         if (res && res.success) {
                             close();
