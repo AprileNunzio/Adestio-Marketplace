@@ -54,6 +54,15 @@ export const MODULI = [
         modulo: () => import('./views/contabilita.js')
     },
     {
+        id: 'conformita',
+        titolo: 'Conformità & Tracciabilità',
+        descrizione: 'Consensi versionati, scoperture di studio e registro immutabile degli accessi',
+        simbolo: 'gpp_good',
+        accento: 'conformita',
+        permesso: 'consensi_view',
+        modulo: () => import('./views/conformita.js')
+    },
+    {
         id: 'statistiche',
         titolo: 'Statistiche & Direzione',
         descrizione: 'Produzione dello studio, redditività e indicatori riservati alla Direzione Sanitaria',

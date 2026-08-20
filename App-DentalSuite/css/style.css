@@ -30,6 +30,7 @@
 .ds-root[data-accent="prestazioni"] { --ds-accent: #7c3aed; }
 .ds-root[data-accent="staff"] { --ds-accent: #db2777; }
 .ds-root[data-accent="contabilita"] { --ds-accent: #ea580c; }
+.ds-root[data-accent="conformita"] { --ds-accent: #4f46e5; }
 .ds-root[data-accent="statistiche"] { --ds-accent: #2563eb; }
 
 .ds-header {

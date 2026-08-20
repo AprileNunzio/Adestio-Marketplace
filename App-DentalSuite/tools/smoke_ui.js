@@ -122,14 +122,14 @@ async function main() {
 
     await app.default.render(radice, {});
     await attendiRender();
-    verifica('Hub renderizzato con 7 moduli',
-        radice.querySelectorAll('.ds-card').length === 7,
+    verifica('Hub renderizzato con 8 moduli',
+        radice.querySelectorAll('.ds-card').length === 8,
         `card: ${radice.querySelectorAll('.ds-card').length}`);
     verifica('Nessuna card bloccata con tutti i permessi',
         radice.querySelectorAll('.ds-card').every(nodo => nodo.getAttribute('aria-disabled') === 'false'));
 
     const shell = creaShell(radice);
-    const sezioni = ['pazienti', 'agenda', 'struttura', 'prestazioni', 'staff', 'contabilita', 'statistiche'];
+    const sezioni = ['pazienti', 'agenda', 'struttura', 'prestazioni', 'staff', 'contabilita', 'conformita', 'statistiche'];
 
     for (const sezione of sezioni) {
         await shell.naviga(sezione);
@@ -160,6 +160,17 @@ async function main() {
         await attendiRender();
         const contenuto = radice.querySelectorAll('.ds-panel, .ds-alert, .ds-empty, .ds-stat');
         verifica(`Scheda "${scheda.id}" produce contenuto`, contenuto.length > 0, `${contenuto.length} blocchi`);
+    }
+
+    await shell.naviga('conformita');
+    await attendiRender();
+    const schedeConformita = radice.querySelectorAll('.ds-tab');
+    verifica('Conformita con 2 schede', schedeConformita.length === 2, `${schedeConformita.length}`);
+    for (const scheda of schedeConformita) {
+        await scheda.emetti('click');
+        await attendiRender();
+        verifica(`Scheda conformita "${scheda.dataset.scheda}" renderizzata`,
+            radice.querySelectorAll('.ds-panel, .ds-stat').length > 0);
     }
 
     await shell.naviga('contabilita');

@@ -21,7 +21,9 @@ const handlers = {
     spese: require('./backend/handlers/spese'),
     rate: require('./backend/handlers/rate'),
     notifiche: require('./backend/handlers/notifiche'),
-    statistiche: require('./backend/handlers/statistiche')
+    statistiche: require('./backend/handlers/statistiche'),
+    consensi: require('./backend/handlers/consensi'),
+    audit: require('./backend/handlers/audit')
 };
 
 function registerBackendHandlers(registerApi, app, adestioDb) {

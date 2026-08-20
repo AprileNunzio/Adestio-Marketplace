@@ -216,6 +216,21 @@
       "id": "direzione_economics",
       "label": "Direzione Sanitaria: margini, redditivita e forecast di cassa",
       "default": false
+    },
+    {
+      "id": "consensi_view",
+      "label": "Consensi: consultazione stato, versioni e scoperture",
+      "default": true
+    },
+    {
+      "id": "consensi_manage",
+      "label": "Consensi: raccolta, revoca e gestione dei modelli",
+      "default": false
+    },
+    {
+      "id": "audit_view",
+      "label": "Registro accessi: consultazione tracciabilita sanitaria (Titolare del trattamento)",
+      "default": false
     }
   ],
   "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",

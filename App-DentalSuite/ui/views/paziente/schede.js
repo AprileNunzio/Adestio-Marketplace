@@ -42,6 +42,13 @@ export const SCHEDE = [
         modulo: () => import('./referti.js')
     },
     {
+        id: 'consensi',
+        titolo: 'Consensi',
+        simbolo: 'assignment_turned_in',
+        permesso: 'consensi_view',
+        modulo: () => import('./consensi.js')
+    },
+    {
         id: 'economia',
         titolo: 'Piano economico',
         simbolo: 'receipt_long',

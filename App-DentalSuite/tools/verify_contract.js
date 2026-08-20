@@ -118,6 +118,9 @@ function verifyCodeStandards() {
     const files = targets.reduce(
         (acc, dir) => acc.concat(scanner.collectFiles(dir, '.js')),
         rootFiles
+    ).concat(
+        scanner.collectFiles(path.join(APP_ROOT, 'core'), '.json'),
+        scanner.collectFiles(path.join(APP_ROOT, 'css'), '.css')
     );
 
     files.forEach(file => {
@@ -127,6 +130,7 @@ function verifyCodeStandards() {
         if (lines > MAX_LINES) {
             report('STANDARD', `${relative}: ${lines} righe (limite ${MAX_LINES})`);
         }
+        if (file.endsWith('.json')) return;
         const comments = scanner.findComments(source);
         if (comments.length > 0) {
             report('STANDARD', `${relative}: commenti alle righe ${comments.slice(0, 8).join(', ')}`);

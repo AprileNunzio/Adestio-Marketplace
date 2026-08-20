@@ -63,6 +63,9 @@ function creaHost(opzioni = {}) {
                     .run(utenteId, `adestio_dental_suite:${permesso}`);
             });
         },
+        manomettiAudit() {
+            appDb.prepare("UPDATE log_audit SET esito = 'consentito' WHERE esito = 'negato'").run();
+        },
         revocaTutto() {
             authDb.prepare('DELETE FROM user_permissions WHERE user_id = ?').run(utenteId);
         },

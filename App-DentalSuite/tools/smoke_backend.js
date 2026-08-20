@@ -27,7 +27,7 @@ const PERMESSI = [
     'prestazioni_view', 'prestazioni_edit', 'prestazioni_delete', 'staff_view', 'staff_edit',
     'compensi_view', 'compensi_settle', 'preventivi_view', 'preventivi_edit',
     'incassi_view', 'incassi_edit', 'spese_view', 'spese_edit', 'rate_view', 'rate_edit',
-    'statistiche_view'
+    'statistiche_view', 'consensi_view', 'consensi_manage', 'audit_view'
 ];
 
 async function main() {
@@ -38,7 +38,7 @@ async function main() {
     host.concedi(PERMESSI);
     const caricato = backend.registerBackendHandlers(broker.registerApi, host.electronApp, host.adestioDb);
     verifica('registerBackendHandlers ritorna true', caricato === true);
-    verifica('69 canali registrati', broker.conteggio() === 69, `registrati: ${broker.conteggio()}`);
+    verifica('78 canali registrati', broker.conteggio() === 78, `registrati: ${broker.conteggio()}`);
 
     const chiama = (azione, payload) => broker.invoca(azione, payload);
 
@@ -205,6 +205,89 @@ async function main() {
         await chiama('prestazioni.remove', { id: prestazione.id }), 'CONFLICT');
     assertKo('Eliminazione sede con poltrone bloccata',
         await chiama('struttura.removeSede', { id: sede.id }), 'CONFLICT');
+
+    const modelloV1 = assertOk('Modello di consenso creato', await chiama('consensi.salvaModello', {
+        codice: 'PRIVACY_GDPR', titolo: 'Informativa privacy', ambito: 'privacy',
+        testo: 'Testo informativa versione uno', obbligatorio: 1, validita_mesi: 24
+    }));
+    verifica('Prima versione del modello e la 1', modelloV1.versione === 1 && modelloV1.nuova_versione === true);
+
+    const modelloUguale = assertOk('Salvataggio con testo identico', await chiama('consensi.salvaModello', {
+        codice: 'PRIVACY_GDPR', titolo: 'Informativa privacy', ambito: 'privacy',
+        testo: 'Testo informativa versione uno', obbligatorio: 1, validita_mesi: 24
+    }));
+    verifica('Testo invariato non crea una nuova versione', modelloUguale.nuova_versione === false);
+
+    assertOk('Consenso raccolto sul paziente', await chiama('consensi.registra', {
+        paziente_id: paziente.id, modello_id: modelloV1.id, modalita_raccolta: 'firma_digitale'
+    }));
+    const statoConsensi = assertOk('Consensi del paziente letti', await chiama('consensi.listByPaziente', {
+        paziente_id: paziente.id
+    }));
+    verifica('Nessuna scopertura dopo la raccolta', statoConsensi.scoperture.length === 0,
+        JSON.stringify(statoConsensi.scoperture));
+
+    const modelloV2 = assertOk('Nuova versione del modello', await chiama('consensi.salvaModello', {
+        codice: 'PRIVACY_GDPR', titolo: 'Informativa privacy', ambito: 'privacy',
+        testo: 'Testo informativa versione due, aggiornata', obbligatorio: 1, validita_mesi: 24
+    }));
+    verifica('Testo modificato genera la versione 2', modelloV2.versione === 2 && modelloV2.nuova_versione === true);
+
+    const dopoVersione = assertOk('Consensi riletti dopo il cambio versione', await chiama('consensi.listByPaziente', {
+        paziente_id: paziente.id
+    }));
+    verifica('Consenso su versione obsoleta risulta scoperto',
+        dopoVersione.scoperture.length === 1 && dopoVersione.scoperture[0].motivo.includes('versione'),
+        JSON.stringify(dopoVersione.scoperture));
+
+    assertKo('Raccolta su modello non piu in vigore rifiutata', await chiama('consensi.registra', {
+        paziente_id: paziente.id, modello_id: modelloV1.id
+    }), 'CONFLICT');
+
+    const nuovoConsenso = assertOk('Consenso ri-raccolto sulla versione corrente', await chiama('consensi.registra', {
+        paziente_id: paziente.id, modello_id: modelloV2.id
+    }));
+    assertOk('Consenso revocato', await chiama('consensi.revoca', { id: nuovoConsenso.id }));
+    assertKo('Doppia revoca rifiutata', await chiama('consensi.revoca', { id: nuovoConsenso.id }), 'CONFLICT');
+
+    const consensiFinali = assertOk('Consensi riletti dopo la revoca', await chiama('consensi.listByPaziente', {
+        paziente_id: paziente.id
+    }));
+    verifica('Il consenso vigente e quello revocato piu recente, non il precedente',
+        consensiFinali.vigenti.length === 1 && consensiFinali.vigenti[0].stato_effettivo === 'revocato',
+        JSON.stringify(consensiFinali.vigenti.map(v => `${v.versione}:${v.stato_effettivo}`)));
+
+    const scopertureStudio = assertOk('Scoperture di studio calcolate', await chiama('consensi.scopertureStudio', {}));
+    verifica('Il paziente con consenso revocato risulta scoperto',
+        scopertureStudio.totale === 1 && scopertureStudio.pazienti_scoperti[0].mancanti[0].motivo === 'revocato dal paziente',
+        JSON.stringify(scopertureStudio.pazienti_scoperti[0] || null));
+
+    const registro = assertOk('Registro accessi consultabile', await chiama('audit.list', { limite: 500 }));
+    verifica('Il registro ha tracciato ogni azione precedente', registro.totale >= 50, `righe: ${registro.totale}`);
+    verifica('Il registro traccia anche le letture',
+        registro.righe.some(riga => riga.azione === 'pazienti.get' && riga.esito === 'consentito'));
+    verifica('Il registro traccia i tentativi negati',
+        registro.righe.some(riga => riga.esito === 'negato' && riga.permesso === 'direzione_economics'));
+    verifica('Le righe portano l identificativo del paziente coinvolto',
+        registro.righe.some(riga => riga.paziente_id === paziente.id));
+
+    const paginata = assertOk('Registro paginato', await chiama('audit.list', { limite: 5, scarto: 5 }));
+    verifica('La paginazione limita le righe restituite', paginata.righe.length === 5 && paginata.scarto === 5);
+
+    const sintesi = assertOk('Riepilogo del registro', await chiama('audit.riepilogo', {}));
+    verifica('Il riepilogo aggrega per esito e per entita',
+        sintesi.per_esito.length >= 2 && sintesi.per_entita.length > 5);
+
+    const integrita = assertOk('Catena di integrita verificata', await chiama('audit.verificaIntegrita', {}));
+    verifica('La catena del registro e integra', integrita.integra === true, JSON.stringify(integrita.anomalie));
+
+    host.manomettiAudit();
+    const dopoManomissione = assertOk('Verifica dopo manomissione', await chiama('audit.verificaIntegrita', {}));
+    verifica('La manomissione di una riga viene rilevata',
+        dopoManomissione.integra === false
+        && dopoManomissione.anomalie.some(voce => voce.tipo === 'contenuto alterato dopo la scrittura'),
+        JSON.stringify(dopoManomissione.anomalie.slice(0, 2)));
+
 
     host.revocaTutto();
     require('../backend/kernel/authz').invalidate();

@@ -10,33 +10,26 @@
         "pazienti.update": { "handler": "pazienti", "method": "update", "permission": "pazienti_edit", "mutates": true },
         "pazienti.archive": { "handler": "pazienti", "method": "archive", "permission": "pazienti_delete", "mutates": true },
         "pazienti.restore": { "handler": "pazienti", "method": "restore", "permission": "pazienti_delete", "mutates": true },
-
         "anamnesi.get": { "handler": "anamnesi", "method": "get", "permission": "anamnesi_view", "mutates": false },
         "anamnesi.save": { "handler": "anamnesi", "method": "save", "permission": "anamnesi_edit", "mutates": true },
-
         "odontogramma.get": { "handler": "odontogramma", "method": "get", "permission": "cartella_view", "mutates": false },
         "odontogramma.saveDente": { "handler": "odontogramma", "method": "saveDente", "permission": "cartella_edit", "mutates": true },
-
         "trattamenti.listByPaziente": { "handler": "trattamenti", "method": "listByPaziente", "permission": "cartella_view", "mutates": false },
         "trattamenti.add": { "handler": "trattamenti", "method": "add", "permission": "cartella_edit", "mutates": true },
         "trattamenti.update": { "handler": "trattamenti", "method": "update", "permission": "cartella_edit", "mutates": true },
         "trattamenti.remove": { "handler": "trattamenti", "method": "remove", "permission": "cartella_edit", "mutates": true },
-
         "prescrizioni.listByPaziente": { "handler": "prescrizioni", "method": "listByPaziente", "permission": "prescrizioni_view", "mutates": false },
         "prescrizioni.add": { "handler": "prescrizioni", "method": "add", "permission": "prescrizioni_edit", "mutates": true },
         "prescrizioni.remove": { "handler": "prescrizioni", "method": "remove", "permission": "prescrizioni_edit", "mutates": true },
-
         "allegati.listByPaziente": { "handler": "allegati", "method": "listByPaziente", "permission": "allegati_view", "mutates": false },
         "allegati.open": { "handler": "allegati", "method": "open", "permission": "allegati_view", "mutates": false },
         "allegati.upload": { "handler": "allegati", "method": "upload", "permission": "allegati_upload", "mutates": true },
         "allegati.remove": { "handler": "allegati", "method": "remove", "permission": "allegati_delete", "mutates": true },
-
         "agenda.listByRange": { "handler": "agenda", "method": "listByRange", "permission": "agenda_view", "mutates": false },
         "agenda.create": { "handler": "agenda", "method": "create", "permission": "agenda_edit", "mutates": true },
         "agenda.update": { "handler": "agenda", "method": "update", "permission": "agenda_edit", "mutates": true },
         "agenda.updateStato": { "handler": "agenda", "method": "updateStato", "permission": "agenda_edit", "mutates": true },
         "agenda.remove": { "handler": "agenda", "method": "remove", "permission": "agenda_delete", "mutates": true },
-
         "struttura.tree": { "handler": "struttura", "method": "tree", "permission": "struttura_view", "mutates": false },
         "struttura.saveSede": { "handler": "struttura", "method": "saveSede", "permission": "struttura_edit", "mutates": true },
         "struttura.removeSede": { "handler": "struttura", "method": "removeSede", "permission": "struttura_edit", "mutates": true },
@@ -44,49 +37,49 @@
         "struttura.removeSala": { "handler": "struttura", "method": "removeSala", "permission": "struttura_edit", "mutates": true },
         "struttura.savePoltrona": { "handler": "struttura", "method": "savePoltrona", "permission": "struttura_edit", "mutates": true },
         "struttura.removePoltrona": { "handler": "struttura", "method": "removePoltrona", "permission": "struttura_edit", "mutates": true },
-
         "prestazioni.list": { "handler": "prestazioni", "method": "list", "permission": "prestazioni_view", "mutates": false },
         "prestazioni.get": { "handler": "prestazioni", "method": "get", "permission": "prestazioni_view", "mutates": false },
         "prestazioni.create": { "handler": "prestazioni", "method": "create", "permission": "prestazioni_edit", "mutates": true },
         "prestazioni.update": { "handler": "prestazioni", "method": "update", "permission": "prestazioni_edit", "mutates": true },
         "prestazioni.remove": { "handler": "prestazioni", "method": "remove", "permission": "prestazioni_delete", "mutates": true },
-
         "staff.list": { "handler": "staff", "method": "list", "permission": "staff_view", "mutates": false },
         "staff.get": { "handler": "staff", "method": "get", "permission": "staff_view", "mutates": false },
         "staff.create": { "handler": "staff", "method": "create", "permission": "staff_edit", "mutates": true },
         "staff.update": { "handler": "staff", "method": "update", "permission": "staff_edit", "mutates": true },
         "staff.remove": { "handler": "staff", "method": "remove", "permission": "staff_delete", "mutates": true },
-
         "compensi.listLiquidazioni": { "handler": "compensi", "method": "listLiquidazioni", "permission": "compensi_view", "mutates": false },
         "compensi.calcola": { "handler": "compensi", "method": "calcola", "permission": "compensi_view", "mutates": false },
         "compensi.liquida": { "handler": "compensi", "method": "liquida", "permission": "compensi_settle", "mutates": true },
-
         "preventivi.list": { "handler": "preventivi", "method": "list", "permission": "preventivi_view", "mutates": false },
         "preventivi.get": { "handler": "preventivi", "method": "get", "permission": "preventivi_view", "mutates": false },
         "preventivi.create": { "handler": "preventivi", "method": "create", "permission": "preventivi_edit", "mutates": true },
         "preventivi.update": { "handler": "preventivi", "method": "update", "permission": "preventivi_edit", "mutates": true },
         "preventivi.setStato": { "handler": "preventivi", "method": "setStato", "permission": "preventivi_edit", "mutates": true },
         "preventivi.remove": { "handler": "preventivi", "method": "remove", "permission": "preventivi_delete", "mutates": true },
-
         "incassi.list": { "handler": "incassi", "method": "list", "permission": "incassi_view", "mutates": false },
         "incassi.registra": { "handler": "incassi", "method": "registra", "permission": "incassi_edit", "mutates": true },
         "incassi.remove": { "handler": "incassi", "method": "remove", "permission": "incassi_edit", "mutates": true },
-
         "spese.list": { "handler": "spese", "method": "list", "permission": "spese_view", "mutates": false },
         "spese.registra": { "handler": "spese", "method": "registra", "permission": "spese_edit", "mutates": true },
         "spese.remove": { "handler": "spese", "method": "remove", "permission": "spese_edit", "mutates": true },
-
         "rate.listByPaziente": { "handler": "rate", "method": "listByPaziente", "permission": "rate_view", "mutates": false },
         "rate.scadenziario": { "handler": "rate", "method": "scadenziario", "permission": "rate_view", "mutates": false },
         "rate.creaPiano": { "handler": "rate", "method": "creaPiano", "permission": "rate_edit", "mutates": true },
         "rate.pagaRata": { "handler": "rate", "method": "pagaRata", "permission": "rate_edit", "mutates": true },
-
         "notifiche.listByPaziente": { "handler": "notifiche", "method": "listByPaziente", "permission": "notifiche_send", "mutates": false },
         "notifiche.log": { "handler": "notifiche", "method": "log", "permission": "notifiche_send", "mutates": true },
-
         "statistiche.produzione": { "handler": "statistiche", "method": "produzione", "permission": "statistiche_view", "mutates": false },
         "statistiche.perMedico": { "handler": "statistiche", "method": "perMedico", "permission": "statistiche_view", "mutates": false },
         "statistiche.perBranca": { "handler": "statistiche", "method": "perBranca", "permission": "statistiche_view", "mutates": false },
-        "statistiche.economia": { "handler": "statistiche", "method": "economia", "permission": "direzione_economics", "mutates": false }
+        "statistiche.economia": { "handler": "statistiche", "method": "economia", "permission": "direzione_economics", "mutates": false },
+        "consensi.modelli": { "handler": "consensi", "method": "modelli", "permission": "consensi_view", "mutates": false },
+        "consensi.listByPaziente": { "handler": "consensi", "method": "listByPaziente", "permission": "consensi_view", "mutates": false },
+        "consensi.scopertureStudio": { "handler": "consensi", "method": "scopertureStudio", "permission": "consensi_view", "mutates": false },
+        "consensi.salvaModello": { "handler": "consensi", "method": "salvaModello", "permission": "consensi_manage", "mutates": true },
+        "consensi.registra": { "handler": "consensi", "method": "registra", "permission": "consensi_manage", "mutates": true },
+        "consensi.revoca": { "handler": "consensi", "method": "revoca", "permission": "consensi_manage", "mutates": true },
+        "audit.list": { "handler": "audit", "method": "list", "permission": "audit_view", "mutates": false },
+        "audit.riepilogo": { "handler": "audit", "method": "riepilogo", "permission": "audit_view", "mutates": false },
+        "audit.verificaIntegrita": { "handler": "audit", "method": "verificaIntegrita", "permission": "audit_view", "mutates": false }
     }
 }
