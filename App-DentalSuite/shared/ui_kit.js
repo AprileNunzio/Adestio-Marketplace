@@ -39,10 +39,10 @@ export function formatDateTime(val) {
     }
 }
 
-export function renderHero({ title, subtitle, icon, actionsHtml = '' }) {
+export function renderHero({ title, subtitle, icon, theme = 'teal', actionsHtml = '' }) {
     try {
         return `
-            <div class="ds-hero">
+            <div class="ds-hero theme-${theme}">
                 <div class="ds-hero-info">
                     <div class="ds-hero-icon"><span class="material-symbols-rounded">${icon || 'dentistry'}</span></div>
                     <div>

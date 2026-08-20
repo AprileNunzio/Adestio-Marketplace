@@ -42,6 +42,7 @@ export default {
                             title: 'Area Finanze & Amministrazione Riservata',
                             subtitle: 'Gestione contabile centralizzata: ricevute sanitarie, acconti, rateizzazioni, preventivi e spese di studio.',
                             icon: 'account_balance_wallet',
+                                theme: 'purple',
                             actionsHtml: `
                                 <button class="ds-btn ds-btn-hero" id="ds-btn-new-incasso"><span class="material-symbols-rounded">add_card</span>Emetti Ricevuta / Acconto</button>
                                 <button class="ds-btn ds-btn-hero" id="ds-btn-new-plan"><span class="material-symbols-rounded">credit_card</span>Nuovo Piano Rateale</button>

@@ -60,6 +60,7 @@ export default {
                                 title: 'Agenda Poltrone & Sale Operative',
                                 subtitle: 'Planning giornaliero appuntamenti, assegnazione automatica medici e promemoria multicanale.',
                                 icon: 'calendar_month',
+                                theme: 'blue',
                                 actionsHtml: `
                                     <button class="ds-btn ds-btn-hero" id="ds-btn-new-app"><span class="material-symbols-rounded">add</span>Nuovo Appuntamento</button>
                                 `

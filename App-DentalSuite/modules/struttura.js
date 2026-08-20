@@ -40,6 +40,7 @@ export default {
                                 title: 'Sedi, Sale Operative & Poltrone',
                                 subtitle: 'Configura le sedi dello studio, gli ambulatori e assegna i medici specialisti alle poltrone di default.',
                                 icon: 'domain',
+                                theme: 'cyan',
                                 actionsHtml: `
                                     <button class="ds-btn ds-btn-hero" id="ds-btn-add-struttura"><span class="material-symbols-rounded">add_circle</span>Nuova Unità / Sala / Sede</button>
                                 `

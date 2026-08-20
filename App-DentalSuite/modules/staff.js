@@ -52,6 +52,7 @@ export default {
                                 title: 'Staff, Collaboratori & Controllo Accessi RBAC',
                                 subtitle: 'Medici specialisti, assistenti ASO, segreteria, liquidazioni provvigionali e configurazione permessi sincronizzata.',
                                 icon: 'group',
+                                theme: 'amber',
                                 actionsHtml: `
                                     <button class="ds-btn ds-btn-hero" id="ds-btn-new-staff"><span class="material-symbols-rounded">person_add</span>Nuovo Collaboratore</button>
                                     <button class="ds-btn ds-btn-hero" id="ds-btn-new-liq"><span class="material-symbols-rounded">receipt_long</span>Registra Liquidazione</button>

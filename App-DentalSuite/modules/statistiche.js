@@ -79,6 +79,7 @@ export default {
                         title: 'Statistiche Economiche & Previsioni di Cassa',
                         subtitle: 'Analisi andamenti, cashflow predittivo multi-variabile, margini e scomposizione clinica.',
                         icon: 'monitoring',
+                                theme: 'rose',
                         actionsHtml: `<button class="ds-btn ds-btn-hero" id="ds-btn-refresh-stats"><span class="material-symbols-rounded">sync</span>Aggiorna Dati</button>`
                     })}
 

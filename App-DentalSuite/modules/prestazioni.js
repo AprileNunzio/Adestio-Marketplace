@@ -26,6 +26,7 @@ export default {
                             title: 'Listino Prestazioni & Compensi Staff',
                             subtitle: 'Tariffario clinico, tempi poltrona, simulatore di marginalità e regole di compenso equipe.',
                             icon: 'list_alt',
+                                theme: 'emerald',
                             actionsHtml: `<button class="ds-btn ds-btn-hero" id="ds-btn-new-prest"><span class="material-symbols-rounded">add_circle</span>Nuova Prestazione a Listino</button>`
                         })}
 

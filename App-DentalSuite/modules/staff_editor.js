@@ -23,6 +23,7 @@ export default {
                         title: isEdit ? `Scheda Collaboratore • ${s.cognome || ''} ${s.nome || ''}` : 'Nuovo Membro Equipe Clinica & Staff',
                         subtitle: 'Dati professionali, iscrizione albo, mansioni, orari e regole di compenso provvigionale o fisso.',
                         icon: isEdit ? 'badge' : 'person_add',
+                        theme: 'amber',
                         actionsHtml: `
                             <button class="ds-btn ds-btn-hero" id="ds-staff-btn-back"><span class="material-symbols-rounded">arrow_back</span>Torna all'Elenco Staff</button>
                             <button class="ds-btn ds-btn-hero" id="ds-staff-btn-save"><span class="material-symbols-rounded">save</span>${isEdit ? 'Salva Modifiche' : 'Registra Collaboratore'}</button>
