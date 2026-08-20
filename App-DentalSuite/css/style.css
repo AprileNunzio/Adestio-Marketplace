@@ -202,3 +202,10 @@
 
 .fade-in-up { animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+
+.ds-grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; width: 100%; box-sizing: border-box; }
+.ds-card-stat { background: var(--md-surface); border: 1.5px solid var(--md-outline-variant); border-radius: 18px; padding: 1.2rem 1.4rem; display: flex; align-items: center; gap: 1.1rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03); box-sizing: border-box; }
+.ds-stat-icon { width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+.ds-stat-val { font-size: 1.55rem; font-weight: 800; color: var(--md-on-surface); line-height: 1.1; }
+.ds-stat-lbl { font-size: 0.78rem; font-weight: 700; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.25rem; }

@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderHero, renderModal, formatCurrency, formatDate , showNotification } from '../shared/ui_kit.js';
+import { renderHero, renderModal, formatCurrency, formatDate, showNotification } from '../shared/ui_kit.js';
 import { openInstallmentPlanModal } from '../components/installment_modal.js';
 import { createPatientSearchPicker } from '../components/patient_search_picker.js';
 
@@ -29,49 +29,64 @@ export default {
                 const totSpese = spese.reduce((a, b) => a + (Number(b.importo) || 0), 0);
                 const bilancio = totInc - totSpese;
 
-                const SUB_CARDS = [
-                    { id: 'incassi', label: 'Ricevute & Incassi', icon: 'payments', count: incassi.length, color: '#16a34a', bg: 'rgba(22,163,74,0.12)' },
-                    { id: 'preventivi', label: 'Preventivi & Piani di Cura', icon: 'request_quote', count: preventivi.length, color: '#2563eb', bg: 'rgba(37,99,235,0.12)' },
-                    { id: 'spese', label: 'Spese & Uscite Studio', icon: 'shopping_bag', count: spese.length, color: '#e11d48', bg: 'rgba(225,29,72,0.12)' },
-                    { id: 'liquidazioni', label: 'Liquidazioni Staff', icon: 'receipt_long', count: liquidazioni.length, color: '#9333ea', bg: 'rgba(147,51,234,0.12)' }
-                ];
-
                 el.innerHTML = `
                     <div class="ds-root fade-in-up">
                         ${renderHero({
                             title: 'Area Finanze & Amministrazione Riservata',
                             subtitle: 'Gestione contabile centralizzata: ricevute sanitarie, acconti, rateizzazioni, preventivi e spese di studio.',
                             icon: 'account_balance_wallet',
-                                theme: 'purple',
+                            theme: 'purple',
                             actionsHtml: `
-                                <button class="ds-btn ds-btn-hero" id="ds-btn-new-incasso"><span class="material-symbols-rounded">add_card</span>Emetti Ricevuta / Acconto</button>
+                                <button class="ds-btn ds-btn-hero" id="ds-btn-new-incasso"><span class="material-symbols-rounded">add_card</span>Nuovo Incasso / Ricevuta</button>
                                 <button class="ds-btn ds-btn-hero" id="ds-btn-new-plan"><span class="material-symbols-rounded">credit_card</span>Nuovo Piano Rateale</button>
                                 <button class="ds-btn ds-btn-hero" id="ds-btn-new-spesa"><span class="material-symbols-rounded">shopping_cart</span>Registra Spesa</button>
                             `
                         })}
 
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-                            ${SUB_CARDS.map(c => `
-                                <div class="ds-hub-card ${subTab === c.id ? 'active' : ''}" data-sub="${c.id}" style="padding:1.1rem; ${subTab === c.id ? 'border-color:var(--ds-teal); background:var(--ds-teal-soft);' : ''}">
-                                    <div class="ds-hub-card-header">
-                                        <div class="ds-hub-icon-wrap" style="background:${c.bg}; color:${c.color}; width:44px; height:44px; font-size:1.4rem;">
-                                            <span class="material-symbols-rounded">${c.icon}</span>
-                                        </div>
-                                        <span class="ds-badge" style="background:${c.bg}; color:${c.color};">${c.count} Voci</span>
-                                    </div>
-                                    <div class="ds-hub-card-body">
-                                        <h4 style="margin:0; font-size:0.95rem; font-weight:800; color:var(--md-on-surface);">${c.label}</h4>
-                                    </div>
+                        <div class="ds-grid-stats">
+                            <div class="ds-card-stat">
+                                <div class="ds-stat-icon" style="background:rgba(22,163,74,0.12); color:#15803d;">
+                                    <span class="material-symbols-rounded">payments</span>
                                 </div>
-                            `).join('')}
+                                <div>
+                                    <div class="ds-stat-val" style="color:#15803d;">${formatCurrency(totInc)}</div>
+                                    <div class="ds-stat-lbl">Totale Entrate Studio</div>
+                                </div>
+                            </div>
+                            <div class="ds-card-stat">
+                                <div class="ds-stat-icon" style="background:rgba(225,29,72,0.12); color:#be123c;">
+                                    <span class="material-symbols-rounded">shopping_bag</span>
+                                </div>
+                                <div>
+                                    <div class="ds-stat-val" style="color:#be123c;">${formatCurrency(totSpese)}</div>
+                                    <div class="ds-stat-lbl">Totale Uscite & Spese</div>
+                                </div>
+                            </div>
+                            <div class="ds-card-stat">
+                                <div class="ds-stat-icon" style="background:${bilancio >= 0 ? 'rgba(126,34,206,0.12)' : 'rgba(217,119,6,0.12)'}; color:${bilancio >= 0 ? 'var(--ds-purple)' : '#b45309'};">
+                                    <span class="material-symbols-rounded">savings</span>
+                                </div>
+                                <div>
+                                    <div class="ds-stat-val" style="color:${bilancio >= 0 ? 'var(--ds-purple)' : '#b45309'};">${formatCurrency(bilancio)}</div>
+                                    <div class="ds-stat-lbl">Saldo di Cassa Netto</div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--md-surface); padding:0.8rem 1.2rem; border-radius:14px; border:1px solid var(--md-outline-variant); flex-wrap:wrap; gap:0.6rem;">
-                            <span style="font-weight:700; font-size:0.88rem; color:var(--md-on-surface-variant);">Riepilogo Cassa:</span>
-                            <div style="display:flex; gap:0.6rem; align-items:center;">
-                                <span class="ds-badge ds-badge-green">Entrate: ${formatCurrency(totInc)}</span>
-                                <span class="ds-badge ds-badge-rose">Uscite: ${formatCurrency(totSpese)}</span>
-                                <span class="ds-badge ${bilancio >= 0 ? 'ds-badge-teal' : 'ds-badge-amber'}">Flusso Netto: ${formatCurrency(bilancio)}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                            <div class="ds-nav" style="background:var(--md-surface); padding:4px; border-radius:999px; border:1.5px solid var(--md-outline-variant);">
+                                <button class="ds-nav-btn ${subTab === 'incassi' ? 'active' : ''}" data-sub="incassi" style="${subTab === 'incassi' ? 'background:var(--ds-purple); color:#fff; border-color:transparent;' : ''}">
+                                    <span class="material-symbols-rounded">payments</span>Ricevute & Incassi (${incassi.length})
+                                </button>
+                                <button class="ds-nav-btn ${subTab === 'preventivi' ? 'active' : ''}" data-sub="preventivi" style="${subTab === 'preventivi' ? 'background:var(--ds-purple); color:#fff; border-color:transparent;' : ''}">
+                                    <span class="material-symbols-rounded">request_quote</span>Preventivi & Piani di Cura (${preventivi.length})
+                                </button>
+                                <button class="ds-nav-btn ${subTab === 'spese' ? 'active' : ''}" data-sub="spese" style="${subTab === 'spese' ? 'background:var(--ds-purple); color:#fff; border-color:transparent;' : ''}">
+                                    <span class="material-symbols-rounded">shopping_bag</span>Spese & Uscite Studio (${spese.length})
+                                </button>
+                                <button class="ds-nav-btn ${subTab === 'liquidazioni' ? 'active' : ''}" data-sub="liquidazioni" style="${subTab === 'liquidazioni' ? 'background:var(--ds-purple); color:#fff; border-color:transparent;' : ''}">
+                                    <span class="material-symbols-rounded">receipt_long</span>Liquidazioni Staff (${liquidazioni.length})
+                                </button>
                             </div>
                         </div>
 
@@ -79,28 +94,30 @@ export default {
                     </div>
                 `;
 
-                el.querySelectorAll('.ds-hub-card[data-sub]').forEach(card => {
-                    card.addEventListener('click', () => {
-                        subTab = card.dataset.sub;
+                el.querySelectorAll('.ds-nav-btn[data-sub]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        subTab = btn.dataset.sub;
                         renderScreen();
                     });
                 });
 
-                el.querySelector('#ds-btn-new-incasso').addEventListener('click', () => openIncassoModal());
-                el.querySelector('#ds-btn-new-spesa').addEventListener('click', () => openSpesaModal());
-                el.querySelector('#ds-btn-new-plan').addEventListener('click', () => {
+                el.querySelector('#ds-btn-new-incasso')?.addEventListener('click', () => openIncassoModal());
+                el.querySelector('#ds-btn-new-spesa')?.addEventListener('click', () => openSpesaModal());
+                el.querySelector('#ds-btn-new-plan')?.addEventListener('click', () => {
                     openInstallmentPlanModal({
                         onCreated: () => renderScreen()
                     });
                 });
 
                 const contentEl = el.querySelector('#ds-contab-content');
+                if (!contentEl) return;
 
                 if (subTab === 'incassi') {
                     contentEl.innerHTML = `
-                        <div class="ds-panel">
+                        <div class="ds-panel border-purple">
                             <div class="ds-panel-header">
-                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">payments</span>Registro Ricevute Sanitarie & Incassi</div>
+                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-purple);">payments</span>Registro Ricevute Sanitarie & Incassi</div>
+                                <span class="ds-badge ds-badge-purple">${incassi.length} Incassi</span>
                             </div>
                             <div class="ds-table-wrap">
                                 <table class="ds-table">
@@ -118,11 +135,11 @@ export default {
                                     <tbody>
                                         ${incassi.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessun incasso registrato.</td></tr>' : incassi.map(inc => `
                                             <tr>
-                                                <td><strong style="color:var(--ds-teal);">${inc.numero_documento}</strong></td>
+                                                <td><strong style="color:var(--ds-purple);">${inc.numero_documento}</strong></td>
                                                 <td>${formatDate(inc.data_pagamento)}</td>
                                                 <td><strong>${inc.paziente_cognome || ''} ${inc.paziente_nome || ''}</strong><br><small style="color:var(--md-on-surface-variant);">${inc.paziente_cf || ''}</small></td>
-                                                <td><span class="ds-badge ds-badge-${inc.tipo_documento === 'acconto' ? 'blue' : (inc.tipo_documento === 'rata' ? 'purple' : 'teal')}">${inc.tipo_documento.toUpperCase()}</span></td>
-                                                <td><span class="ds-badge ds-badge-teal">${inc.metodo_pagamento.toUpperCase()}</span></td>
+                                                <td><span class="ds-badge ds-badge-${inc.tipo_documento === 'acconto' ? 'blue' : (inc.tipo_documento === 'rata' ? 'purple' : 'teal')}">${(inc.tipo_documento || '').toUpperCase()}</span></td>
+                                                <td><span class="ds-badge ds-badge-cyan">${(inc.metodo_pagamento || '').toUpperCase()}</span></td>
                                                 <td style="font-weight:800; color:var(--ds-green); font-size:0.95rem;">${formatCurrency(inc.importo)}</td>
                                                 <td style="color:var(--md-on-surface-variant);">${inc.note || '-'}</td>
                                             </tr>
@@ -134,9 +151,10 @@ export default {
                     `;
                 } else if (subTab === 'preventivi') {
                     contentEl.innerHTML = `
-                        <div class="ds-panel">
+                        <div class="ds-panel border-purple">
                             <div class="ds-panel-header">
-                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">request_quote</span>Piani di Cura e Preventivi Pazienti</div>
+                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-purple);">request_quote</span>Piani di Cura e Preventivi Pazienti</div>
+                                <span class="ds-badge ds-badge-purple">${preventivi.length} Preventivi</span>
                             </div>
                             <div class="ds-table-wrap">
                                 <table class="ds-table">
@@ -154,14 +172,14 @@ export default {
                                     <tbody>
                                         ${preventivi.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessun preventivo registrato.</td></tr>' : preventivi.map(pr => `
                                             <tr>
-                                                <td><strong style="color:var(--ds-blue);">${pr.numero_preventivo}</strong></td>
+                                                <td><strong style="color:var(--ds-purple);">${pr.numero_preventivo}</strong></td>
                                                 <td>${formatDate(pr.data_emissione)}</td>
                                                 <td><strong>${pr.paziente_cognome || ''} ${pr.paziente_nome || ''}</strong></td>
                                                 <td>${pr.medico_cognome ? 'Dr. ' + pr.medico_cognome : '-'}</td>
-                                                <td><span class="ds-badge ds-badge-${pr.stato === 'accettato' ? 'green' : (pr.stato === 'bozza' ? 'amber' : 'rose')}">${pr.stato.toUpperCase()}</span></td>
-                                                <td style="font-weight:800; font-size:0.95rem;">${formatCurrency(pr.totale_netto)}</td>
+                                                <td><span class="ds-badge ds-badge-${pr.stato === 'accettato' ? 'green' : (pr.stato === 'bozza' ? 'amber' : 'rose')}">${(pr.stato || '').toUpperCase()}</span></td>
+                                                <td style="font-weight:800; font-size:0.95rem; color:var(--ds-purple);">${formatCurrency(pr.totale_netto)}</td>
                                                 <td style="text-align:right;">
-                                                    <button class="ds-btn ds-btn-primary ds-rateizza-prev" data-id="${pr.id}" style="padding:0.35rem 0.6rem; font-size:0.8rem;"><span class="material-symbols-rounded" style="font-size:1rem;">credit_card</span> Rateizza</button>
+                                                    <button class="ds-btn ds-btn-purple ds-rateizza-prev" data-id="${pr.id}" style="padding:0.35rem 0.65rem; font-size:0.8rem;"><span class="material-symbols-rounded" style="font-size:1rem;">credit_card</span> Rateizza</button>
                                                 </td>
                                             </tr>
                                         `).join('')}
@@ -185,9 +203,10 @@ export default {
                     });
                 } else if (subTab === 'spese') {
                     contentEl.innerHTML = `
-                        <div class="ds-panel">
+                        <div class="ds-panel border-purple">
                             <div class="ds-panel-header">
-                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">shopping_bag</span>Registro Uscite e Spese di Gestione Studio</div>
+                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-purple);">shopping_bag</span>Registro Uscite e Spese di Gestione Studio</div>
+                                <span class="ds-badge ds-badge-rose">${spese.length} Spese</span>
                             </div>
                             <div class="ds-table-wrap">
                                 <table class="ds-table">
@@ -206,10 +225,10 @@ export default {
                                         ${spese.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessuna spesa registrata.</td></tr>' : spese.map(sp => `
                                             <tr>
                                                 <td>${formatDate(sp.data_spesa)}</td>
-                                                <td><span class="ds-badge ds-badge-amber">${sp.categoria.replace(/_/g, ' ').toUpperCase()}</span></td>
+                                                <td><span class="ds-badge ds-badge-amber">${(sp.categoria || '').replace(/_/g, ' ').toUpperCase()}</span></td>
                                                 <td><strong>${sp.descrizione}</strong></td>
                                                 <td>${sp.fornitore || '-'}${sp.numero_fattura ? ` (Ft. ${sp.numero_fattura})` : ''}</td>
-                                                <td>${sp.metodo_pagamento.toUpperCase()}</td>
+                                                <td><span class="ds-badge ds-badge-cyan">${(sp.metodo_pagamento || '').toUpperCase()}</span></td>
                                                 <td style="font-weight:800; color:var(--ds-rose); font-size:0.95rem;">${formatCurrency(sp.importo)}</td>
                                                 <td style="text-align:right;">
                                                     <button class="ds-btn ds-btn-danger ds-del-spesa" data-id="${sp.id}" style="padding:0.35rem 0.6rem;"><span class="material-symbols-rounded" style="font-size:1rem;">delete</span></button>
@@ -231,9 +250,10 @@ export default {
                     });
                 } else if (subTab === 'liquidazioni') {
                     contentEl.innerHTML = `
-                        <div class="ds-panel">
+                        <div class="ds-panel border-purple">
                             <div class="ds-panel-header">
-                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">receipt_long</span>Registro Liquidazioni Compensi Staff</div>
+                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-purple);">receipt_long</span>Registro Liquidazioni Compensi Staff</div>
+                                <span class="ds-badge ds-badge-purple">${liquidazioni.length} Liquidazioni</span>
                             </div>
                             <div class="ds-table-wrap">
                                 <table class="ds-table">
@@ -313,7 +333,7 @@ export default {
                     `,
                     footerHtml: `
                         <button type="button" class="ds-btn ds-btn-ghost ds-modal-cancel">Annulla</button>
-                        <button type="button" class="ds-btn ds-btn-primary" id="ds-save-incasso-btn"><span class="material-symbols-rounded">save</span>Conferma Incasso</button>
+                        <button type="button" class="ds-btn ds-btn-purple" id="ds-save-incasso-btn"><span class="material-symbols-rounded">save</span>Conferma Incasso</button>
                     `
                 });
 
@@ -336,7 +356,7 @@ export default {
                     try {
                         const selPazId = patientPicker.getSelectedPazienteId();
                         if (!selPazId) {
-                            showNotification('Seleziona un paziente.', 'error');
+                            showNotification('Seleziona un paziente.', 'danger');
                             return;
                         }
 
@@ -348,12 +368,13 @@ export default {
                         const res = await callApi('contabilita:registraIncasso', payload);
                         if (res && res.success) {
                             close();
+                            showNotification('Incasso registrato con successo!', 'success');
                             renderScreen();
                         } else {
-                            showNotification(res.error || 'Errore', 'error');
+                            showNotification(res.error || 'Errore salvataggio incasso', 'danger');
                         }
                     } catch (err) {
-                        showNotification(err.message, 'error');
+                        showNotification(err.message, 'danger');
                     }
                 });
             }
@@ -414,7 +435,7 @@ export default {
                     `,
                     footerHtml: `
                         <button type="button" class="ds-btn ds-btn-ghost ds-modal-cancel">Annulla</button>
-                        <button type="button" class="ds-btn ds-btn-primary" id="ds-save-spesa-btn"><span class="material-symbols-rounded">save</span>Registra Spesa</button>
+                        <button type="button" class="ds-btn ds-btn-purple" id="ds-save-spesa-btn"><span class="material-symbols-rounded">save</span>Registra Spesa</button>
                     `
                 });
 
@@ -435,12 +456,13 @@ export default {
                         const res = await callApi('contabilita:registraSpesa', payload);
                         if (res && res.success) {
                             close();
+                            showNotification('Spesa registrata con successo!', 'success');
                             renderScreen();
                         } else {
-                            showNotification(res.error || 'Errore', 'error');
+                            showNotification(res.error || 'Errore salvataggio spesa', 'danger');
                         }
                     } catch (err) {
-                        showNotification(err.message, 'error');
+                        showNotification(err.message, 'danger');
                     }
                 });
             }

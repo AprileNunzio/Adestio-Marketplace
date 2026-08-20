@@ -13,47 +13,55 @@ export function renderCashflowAnalyticsView(container, forecast) {
             container.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:1.2rem;">
                     
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.8rem; background:var(--md-surface); border:1.5px solid var(--md-outline-variant); border-radius:16px; padding:0.9rem 1.2rem;">
-                        <div style="display:flex; align-items:center; gap:0.6rem;">
-                            <span class="material-symbols-rounded" style="color:var(--ds-purple); font-size:1.6rem;">insights</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.8rem; background:var(--md-surface-container-low); border:1.5px solid var(--md-outline-variant); border-radius:18px; padding:1rem 1.4rem;">
+                        <div style="display:flex; align-items:center; gap:0.8rem;">
+                            <div style="width:44px; height:44px; border-radius:14px; background:rgba(126,34,206,0.12); display:flex; align-items:center; justify-content:center; color:var(--ds-purple);">
+                                <span class="material-symbols-rounded" style="font-size:1.6rem;">insights</span>
+                            </div>
                             <div>
-                                <div style="font-weight:800; font-size:1rem; color:var(--md-on-surface);">Motore Predittivo Multi-Variabile</div>
-                                <div style="font-size:0.76rem; color:var(--md-on-surface-variant);">Indice di copertura cassa: <strong style="color:var(--ds-teal);">${forecast.coverageRatio}x</strong></div>
+                                <div style="font-weight:800; font-size:1.05rem; color:var(--md-on-surface);">Motore Predittivo Multi-Variabile Cashflow</div>
+                                <div style="font-size:0.78rem; color:var(--md-on-surface-variant); margin-top:2px;">Indice di copertura cassa: <strong style="color:var(--ds-teal); font-size:0.88rem;">${forecast.coverageRatio}x</strong> (Liquidità / Uscite)</div>
                             </div>
                         </div>
-                        <div class="ds-nav" style="background:var(--md-surface-container-low); padding:4px; border-radius:12px;">
-                            <button class="ds-nav-btn ${activeScenario === 'prudenziale' ? 'active' : ''}" data-scen="prudenziale" style="font-size:0.78rem; padding:0.4rem 0.8rem;">🛡️ Prudenziale</button>
-                            <button class="ds-nav-btn ${activeScenario === 'realistico' ? 'active' : ''}" data-scen="realistico" style="font-size:0.78rem; padding:0.4rem 0.8rem;">🎯 Atteso (Ponderato)</button>
-                            <button class="ds-nav-btn ${activeScenario === 'ottimistico' ? 'active' : ''}" data-scen="ottimistico" style="font-size:0.78rem; padding:0.4rem 0.8rem;">🚀 Ottimistico</button>
+                        <div class="ds-nav" style="background:var(--md-surface); padding:4px; border-radius:999px; border:1px solid var(--md-outline-variant);">
+                            <button class="ds-nav-btn ${activeScenario === 'prudenziale' ? 'active' : ''}" data-scen="prudenziale" style="font-size:0.8rem; padding:0.4rem 0.9rem;">🛡️ Prudenziale</button>
+                            <button class="ds-nav-btn ${activeScenario === 'realistico' ? 'active' : ''}" data-scen="realistico" style="font-size:0.8rem; padding:0.4rem 0.9rem;">🎯 Atteso (Ponderato)</button>
+                            <button class="ds-nav-btn ${activeScenario === 'ottimistico' ? 'active' : ''}" data-scen="ottimistico" style="font-size:0.8rem; padding:0.4rem 0.9rem;">🚀 Ottimistico</button>
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
-                        <div style="background:var(--md-surface); border:1.5px solid var(--md-outline-variant); border-radius:16px; padding:1.2rem;">
+                        <div style="background:var(--md-surface); border:1.5px solid var(--md-outline-variant); border-radius:18px; padding:1.2rem 1.4rem; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--md-on-surface-variant);">Entrate Previste (30gg)</span>
-                                <span class="material-symbols-rounded" style="color:var(--ds-teal);">trending_up</span>
+                                <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--md-on-surface-variant); letter-spacing:0.04em;">Entrate Previste (30gg)</span>
+                                <div style="width:36px; height:36px; border-radius:10px; background:rgba(13,148,136,0.12); display:flex; align-items:center; justify-content:center; color:var(--ds-teal);">
+                                    <span class="material-symbols-rounded">trending_up</span>
+                                </div>
                             </div>
-                            <div style="font-size:1.6rem; font-weight:800; color:var(--ds-teal); margin-top:0.3rem;">${formatCurrency(sc.m30)}</div>
-                            <div style="font-size:0.75rem; color:var(--md-on-surface-variant); margin-top:0.3rem;">60gg: ${formatCurrency(sc.m60)} • 90gg: ${formatCurrency(sc.m90)}</div>
+                            <div style="font-size:1.65rem; font-weight:800; color:var(--ds-teal); margin-top:0.4rem;">${formatCurrency(sc.m30)}</div>
+                            <div style="font-size:0.76rem; color:var(--md-on-surface-variant); margin-top:0.35rem;">60gg: <strong>${formatCurrency(sc.m60)}</strong> • 90gg: <strong>${formatCurrency(sc.m90)}</strong></div>
                         </div>
 
-                        <div style="background:var(--md-surface); border:1.5px solid var(--md-outline-variant); border-radius:16px; padding:1.2rem;">
+                        <div style="background:var(--md-surface); border:1.5px solid var(--md-outline-variant); border-radius:18px; padding:1.2rem 1.4rem; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--md-on-surface-variant);">Uscite Fisse & Variabili (30gg)</span>
-                                <span class="material-symbols-rounded" style="color:var(--ds-rose);">trending_down</span>
+                                <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--md-on-surface-variant); letter-spacing:0.04em;">Uscite Fisse & Variabili (30gg)</span>
+                                <div style="width:36px; height:36px; border-radius:10px; background:rgba(225,29,72,0.12); display:flex; align-items:center; justify-content:center; color:var(--ds-rose);">
+                                    <span class="material-symbols-rounded">trending_down</span>
+                                </div>
                             </div>
-                            <div style="font-size:1.6rem; font-weight:800; color:var(--ds-rose); margin-top:0.3rem;">${formatCurrency(out.m30)}</div>
-                            <div style="font-size:0.75rem; color:var(--md-on-surface-variant); margin-top:0.3rem;">Totale Trimestre: ${formatCurrency(out.total)}</div>
+                            <div style="font-size:1.65rem; font-weight:800; color:var(--ds-rose); margin-top:0.4rem;">${formatCurrency(out.m30)}</div>
+                            <div style="font-size:0.76rem; color:var(--md-on-surface-variant); margin-top:0.35rem;">Totale Trimestre: <strong>${formatCurrency(out.total)}</strong></div>
                         </div>
 
-                        <div style="background:var(--md-surface); border:1.5px solid var(--md-outline-variant); border-radius:16px; padding:1.2rem;">
+                        <div style="background:var(--md-surface); border:1.5px solid var(--md-outline-variant); border-radius:18px; padding:1.2rem 1.4rem; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--md-on-surface-variant);">Flusso Netto Atteso (30gg)</span>
-                                <span class="material-symbols-rounded" style="color:${net.m30 >= 0 ? 'var(--ds-green)' : 'var(--ds-rose)'};">savings</span>
+                                <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--md-on-surface-variant); letter-spacing:0.04em;">Flusso Netto Atteso (30gg)</span>
+                                <div style="width:36px; height:36px; border-radius:10px; background:${net.m30 >= 0 ? 'rgba(22,163,74,0.12)' : 'rgba(225,29,72,0.12)'}; display:flex; align-items:center; justify-content:center; color:${net.m30 >= 0 ? 'var(--ds-green)' : 'var(--ds-rose)'};">
+                                    <span class="material-symbols-rounded">savings</span>
+                                </div>
                             </div>
-                            <div style="font-size:1.6rem; font-weight:800; color:${net.m30 >= 0 ? 'var(--ds-green)' : 'var(--ds-rose)'}; margin-top:0.3rem;">${formatCurrency(net.m30)}</div>
-                            <div style="font-size:0.75rem; color:var(--md-on-surface-variant); margin-top:0.3rem;">Netto Trimestrale: ${formatCurrency(net.total)}</div>
+                            <div style="font-size:1.65rem; font-weight:800; color:${net.m30 >= 0 ? 'var(--ds-green)' : 'var(--ds-rose)'}; margin-top:0.4rem;">${formatCurrency(net.m30)}</div>
+                            <div style="font-size:0.76rem; color:var(--md-on-surface-variant); margin-top:0.35rem;">Netto Trimestrale: <strong>${formatCurrency(net.total)}</strong></div>
                         </div>
                     </div>
 
@@ -65,22 +73,22 @@ export function renderCashflowAnalyticsView(container, forecast) {
                                     Scomposizione Vettori di Incasso (Prossimi 30 Giorni)
                                 </div>
                             </div>
-                            <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.86rem;">
-                                <div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--md-outline-variant);">
+                            <div style="display:flex; flex-direction:column; gap:0.7rem; font-size:0.88rem;">
+                                <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--md-outline-variant);">
                                     <span>📆 Rate Contrattualizzate (Pesate Solvibilità)</span>
-                                    <strong>${formatCurrency(bk.rateCerte)}</strong>
+                                    <strong style="color:var(--ds-teal);">${formatCurrency(bk.rateCerte)}</strong>
                                 </div>
-                                <div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--md-outline-variant);">
+                                <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--md-outline-variant);">
                                     <span>📋 Preventivi Accettati & Pipeline Ponderata</span>
-                                    <strong>${formatCurrency(bk.preventiviPonderati)}</strong>
+                                    <strong style="color:var(--ds-blue);">${formatCurrency(bk.preventiviPonderati)}</strong>
                                 </div>
-                                <div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--md-outline-variant);">
+                                <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--md-outline-variant);">
                                     <span>💺 Produttività Agenda Poltrone</span>
-                                    <strong>${formatCurrency(bk.agendaVelocity)}</strong>
+                                    <strong style="color:var(--ds-purple);">${formatCurrency(bk.agendaVelocity)}</strong>
                                 </div>
-                                <div style="display:flex; justify-content:space-between; padding:0.4rem 0;">
+                                <div style="display:flex; justify-content:space-between; padding:0.5rem 0;">
                                     <span>📈 Routine Clinica & Stagionalità</span>
-                                    <strong>${formatCurrency(bk.routineRicorrente)}</strong>
+                                    <strong style="color:var(--ds-green);">${formatCurrency(bk.routineRicorrente)}</strong>
                                 </div>
                             </div>
                         </div>
@@ -93,12 +101,12 @@ export function renderCashflowAnalyticsView(container, forecast) {
                                 </div>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                                ${forecast.advisory.length === 0 ? '<p style="color:var(--md-on-surface-variant);">Nessun alert generato.</p>' : forecast.advisory.map(adv => `
-                                    <div style="display:flex; gap:0.8rem; padding:0.7rem 0.9rem; background:var(--md-surface-container-low); border-radius:12px;">
-                                        <span class="material-symbols-rounded" style="color:var(--ds-${adv.type === 'danger' ? 'rose' : (adv.type === 'warning' ? 'amber' : 'teal')}); font-size:1.4rem;">${adv.icon}</span>
+                                ${forecast.advisory.length === 0 ? '<p style="color:var(--md-on-surface-variant); text-align:center; padding:1.2rem;">Tutti gli indicatori sono ottimali.</p>' : forecast.advisory.map(adv => `
+                                    <div style="display:flex; gap:0.9rem; padding:0.85rem 1rem; background:var(--md-surface-container-low); border:1px solid var(--md-outline-variant); border-radius:14px;">
+                                        <span class="material-symbols-rounded" style="color:var(--ds-${adv.type === 'danger' ? 'rose' : (adv.type === 'warning' ? 'amber' : 'teal')}); font-size:1.5rem; flex-shrink:0;">${adv.icon}</span>
                                         <div>
-                                            <div style="font-weight:800; font-size:0.88rem; color:var(--md-on-surface);">${adv.title}</div>
-                                            <div style="font-size:0.8rem; color:var(--md-on-surface-variant); margin-top:0.2rem;">${adv.desc}</div>
+                                            <div style="font-weight:800; font-size:0.9rem; color:var(--md-on-surface);">${adv.title}</div>
+                                            <div style="font-size:0.82rem; color:var(--md-on-surface-variant); margin-top:0.25rem; line-height:1.35;">${adv.desc}</div>
                                         </div>
                                     </div>
                                 `).join('')}

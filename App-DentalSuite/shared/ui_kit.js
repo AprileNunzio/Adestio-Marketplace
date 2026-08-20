@@ -58,11 +58,12 @@ export function renderHero({ title, subtitle, icon, theme = 'teal', actionsHtml 
     }
 }
 
-export function renderStatCard({ icon, value, label, color = '#0d9488', bg = 'rgba(13, 148, 136, 0.12)' }) {
+export function renderStatCard({ icon, value, label, color = '#0d9488', bg, bgColor }) {
     try {
+        const bgVal = bg || bgColor || 'rgba(13, 148, 136, 0.12)';
         return `
             <div class="ds-card-stat">
-                <div class="ds-stat-icon" style="background:${bg}; color:${color};">
+                <div class="ds-stat-icon" style="background:${bgVal}; color:${color};">
                     <span class="material-symbols-rounded">${icon}</span>
                 </div>
                 <div>
