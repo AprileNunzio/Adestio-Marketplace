@@ -1,7 +1,7 @@
 {
   "id": "adestio_dental_suite",
   "name": "Adestio DentalSuite",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "minCoreVersion": "1.0.0",
   "api_version": "1.0",
   "published_at": "2026-08-20T10:00:00Z",
@@ -83,5 +83,5 @@
       "src": "index.html"
     }
   ],
-  "integrity_hash": "222cc27efe213de2f8480cf2f29acc0859cb0a000f37be11b94deea538f2b479"
+  "integrity_hash": "7100b1cefa2a28fdb0b77ff391690c3ec4e4f5778bb8ca04002817b382b7a3d3"
 }
