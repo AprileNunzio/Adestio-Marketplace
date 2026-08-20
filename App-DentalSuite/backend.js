@@ -36,7 +36,9 @@ function registerBackendHandlers(registerApi, app, context) {
         registerApi('agenda:deleteAppuntamento', agendaBackend.deleteAppuntamento);
 
         registerApi('staff:getAll', staffBackend.getAll);
-        registerApi('staff:save', staffBackend.save);
+        registerApi('staff:create', staffBackend.create);
+        registerApi('staff:update', staffBackend.update);
+        registerApi('staff:save', staffBackend.update);
         registerApi('staff:remove', staffBackend.remove);
         registerApi('staff:getCurrentUser', staffBackend.getCurrentUser);
         registerApi('staff:calcolaLiquidazione', staffBackend.calcolaLiquidazione);
