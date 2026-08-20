@@ -223,5 +223,10 @@
         "id": "privacy_erase",
         "label": "Privacy: anonimizzazione su richiesta di cancellazione (diritto all oblio)",
         "default": false
+    },
+    {
+        "id": "accordi_manage",
+        "label": "Compensi: definizione degli accordi economici con i collaboratori",
+        "default": false
     }
 ]

@@ -5,6 +5,7 @@ import { esito } from '../components/notifica.js';
 import { call } from '../kernel/transport.js';
 import { can } from '../security/permissions.js';
 import * as fmt from '../kernel/format.js';
+import { navigatoreGiorno } from '../components/navigatore_giorno.js';
 import { montaVista, elenco } from './shared/vista.js';
 import { apriAppuntamento } from './agenda/appuntamento_editor.js';
 
@@ -89,13 +90,6 @@ export default {
                 return { appuntamenti, poltrone };
             },
             disegna: ({ appuntamenti, poltrone }, aggiorna) => {
-                const spostaGiorno = passi => {
-                    const base = new Date(fmt.inizioGiornata(giorno));
-                    base.setDate(base.getDate() + passi);
-                    giorno = fmt.isoDa(base);
-                    aggiorna();
-                };
-
                 const apri = async appuntamento => {
                     await apriAppuntamento({
                         appuntamento,
@@ -129,12 +123,11 @@ export default {
                     })
                     : tabellone(giorno, poltrone, appuntamenti, apri);
 
-                const selettore = el('input', {
-                    class: 'ds-input',
-                    type: 'date',
-                    value: giorno,
-                    onChange: evento => {
-                        giorno = evento.target.value || fmt.oggiIso();
+                const navigatore = navigatoreGiorno({
+                    giorno,
+                    oggi: fmt.oggiIso(),
+                    onCambia: nuovoGiorno => {
+                        giorno = nuovoGiorno;
                         aggiorna();
                     }
                 });
@@ -159,10 +152,7 @@ export default {
                     pannello({
                         titolo: 'Planning giornaliero',
                         azioni: [
-                            bottone({ simbolo: 'chevron_left', variante: 'ghost', piccolo: true, titolo: 'Giorno precedente', onClick: () => spostaGiorno(-1) }),
-                            selettore,
-                            bottone({ simbolo: 'chevron_right', variante: 'ghost', piccolo: true, titolo: 'Giorno successivo', onClick: () => spostaGiorno(1) }),
-                            bottone({ etichetta: 'Oggi', variante: 'ghost', piccolo: true, onClick: () => { giorno = fmt.oggiIso(); aggiorna(); } }),
+                            navigatore,
                             spaziatore(),
                             ...Object.entries(perStato).map(([stato, quanti]) =>
                                 distintivo(`${fmt.etichettaStato(stato)}: ${quanti}`, 'info'))

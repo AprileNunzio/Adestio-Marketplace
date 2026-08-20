@@ -6,6 +6,8 @@ const { appuntamenti } = require('../repositories/facility');
 const { validationError, conflictError } = require('../kernel/errors');
 const identita = require('../domain/identita');
 
+const RAPPORTI = ['dipendente', 'collaboratore', 'libero_professionista', 'socio'];
+
 const RUOLI = ['medico', 'odontoiatra', 'igienista', 'aso', 'segreteria', 'amministrazione', 'odontotecnico'];
 
 function decora(riga) {
@@ -23,6 +25,12 @@ function valida(payload) {
     if (percentuale < 0 || percentuale > 100) errori.push('La percentuale di default deve essere tra 0 e 100');
     const ritenuta = Number(payload.ritenuta_acconto_percentuale || 0);
     if (ritenuta < 0 || ritenuta > 100) errori.push('La ritenuta d\'acconto deve essere tra 0 e 100');
+    if (payload.compenso_mensile !== undefined && Number(payload.compenso_mensile) < 0) {
+        errori.push('Il compenso fisso mensile non può essere negativo');
+    }
+    if (payload.tipo_rapporto && !RAPPORTI.includes(payload.tipo_rapporto)) {
+        errori.push(`Tipo di rapporto non valido: ${payload.tipo_rapporto}`);
+    }
     if (errori.length > 0) throw validationError(errori.join('. '));
 }
 
@@ -67,4 +75,4 @@ async function remove(payload = {}) {
     return { id: payload.id };
 }
 
-module.exports = { list, get, create, update, remove, RUOLI };
+module.exports = { list, get, create, update, remove, RUOLI, RAPPORTI };

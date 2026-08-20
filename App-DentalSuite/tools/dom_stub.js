@@ -60,6 +60,10 @@ class Elemento extends NodoTesto {
     }
 
     setAttribute(nome, valore) {
+        if (nome === 'class') {
+            this.className = String(valore);
+            return;
+        }
         this.attributi.set(nome, String(valore));
     }
 
@@ -167,6 +171,7 @@ function creaDocumento() {
         radiceDocumento: true,
         ascoltatori: new Map(),
         createElement: tag => new Elemento(tag),
+        createElementNS: (spazio, tag) => new Elemento(tag),
         createTextNode: valore => new NodoTesto(valore),
         createDocumentFragment: () => new Frammento(),
         addEventListener(tipo, gestore) {

@@ -23,7 +23,7 @@ const anamnesi = createRepository('anamnesi', [
 
 const odontogramma = createRepository('odontogramma', [
     'paziente_id', 'numero_dente', 'dentizione', 'superfici', 'stato',
-    'materiale', 'mobilita', 'note'
+    'materiale', 'mobilita', 'note', 'data_rilevazione', 'rilevazione_id'
 ], { label: 'Dente', orderBy: 'numero_dente ASC', systemColumns: AUTORE });
 
 const trattamenti = createRepository('trattamenti_paziente', [

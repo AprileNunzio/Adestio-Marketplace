@@ -90,6 +90,14 @@
         "privacy.anonimizzaPaziente": { "handler": "privacy", "method": "anonimizzaPaziente", "permission": "privacy_erase", "mutates": true },
         "privacy.registroCancellazioni": { "handler": "privacy", "method": "registroCancellazioni", "permission": "privacy_erase", "mutates": false },
         "privacy.anteprimaEsportazione": { "handler": "privacy", "method": "anteprimaEsportazione", "permission": "privacy_export", "mutates": false },
-        "privacy.esportaPaziente": { "handler": "privacy", "method": "esportaPaziente", "permission": "privacy_export", "mutates": false }
+        "privacy.esportaPaziente": { "handler": "privacy", "method": "esportaPaziente", "permission": "privacy_export", "mutates": false },
+        "odontogramma.storico": { "handler": "odontogramma", "method": "storico", "permission": "cartella_view", "mutates": false },
+        "odontogramma.modificaRilevazione": { "handler": "odontogramma", "method": "modificaRilevazione", "permission": "cartella_edit", "mutates": true },
+        "odontogramma.eliminaRilevazione": { "handler": "odontogramma", "method": "eliminaRilevazione", "permission": "cartella_edit", "mutates": true },
+        "accordi.listByStaff": { "handler": "accordi", "method": "listByStaff", "permission": "compensi_view", "mutates": false },
+        "accordi.simula": { "handler": "accordi", "method": "simula", "permission": "compensi_view", "mutates": false },
+        "accordi.salva": { "handler": "accordi", "method": "salva", "permission": "accordi_manage", "mutates": true },
+        "accordi.rimuovi": { "handler": "accordi", "method": "rimuovi", "permission": "accordi_manage", "mutates": true },
+        "compensi.maturato": { "handler": "compensi", "method": "maturato", "permission": "compensi_view", "mutates": false }
     }
 }

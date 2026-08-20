@@ -1,10 +1,13 @@
 const LISTENER = /^on[A-Z]/;
+const NS_SVG = 'http://www.w3.org/2000/svg';
 
-function applyProps(node, props) {
+function applyProps(node, props, vettoriale) {
     Object.entries(props).forEach(([chiave, valore]) => {
         if (valore === null || valore === undefined || valore === false) return;
         if (chiave === 'class') {
-            node.className = Array.isArray(valore) ? valore.filter(Boolean).join(' ') : valore;
+            const nomi = Array.isArray(valore) ? valore.filter(Boolean).join(' ') : valore;
+            if (vettoriale) node.setAttribute('class', nomi);
+            else node.className = nomi;
             return;
         }
         if (chiave === 'dataset') {
@@ -13,11 +16,11 @@ function applyProps(node, props) {
             });
             return;
         }
-        if (chiave === 'value') {
+        if (chiave === 'value' && !vettoriale) {
             node.value = valore;
             return;
         }
-        if (chiave === 'checked' || chiave === 'disabled' || chiave === 'selected') {
+        if (!vettoriale && (chiave === 'checked' || chiave === 'disabled' || chiave === 'selected')) {
             node[chiave] = Boolean(valore);
             return;
         }
@@ -40,7 +43,14 @@ function appendChild(node, child) {
 
 export function el(tag, props = {}, children = []) {
     const node = document.createElement(tag);
-    applyProps(node, props);
+    applyProps(node, props, false);
+    appendChild(node, children);
+    return node;
+}
+
+export function svg(tag, props = {}, children = []) {
+    const node = document.createElementNS(NS_SVG, tag);
+    applyProps(node, props, true);
     appendChild(node, children);
     return node;
 }

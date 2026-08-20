@@ -10,6 +10,7 @@ import { montaVista, elenco } from './shared/vista.js';
 import { apriForm } from './shared/form_modale.js';
 import { SEZIONI_STAFF, STAFF_VUOTO, TONI_RUOLO } from './forms/staff_form.js';
 import { rendiLiquidazioni } from './staff/liquidazioni.js';
+import { rendiAccordi } from './staff/accordi.js';
 
 export default {
     rendi: async ({ indietro }) => {
@@ -20,12 +21,14 @@ export default {
             liquida: await can('compensi_settle')
         };
         let scheda = 'collaboratori';
+        let scelto = null;
 
         return montaVista({
             accento: 'staff',
             carica: async () => elenco(await call('staff.list', { includeArchived: true })),
             disegna: (righe, aggiorna) => {
                 const attivi = righe.filter(riga => Number(riga.is_deleted) === 0);
+                if (!scelto && attivi.length > 0) scelto = attivi[0].id;
 
                 const apri = async riga => {
                     await apriForm({
@@ -62,6 +65,24 @@ export default {
                     });
                     if (id === 'liquidazioni') {
                         rimpiazza(contenuto, await rendiLiquidazioni({ collaboratori: attivi, permessi }));
+                        return;
+                    }
+                    if (id === 'accordi') {
+                        const scelta = el('select', {
+                            class: 'ds-select',
+                            onChange: async evento => {
+                                scelto = evento.target.value;
+                                await mostra('accordi');
+                            }
+                        }, attivi.map(voce => el('option', {
+                            value: voce.id, selected: voce.id === scelto
+                        }, voce.nominativo)));
+                        const corrente = attivi.find(voce => voce.id === scelto) || attivi[0];
+                        rimpiazza(contenuto, [
+                            pannello({ titolo: 'Collaboratore', azioni: [scelta] }, el('p', { class: 'ds-muted' },
+                                'Gli accordi definiscono quanto prende questo collaboratore su ogni tipo di lavoro.')),
+                            await rendiAccordi({ collaboratore: corrente })
+                        ]);
                         return;
                     }
                     rimpiazza(contenuto, pannello({ titolo: 'Organico dello studio', flush: true }, tabella({
@@ -108,6 +129,7 @@ export default {
 
                 const schede = [
                     { id: 'collaboratori', titolo: 'Collaboratori', simbolo: 'groups', attiva: true },
+                    { id: 'accordi', titolo: 'Accordi economici', simbolo: 'handshake', attiva: permessi.compensi },
                     { id: 'liquidazioni', titolo: 'Compensi & Liquidazioni', simbolo: 'payments', attiva: permessi.compensi }
                 ];
 

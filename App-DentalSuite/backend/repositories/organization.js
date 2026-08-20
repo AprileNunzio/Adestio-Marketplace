@@ -12,12 +12,13 @@ const staff = createRepository('staff', [
     'nome', 'secondo_nome', 'cognome', 'codice_fiscale', 'partita_iva', 'ruolo',
     'specializzazione', 'numero_albo', 'utente_adestio_id', 'percentuale_default',
     'costo_orario', 'ritenuta_acconto_percentuale', 'colore_agenda', 'telefono',
-    'email', 'attivo', 'note'
+    'email', 'attivo', 'note', 'compenso_mensile', 'tipo_rapporto'
 ], { label: 'Collaboratore', orderBy: 'cognome ASC, nome ASC' });
 
 const liquidazioni = createRepository('liquidazioni_staff', [
     'staff_id', 'periodo_dal', 'periodo_al', 'totale_competenze', 'ritenuta_acconto',
-    'totale_liquidato', 'numero_trattamenti', 'data_liquidazione', 'metodo_pagamento', 'note'
+    'totale_liquidato', 'numero_trattamenti', 'data_liquidazione', 'metodo_pagamento', 'note',
+    'totale_mensilita', 'totale_variabile'
 ], { label: 'Liquidazione', orderBy: 'periodo_dal DESC', systemColumns: ['autore_id'] });
 
 module.exports = { prestazioni, staff, liquidazioni };

@@ -75,7 +75,7 @@ export function vuoto({ titolo, testo, simbolo = 'inbox', azione }) {
         icona(simbolo),
         el('div', { class: 'ds-empty__title' }, titolo),
         testo ? el('div', { class: 'ds-empty__text' }, testo) : null,
-        azione || null
+        azione ? el('div', { class: 'ds-empty__azione' }, azione) : null
     ]);
 }
 

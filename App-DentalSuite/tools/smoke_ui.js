@@ -162,6 +162,18 @@ async function main() {
         verifica(`Scheda "${scheda.id}" produce contenuto`, contenuto.length > 0, `${contenuto.length} blocchi`);
     }
 
+    await shell.naviga('staff');
+    await attendiRender();
+    const schedeStaff = radice.querySelectorAll('.ds-tab');
+    verifica('Staff con 3 schede (collaboratori, accordi, liquidazioni)',
+        schedeStaff.length === 3, `${schedeStaff.length}`);
+    for (const scheda of schedeStaff) {
+        await scheda.emetti('click');
+        await attendiRender();
+        verifica(`Scheda staff "${scheda.dataset.scheda}" renderizzata`,
+            radice.querySelectorAll('.ds-panel, .ds-empty, .ds-stat').length > 0);
+    }
+
     await shell.naviga('conformita');
     await attendiRender();
     const schedeConformita = radice.querySelectorAll('.ds-tab');

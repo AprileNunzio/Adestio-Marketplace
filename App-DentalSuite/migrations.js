@@ -6,10 +6,14 @@ const organization = require('./backend/schema/organization');
 const financial = require('./backend/schema/financial');
 const audit = require('./backend/schema/audit');
 const privacy = require('./backend/schema/privacy');
+const storico = require('./backend/schema/storico');
+const compensi = require('./backend/schema/compensi');
 
 const nucleo = [].concat(clinical, facility, organization, financial).join('\n');
 const tracciabilita = [].concat(audit).join('\n');
 const riservatezza = [].concat(privacy).join('\n');
+const tracciaClinica = [].concat(storico).join('\n');
+const rapportiEconomici = [].concat(compensi).join('\n');
 
 module.exports = [
     {
@@ -23,5 +27,13 @@ module.exports = [
     {
         version: 3,
         sql: riservatezza
+    },
+    {
+        version: 4,
+        sql: tracciaClinica
+    },
+    {
+        version: 5,
+        sql: rapportiEconomici
     }
 ];

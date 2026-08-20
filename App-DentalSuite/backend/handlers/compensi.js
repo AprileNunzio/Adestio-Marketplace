@@ -1,11 +1,14 @@
 'use strict';
 
-const { staff, liquidazioni } = require('../repositories/organization');
+const { staff, prestazioni, liquidazioni } = require('../repositories/organization');
+const { mensilita } = require('../repositories/compensi');
 const { trattamenti } = require('../repositories/clinical');
 const { db, persist, now } = require('../kernel/database');
 const { validationError, conflictError } = require('../kernel/errors');
+const money = require('../domain/money');
 const actor = require('../kernel/actor');
 const calcolo = require('../domain/compensi');
+const maturatoDominio = require('../domain/maturato');
 const { oggiIso } = require('../domain/rateizzazione');
 
 function periodo(payload) {
@@ -27,6 +30,10 @@ function trattamentiLiquidabili(staffId, dal, al) {
         .filter(riga => riga.medico_id === staffId || riga.segretaria_id === staffId);
 }
 
+function periodiGiaLiquidati(staffId) {
+    return mensilita.findAll({ where: { staff_id: staffId } }).map(riga => riga.periodo);
+}
+
 function listLiquidazioni(payload = {}) {
     const righe = payload.staff_id
         ? liquidazioni.findAll({ where: { staff_id: payload.staff_id } })
@@ -40,39 +47,75 @@ function listLiquidazioni(payload = {}) {
     }));
 }
 
-function calcola(payload = {}) {
+function componiMaturato(payload) {
     if (!payload.staff_id) throw validationError('Selezionare il collaboratore');
     const collaboratore = staff.requireById(payload.staff_id, { includeArchived: true });
     const { dal, al } = periodo(payload);
-    const righe = trattamentiLiquidabili(payload.staff_id, dal, al);
-    const competenze = calcolo.competenzeCollaboratore(righe, payload.staff_id);
-    const netto = calcolo.nettoLiquidazione(
-        competenze.totale_competenze,
-        collaboratore.ritenuta_acconto_percentuale
-    );
+    const catalogo = new Map(prestazioni.findAll({ includeArchived: true }).map(voce => [voce.id, voce]));
+
+    const dettaglio = maturatoDominio.componi({
+        trattamenti: trattamentiLiquidabili(payload.staff_id, dal, al),
+        staffId: payload.staff_id,
+        catalogo,
+        compensoMensile: collaboratore.compenso_mensile,
+        dal,
+        al,
+        periodiLiquidati: periodiGiaLiquidati(payload.staff_id)
+    });
+
+    return { collaboratore, dettaglio, dal, al };
+}
+
+function maturato(payload = {}) {
+    const { collaboratore, dettaglio } = componiMaturato(payload);
+    return {
+        staff_id: collaboratore.id,
+        collaboratore: `${collaboratore.cognome} ${collaboratore.nome}`.trim(),
+        tipo_rapporto: collaboratore.tipo_rapporto || 'collaboratore',
+        compenso_mensile: money.round(collaboratore.compenso_mensile || 0),
+        ritenuta_percentuale: Number(collaboratore.ritenuta_acconto_percentuale || 0),
+        ...dettaglio
+    };
+}
+
+function calcola(payload = {}) {
+    const { collaboratore, dettaglio, dal, al } = componiMaturato(payload);
+    const scelta = maturatoDominio.selezione(dettaglio, payload);
+    const netto = calcolo.nettoLiquidazione(scelta.totale, collaboratore.ritenuta_acconto_percentuale);
 
     return {
-        staff_id: payload.staff_id,
+        staff_id: collaboratore.id,
         collaboratore: `${collaboratore.cognome} ${collaboratore.nome}`.trim(),
+        tipo_rapporto: collaboratore.tipo_rapporto || 'collaboratore',
         periodo_dal: dal,
         periodo_al: al,
-        numero_trattamenti: competenze.numero_trattamenti,
+        numero_trattamenti: scelta.voci.length,
+        totale_mensilita: scelta.totale_mensilita,
+        totale_variabile: scelta.totale_variabile,
+        mensilita: scelta.mensilita,
         ...netto,
-        dettaglio: righe.map(riga => ({
-            id: riga.id,
-            data_trattamento: riga.data_trattamento,
-            descrizione: riga.descrizione,
-            importo: riga.importo,
-            quota: riga.medico_id === payload.staff_id ? riga.quota_medico : riga.quota_segretaria,
-            ruolo: riga.medico_id === payload.staff_id ? 'medico' : 'segreteria'
+        dettaglio: scelta.voci.map(voce => ({
+            id: voce.id,
+            data_trattamento: voce.data,
+            descrizione: voce.descrizione,
+            categoria: voce.categoria,
+            importo: voce.importo,
+            quota: voce.quota,
+            ruolo: voce.ruolo
         }))
     };
 }
 
 async function liquida(payload = {}) {
     const bozza = calcola(payload);
-    if (bozza.numero_trattamenti === 0) {
-        throw conflictError('Nessun trattamento liquidabile nel periodo indicato');
+    if (bozza.numero_trattamenti === 0 && bozza.totale_mensilita <= 0) {
+        throw conflictError('Nessun compenso selezionato da liquidare nel periodo indicato');
+    }
+
+    const chiusi = new Set(periodiGiaLiquidati(bozza.staff_id));
+    const duplicato = bozza.mensilita.find(voce => chiusi.has(voce.periodo));
+    if (duplicato) {
+        throw conflictError(`La mensilità ${duplicato.periodo} risulta già liquidata`);
     }
 
     const id = await liquidazioni.insert({
@@ -80,6 +123,8 @@ async function liquida(payload = {}) {
         periodo_dal: bozza.periodo_dal,
         periodo_al: bozza.periodo_al,
         totale_competenze: bozza.totale_competenze,
+        totale_mensilita: bozza.totale_mensilita,
+        totale_variabile: bozza.totale_variabile,
         ritenuta_acconto: bozza.ritenuta_acconto,
         totale_liquidato: bozza.totale_liquidato,
         numero_trattamenti: bozza.numero_trattamenti,
@@ -87,6 +132,17 @@ async function liquida(payload = {}) {
         metodo_pagamento: payload.metodo_pagamento || '',
         note: payload.note || ''
     }, actor.stamp());
+
+    for (const voce of bozza.mensilita) {
+        await mensilita.insert({
+            liquidazione_id: id,
+            staff_id: bozza.staff_id,
+            periodo: voce.periodo,
+            giorni_coperti: voce.giorni_coperti,
+            giorni_mese: voce.giorni_mese,
+            importo: voce.importo
+        });
+    }
 
     const timestamp = now();
     bozza.dettaglio.forEach(voce => {
@@ -97,7 +153,14 @@ async function liquida(payload = {}) {
     });
     await persist();
 
-    return { id, totale_liquidato: bozza.totale_liquidato, trattamenti_chiusi: bozza.numero_trattamenti };
+    return {
+        id,
+        totale_liquidato: bozza.totale_liquidato,
+        totale_mensilita: bozza.totale_mensilita,
+        totale_variabile: bozza.totale_variabile,
+        trattamenti_chiusi: bozza.numero_trattamenti,
+        mensilita_chiuse: bozza.mensilita.map(voce => voce.periodo)
+    };
 }
 
-module.exports = { listLiquidazioni, calcola, liquida };
+module.exports = { listLiquidazioni, maturato, calcola, liquida };

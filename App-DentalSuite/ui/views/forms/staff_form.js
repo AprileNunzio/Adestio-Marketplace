@@ -45,7 +45,20 @@ export const SEZIONI_STAFF = [
     {
         titolo: 'Trattamento economico',
         campi: [
-            { campo: 'percentuale_default', etichetta: 'Percentuale compenso default (%)', genere: 'numero' },
+            {
+                campo: 'tipo_rapporto',
+                etichetta: 'Tipo di rapporto',
+                genere: 'selezione',
+                vuoto: false,
+                opzioni: [
+                    { valore: 'dipendente', etichetta: 'Dipendente' },
+                    { valore: 'collaboratore', etichetta: 'Collaboratore' },
+                    { valore: 'libero_professionista', etichetta: 'Libero professionista' },
+                    { valore: 'socio', etichetta: 'Socio' }
+                ]
+            },
+            { campo: 'compenso_mensile', etichetta: 'Compenso fisso mensile (€)', genere: 'numero', aiuto: 'Maturato in proporzione ai giorni del periodo' },
+            { campo: 'percentuale_default', etichetta: 'Percentuale di default (%)', genere: 'numero', aiuto: 'Usata quando non esiste un accordo specifico' },
             { campo: 'costo_orario', etichetta: 'Costo orario (€)', genere: 'numero' },
             { campo: 'ritenuta_acconto_percentuale', etichetta: 'Ritenuta d\'acconto (%)', genere: 'numero' },
             { campo: 'note', etichetta: 'Note', genere: 'area', ampio: true }
@@ -57,5 +70,6 @@ export const STAFF_VUOTO = {
     cognome: '', nome: '', secondo_nome: '', codice_fiscale: '', partita_iva: '',
     ruolo: 'odontoiatra', specializzazione: '', numero_albo: '', telefono: '', email: '',
     colore_agenda: '#0d9488', utente_adestio_id: '', attivo: 1,
-    percentuale_default: 0, costo_orario: 0, ritenuta_acconto_percentuale: 0, note: ''
+    percentuale_default: 0, costo_orario: 0, ritenuta_acconto_percentuale: 0, note: '',
+    compenso_mensile: 0, tipo_rapporto: 'collaboratore'
 };
