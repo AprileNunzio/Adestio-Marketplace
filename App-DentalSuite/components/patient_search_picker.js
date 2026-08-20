@@ -98,12 +98,11 @@ export function createPatientSearchPicker(targetOrOptions = {}, maybeOptions = {
             if (!q) {
                 filteredPazienti = pazienti.slice(0, 15);
             } else {
+                const tokens = q.split(/\s+/).filter(Boolean);
                 filteredPazienti = pazienti.filter(p => {
-                    const matchName = `${p.cognome || ''} ${p.nome || ''}`.toLowerCase().includes(q);
-                    const matchCf = (p.codice_fiscale || '').toLowerCase().includes(q);
-                    const matchTel = (p.telefono || '').toLowerCase().includes(q);
-                    return matchName || matchCf || matchTel;
-                }).slice(0, 20);
+                    const full = `${p.cognome || ''} ${p.nome || ''} ${p.nome || ''} ${p.cognome || ''} ${p.codice_fiscale || ''} ${p.telefono || ''}`.toLowerCase();
+                    return tokens.every(t => full.includes(t));
+                }).slice(0, 25);
             }
 
             if (filteredPazienti.length === 0) {

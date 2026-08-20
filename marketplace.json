@@ -58,12 +58,12 @@
   {
     "id": "adestio_business_suite",
     "name": "Adestio Business Suite",
-    "version": "1.0.41",
+    "version": "1.0.42",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "author": "NunzioTech",
-    "published_at": "2026-08-20T11:29:05.589Z",
-    "updated_at": "2026-08-20T11:29:05.589Z",
+    "published_at": "2026-08-20T11:37:07.392Z",
+    "updated_at": "2026-08-20T11:37:07.392Z",
     "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
     "long_description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
     "category": "erp",
@@ -71,7 +71,7 @@
     "folder": "adestio_business_suite",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.41.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.42.zip",
     "ipc": {
       "namespace": "businessSuite",
       "handlers": [
@@ -113,13 +113,13 @@
         "src": "index.html"
       }
     ],
-    "sha256": "8e6c1b9e39654c7e3a6365e43ad58f5e058185c692985517fe9d8dbaa30447ad",
+    "sha256": "9d0c0d5b78f5a6e80f41e1565d8ba874dc68ecb0ee2eb8655c46902252a09ab0",
     "color": "#6366F1"
   },
   {
     "id": "adestio_dental_suite",
     "name": "Adestio DentalSuite",
-    "version": "1.0.15",
+    "version": "1.0.16",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "description": "Gestionale completo per studi dentistici: cartelle cliniche, odontogramma interattivo, agenda multi-medico, compensi staff, TAC/RMN e statistiche.",
@@ -130,8 +130,8 @@
     "color": "#0d9488",
     "published_at": "2026-08-20T10:00:00Z",
     "updated_at": "2026-08-20T10:00:00Z",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v1.0.15.zip",
-    "sha256": "56f8ce3393d05e356f0afc9f0e3525933be501dd392c14451f6561fed7614b20",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v1.0.16.zip",
+    "sha256": "f12ea44ea6899c8c7de12942f639ab34c0268aa55c701e10d48c35ddcf317990",
     "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",
     "links": [
       {

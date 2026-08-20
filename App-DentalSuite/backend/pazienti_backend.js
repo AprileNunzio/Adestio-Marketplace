@@ -8,11 +8,22 @@ async function getAll(event, args = {}) {
         const query = (args && args.query ? String(args.query).trim() : '');
         let rows;
         if (query) {
-            const like = `%${query}%`;
-            rows = d.query(
-                "SELECT * FROM pazienti WHERE is_deleted = 0 AND (nome LIKE ? OR cognome LIKE ? OR codice_fiscale LIKE ? OR telefono LIKE ?) ORDER BY cognome, nome LIMIT 100",
-                [like, like, like, like]
-            );
+            const tokens = query.split(/\s+/).filter(Boolean);
+            if (tokens.length <= 1) {
+                const like = `%${query}%`;
+                rows = d.query(
+                    "SELECT * FROM pazienti WHERE is_deleted = 0 AND (nome LIKE ? OR cognome LIKE ? OR (cognome || ' ' || nome) LIKE ? OR (nome || ' ' || cognome) LIKE ? OR codice_fiscale LIKE ? OR telefono LIKE ?) ORDER BY cognome, nome LIMIT 100",
+                    [like, like, like, like, like, like]
+                );
+            } else {
+                const conditions = tokens.map(() => "(nome LIKE ? OR cognome LIKE ? OR (cognome || ' ' || nome) LIKE ? OR (nome || ' ' || cognome) LIKE ? OR codice_fiscale LIKE ? OR telefono LIKE ?)").join(" AND ");
+                const params = [];
+                tokens.forEach(t => {
+                    const l = `%${t}%`;
+                    params.push(l, l, l, l, l, l);
+                });
+                rows = d.query(`SELECT * FROM pazienti WHERE is_deleted = 0 AND ${conditions} ORDER BY cognome, nome LIMIT 100`, params);
+            }
         } else {
             rows = d.query("SELECT * FROM pazienti WHERE is_deleted = 0 ORDER BY cognome, nome LIMIT 200");
         }
