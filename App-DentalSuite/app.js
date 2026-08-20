@@ -2,6 +2,7 @@ import dashboardModule from './modules/dashboard.js';
 import pazientiModule from './modules/pazienti.js';
 import pazienteEditorModule from './modules/paziente_editor.js';
 import agendaModule from './modules/agenda.js';
+import strutturaModule from './modules/struttura.js';
 import prestazioniModule from './modules/prestazioni.js';
 import staffModule from './modules/staff.js';
 import contabilitaModule from './modules/contabilita.js';
@@ -17,6 +18,7 @@ export default {
                 pazienti: { label: 'Pazienti & Cartelle', icon: 'person_search', module: pazientiModule },
                 paziente_editor: { label: 'Scheda Paziente', icon: 'person_add', module: pazienteEditorModule },
                 agenda: { label: 'Agenda Poltrone', icon: 'calendar_month', module: agendaModule },
+                struttura: { label: 'Sedi, Sale & Poltrone', icon: 'domain', module: strutturaModule },
                 prestazioni: { label: 'Listino Prestazioni', icon: 'list_alt', module: prestazioniModule },
                 staff: { label: 'Staff & Collaboratori', icon: 'badge', module: staffModule },
                 contabilita: { label: 'Finanze & Contabilità', icon: 'account_balance_wallet', module: contabilitaModule },

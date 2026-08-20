@@ -1,168 +1,147 @@
 import { callApi } from '../shared/api.js';
-import { renderHero, renderStatCard, formatDateTime } from '../shared/ui_kit.js';
+import { renderHero } from '../shared/ui_kit.js';
 
 export default {
     render: async (el, onNavigate) => {
         try {
-            el.innerHTML = '<div class="ds-root"><p style="text-align:center; padding:2rem;">Caricamento Hub Odontoiatrico...</p></div>';
+            el.innerHTML = '<div class="ds-root"><p style="text-align:center; padding:2rem;">Inizializzazione Dashboard...</p></div>';
 
-            const [appRes, pazRes, staffRes] = await Promise.all([
-                callApi('agenda:getAppuntamenti', { dateFrom: Date.now() - 24 * 3600 * 1000, dateTo: Date.now() + 7 * 24 * 3600 * 1000 }),
+            const [pazRes, appRes, staffRes, strutRes] = await Promise.all([
                 callApi('pazienti:getAll'),
-                callApi('staff:getAll')
+                callApi('agenda:getAppuntamenti', {
+                    dateFrom: new Date(new Date().setHours(0,0,0,0)).getTime(),
+                    dateTo: new Date(new Date().setHours(23,59,59,999)).getTime()
+                }),
+                callApi('staff:getAll'),
+                callApi('struttura:getAll')
             ]);
 
-            const appuntamenti = (appRes && appRes.success) ? appRes.data : [];
-            const pazienti = (pazRes && pazRes.success) ? pazRes.data : [];
-            const staffList = (staffRes && staffRes.success) ? staffRes.data : [];
-
-            const appOggi = appuntamenti.filter(a => {
-                const d = new Date(a.data_ora_inizio);
-                const today = new Date();
-                return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-            });
+            const pazientiCount = (pazRes && pazRes.success && Array.isArray(pazRes.data)) ? pazRes.data.length : 0;
+            const appuntamentiOggi = (appRes && appRes.success && Array.isArray(appRes.data)) ? appRes.data.length : 0;
+            const staffCount = (staffRes && staffRes.success && Array.isArray(staffRes.data)) ? staffRes.data.length : 0;
+            const poltroneCount = (strutRes && strutRes.success && strutRes.data && Array.isArray(strutRes.data.poltrone)) ? strutRes.data.poltrone.length : 0;
 
             const CARDS = [
                 {
                     id: 'pazienti',
                     title: 'Pazienti & Cartelle Cliniche',
-                    desc: 'Anagrafica, anamnesi medica, odontogramma interattivo FDI, prescrizioni e TAC/RMN.',
+                    subtitle: 'Cartelle complete a pieno schermo, anagrafica, anamnesi medica, odontogramma FDI e diario interventi.',
                     icon: 'person_search',
                     color: '#0d9488',
-                    bg: 'rgba(13,148,136,0.12)',
-                    badge: `${pazienti.length} Pazienti`
+                    badge: `${pazientiCount} Cartelle Attive`
                 },
                 {
                     id: 'agenda',
-                    title: 'Agenda & Gestione Poltrone',
-                    desc: 'Pianificazione visite per riunito, collision detector in tempo reale e promemoria WhatsApp.',
+                    title: 'Agenda Poltrone & Appuntamenti',
+                    subtitle: 'Planning poltrone, gestione orari, assegnazione automatica specialisti e notifiche promemoria.',
                     icon: 'calendar_month',
                     color: '#2563eb',
-                    bg: 'rgba(37,99,235,0.12)',
-                    badge: `${appOggi.length} Oggi`
+                    badge: `${appuntamentiOggi} Visite Oggi`
                 },
                 {
-                    id: 'prestazioni',
-                    title: 'Listino Prestazioni Cliniche',
-                    desc: 'Nomenclatore odontoiatrico, tempi poltrona, quote per medico e segreteria/ASO.',
-                    icon: 'list_alt',
-                    color: '#16a34a',
-                    bg: 'rgba(22,163,74,0.12)',
-                    badge: 'Tariffario'
-                },
-                {
-                    id: 'staff',
-                    title: 'Equipe Medica & Staff',
-                    desc: 'Medici odontoiatri, igienisti, assistenti alla poltrona ASO, segreteria e liquidazioni.',
-                    icon: 'badge',
-                    color: '#9333ea',
-                    bg: 'rgba(147,51,234,0.12)',
-                    badge: `${staffList.length} Membri`
+                    id: 'struttura',
+                    title: 'Sedi, Sale & Poltrone',
+                    subtitle: 'Configura le sedi dello studio, gli ambulatori e assegna i medici specialisti alle unità operative.',
+                    icon: 'domain',
+                    color: '#0891b2',
+                    badge: `${poltroneCount} Poltrone Configurate`
                 },
                 {
                     id: 'contabilita',
-                    title: 'Finanze, Incassi & Rate',
-                    desc: 'Area riservata: emissione ricevute, acconti, piani di rateizzazione e spese di studio.',
+                    title: 'Finanze & Contabilità Riservata',
+                    subtitle: 'Area protetta: emissione ricevute sanitarie, piani rateali, preventivi di spesa e uscite di studio.',
                     icon: 'account_balance_wallet',
+                    color: '#9333ea',
+                    badge: 'Area Riservata'
+                },
+                {
+                    id: 'prestazioni',
+                    title: 'Listino Prestazioni & Tariffe',
+                    subtitle: 'Catalogo clinico, tariffe, provvigioni medici ed assistenti e tempi di poltrona.',
+                    icon: 'list_alt',
+                    color: '#059669',
+                    badge: 'Nomenclatore Odontoiatrico'
+                },
+                {
+                    id: 'staff',
+                    title: 'Staff & Collaboratori Medici',
+                    subtitle: 'Equipe medica, assistenti, calcolo liquidazioni periodiche e controllo accessi RBAC.',
+                    icon: 'badge',
                     color: '#d97706',
-                    bg: 'rgba(217,119,6,0.12)',
-                    badge: 'Riservata'
+                    badge: `${staffCount} Operatori`
                 },
                 {
                     id: 'statistiche',
-                    title: 'Statistiche & Utili Direzione',
-                    desc: 'Cruscotto economico e margini operativi per il Direttore Sanitario (protetto RBAC).',
+                    title: 'Statistiche Direzione & Margini',
+                    subtitle: 'Cruscotto economico con grafici moderni SVG, andamento mensile, previsioni di cassa e margini.',
                     icon: 'monitoring',
                     color: '#e11d48',
-                    bg: 'rgba(225,29,72,0.12)',
-                    badge: 'Direzione'
+                    badge: 'Direzione Sanitaria'
                 }
             ];
+
+            const cardsHtml = CARDS.map(c => `
+                <div class="ds-hub-card ds-hub-card-clickable fade-in-up" data-module="${c.id}" style="--hub-card-accent: ${c.color};">
+                    <div class="ds-hub-card-header">
+                        <div class="ds-hub-card-icon" style="background: ${c.color};">
+                            <span class="material-symbols-rounded">${c.icon}</span>
+                        </div>
+                        <span class="ds-hub-card-badge">${c.badge}</span>
+                    </div>
+                    <h3 class="ds-hub-card-title">${c.title}</h3>
+                    <p class="ds-hub-card-subtitle">${c.subtitle}</p>
+                    <div class="ds-hub-card-footer">
+                        <span class="ds-hub-card-action">Accedi alla Sezione</span>
+                        <span class="material-symbols-rounded">arrow_forward</span>
+                    </div>
+                </div>
+            `).join('');
 
             el.innerHTML = `
                 <div class="ds-root fade-in-up">
                     ${renderHero({
-                        title: 'DentalSuite • Hub Operativo Clinico',
-                        subtitle: 'Seleziona una sezione per accedere alle funzionalità dello studio odontoiatrico.',
+                        title: 'DentalSuite Hub',
+                        subtitle: 'Piattaforma Professionale per la Gestione dello Studio Odontoiatrico Multi-Sede.',
                         icon: 'dentistry',
                         actionsHtml: `
-                            <button class="ds-btn ds-btn-hero" id="ds-quick-new-paz"><span class="material-symbols-rounded">person_add</span>Nuovo Paziente</button>
-                            <button class="ds-btn ds-btn-hero" id="ds-quick-new-app"><span class="material-symbols-rounded">calendar_add_on</span>Nuova Visita</button>
+                            <button class="ds-btn ds-btn-hero" id="ds-hub-quick-paz"><span class="material-symbols-rounded">person_add</span>Nuova Cartella</button>
+                            <button class="ds-btn ds-btn-hero" id="ds-hub-quick-app"><span class="material-symbols-rounded">add_circle</span>Nuova Visita</button>
                         `
                     })}
 
                     <div class="ds-hub-grid">
-                        ${CARDS.map(c => `
-                            <div class="ds-hub-card" data-target="${c.id}">
-                                <div class="ds-hub-card-header">
-                                    <div class="ds-hub-icon-wrap" style="background:${c.bg}; color:${c.color};">
-                                        <span class="material-symbols-rounded">${c.icon}</span>
-                                    </div>
-                                    <span class="ds-badge" style="background:${c.bg}; color:${c.color};">${c.badge}</span>
-                                </div>
-                                <div class="ds-hub-card-body">
-                                    <h3 class="ds-hub-card-title">${c.title}</h3>
-                                    <p class="ds-hub-card-desc">${c.desc}</p>
-                                </div>
-                                <div class="ds-hub-card-footer">
-                                    <span>Apri sezione</span>
-                                    <span class="material-symbols-rounded" style="font-size:1.1rem;">arrow_forward</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-
-                    <div class="ds-panel" style="margin-top:0.8rem;">
-                        <div class="ds-panel-header">
-                            <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">event_upcoming</span>Prossimi Appuntamenti in Poltrona (Vista Operativa)</div>
-                            <button class="ds-btn ds-btn-ghost" id="ds-hub-goto-agenda" style="font-size:0.8rem; padding:0.4rem 0.8rem;">Apri Agenda Completa</button>
-                        </div>
-                        <div class="ds-table-wrap">
-                            <table class="ds-table">
-                                <thead>
-                                    <tr>
-                                        <th>Data e Ora</th>
-                                        <th>Paziente</th>
-                                        <th>Medico / Operatore</th>
-                                        <th>Poltrona</th>
-                                        <th>Stato</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${appuntamenti.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding:1.5rem; color:var(--md-on-surface-variant);">Nessun appuntamento in programma.</td></tr>' : appuntamenti.slice(0, 5).map(a => `
-                                        <tr>
-                                            <td style="font-weight:700;">${formatDateTime(a.data_ora_inizio)}</td>
-                                            <td><strong>${a.paziente_cognome || ''} ${a.paziente_nome || ''}</strong><br><small style="color:var(--md-on-surface-variant);">Tel: ${a.paziente_telefono || '-'}</small></td>
-                                            <td><span class="ds-badge" style="background:${a.colore_calendario || '#0d9488'}22; color:${a.colore_calendario || '#0d9488'}; font-weight:800;">Dr. ${a.medico_cognome || ''}</span></td>
-                                            <td><span class="ds-badge ds-badge-teal">${a.poltrona || 'Unità 1'}</span></td>
-                                            <td><span class="ds-badge ds-badge-${a.stato === 'completato' ? 'green' : (a.stato === 'in_corso' ? 'blue' : (a.stato === 'in_attesa' ? 'amber' : 'teal'))}">${a.stato}</span></td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                        ${cardsHtml}
                     </div>
                 </div>
             `;
 
-            el.querySelectorAll('.ds-hub-card').forEach(card => {
+            el.querySelectorAll('.ds-hub-card-clickable').forEach(card => {
                 card.addEventListener('click', () => {
-                    const target = card.dataset.target;
-                    if (target && onNavigate) onNavigate(target);
+                    const mod = card.dataset.module;
+                    if (mod && onNavigate) onNavigate(mod);
                 });
             });
 
-            const btnP = el.querySelector('#ds-quick-new-paz');
-            if (btnP && onNavigate) btnP.addEventListener('click', () => onNavigate('pazienti', { openNew: true }));
+            const btnQuickPaz = el.querySelector('#ds-hub-quick-paz');
+            if (btnQuickPaz) {
+                btnQuickPaz.addEventListener('click', () => {
+                    if (onNavigate) onNavigate('paziente_editor');
+                });
+            }
 
-            const btnV = el.querySelector('#ds-quick-new-app');
-            if (btnV && onNavigate) btnV.addEventListener('click', () => onNavigate('agenda', { openNew: true }));
-
-            const btnGA = el.querySelector('#ds-hub-goto-agenda');
-            if (btnGA && onNavigate) btnGA.addEventListener('click', () => onNavigate('agenda'));
+            const btnQuickApp = el.querySelector('#ds-hub-quick-app');
+            if (btnQuickApp) {
+                btnQuickApp.addEventListener('click', () => {
+                    openAppointmentModal({
+                        onSaved: () => {
+                            if (onNavigate) onNavigate('agenda');
+                        }
+                    });
+                });
+            }
 
         } catch (e) {
-            el.innerHTML = `<div class="ds-root"><p style="color:var(--md-error);">Errore: ${e.message}</p></div>`;
+            el.innerHTML = `<div class="ds-root"><p style="color:var(--md-error);">Errore durante il caricamento dell'Hub: ${e.message}</p></div>`;
         }
     }
 };

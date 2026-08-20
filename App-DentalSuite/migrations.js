@@ -304,5 +304,58 @@ module.exports = [
             ALTER TABLE pazienti ADD COLUMN preferenze_orari TEXT DEFAULT '';
             ALTER TABLE pazienti ADD COLUMN pacemaker INTEGER DEFAULT 0;
         `
+    },
+    {
+        version: 4,
+        sql: `
+            CREATE TABLE IF NOT EXISTS sedi_studio (
+                id TEXT PRIMARY KEY,
+                nome TEXT NOT NULL,
+                codice TEXT DEFAULT '',
+                indirizzo TEXT DEFAULT '',
+                citta TEXT DEFAULT '',
+                cap TEXT DEFAULT '',
+                provincia TEXT DEFAULT '',
+                telefono TEXT DEFAULT '',
+                email TEXT DEFAULT '',
+                direttore_sanitario TEXT DEFAULT '',
+                is_principale INTEGER DEFAULT 0,
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS sale_studio (
+                id TEXT PRIMARY KEY,
+                sede_id TEXT NOT NULL,
+                nome TEXT NOT NULL,
+                tipo_sala TEXT DEFAULT 'operativa',
+                piano TEXT DEFAULT '',
+                codice_stanza TEXT DEFAULT '',
+                dotazioni TEXT DEFAULT '',
+                colore TEXT DEFAULT '#0d9488',
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_sale_sede ON sale_studio(sede_id);
+
+            CREATE TABLE IF NOT EXISTS poltrone_studio (
+                id TEXT PRIMARY KEY,
+                sede_id TEXT NOT NULL,
+                sala_id TEXT DEFAULT '',
+                nome TEXT NOT NULL,
+                codice_unita TEXT DEFAULT '',
+                marca_modello TEXT DEFAULT '',
+                matricola TEXT DEFAULT '',
+                medico_default_id TEXT DEFAULT '',
+                assistente_default_id TEXT DEFAULT '',
+                colore_agenda TEXT DEFAULT '#0d9488',
+                stato TEXT DEFAULT 'attiva',
+                note TEXT DEFAULT '',
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_poltrone_sede ON poltrone_studio(sede_id);
+            CREATE INDEX IF NOT EXISTS idx_poltrone_sala ON poltrone_studio(sala_id);
+        `
     }
 ];

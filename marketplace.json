@@ -58,20 +58,20 @@
   {
     "id": "adestio_business_suite",
     "name": "Adestio Business Suite",
-    "version": "1.0.38",
+    "version": "1.0.39",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "author": "NunzioTech",
-    "published_at": "2026-05-20T08:00:00Z",
-    "updated_at": "2026-08-20T10:00:00Z",
+    "published_at": "2026-08-20T11:11:24.087Z",
+    "updated_at": "2026-08-20T11:11:24.087Z",
     "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
-    "long_description": "Adestio Business Suite è la soluzione completa e flessibile per gestire l'intero ciclo commerciale aziendale: preventivazione con simulatore margini, emissione ed esportazione fatture elettroniche XML SDI, anagrafiche clienti/fornitori, gestione magazzino e POS per schermi touch.",
+    "long_description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
     "category": "erp",
     "icon": "icon.png",
     "folder": "adestio_business_suite",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.38.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v1.0.39.zip",
     "ipc": {
       "namespace": "businessSuite",
       "handlers": [
@@ -92,15 +92,11 @@
       "anagrafica:*",
       "datiAzienda:*"
     ],
-    "legal_info": "Conforme agli standard dell'Agenzia delle Entrate per la fatturazione elettronica PA/B2B e alla normativa GDPR.",
+    "legal_info": "",
     "links": [
       {
-        "rel": "Sito Web",
-        "href": "https://github.com/AprileNunzio"
-      },
-      {
-        "rel": "Documentazione",
-        "href": "https://github.com/AprileNunzio/Adestio-App-BusinessSuite"
+        "rel": "help",
+        "href": "https://adestio.nunziotech.com/docs/business_suite"
       }
     ],
     "ui_injections": [
@@ -117,12 +113,13 @@
         "src": "index.html"
       }
     ],
-    "sha256": "742576e2f140dcd2afb33142d0d825acdb00a4b90db1dac689884d1c3a0e623b"
+    "sha256": "6325e132ab6935e734e327829c0355e69d5d5eb14b67e6bacb0c3423e9c0d842",
+    "color": "#6366F1"
   },
   {
     "id": "adestio_dental_suite",
     "name": "Adestio DentalSuite",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "description": "Gestionale completo per studi dentistici: cartelle cliniche, odontogramma interattivo, agenda multi-medico, compensi staff, TAC/RMN e statistiche.",
@@ -133,8 +130,8 @@
     "color": "#0d9488",
     "published_at": "2026-08-20T10:00:00Z",
     "updated_at": "2026-08-20T10:00:00Z",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v1.0.6.zip",
-    "sha256": "77d387c27867efa10ceb59d5d4b3d3b1c9196492ad28e415369e7a3d5959964e",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v1.0.7.zip",
+    "sha256": "84c41394dc5f0269288989d10c0ff5cd103bada443444ebf3457b7ded97e1fa9",
     "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",
     "links": [
       {

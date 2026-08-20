@@ -1,79 +1,75 @@
-const dbUtils = require('./backend/db_utils');
+const { initDB } = require('./backend/db_utils');
 const pazientiBackend = require('./backend/pazienti_backend');
-const agendaBackend = require('./backend/agenda_backend');
 const prestazioniBackend = require('./backend/prestazioni_backend');
+const agendaBackend = require('./backend/agenda_backend');
 const staffBackend = require('./backend/staff_backend');
 const contabilitaBackend = require('./backend/contabilita_backend');
-const statisticheBackend = require('./backend/statistiche_backend');
 const allegatiBackend = require('./backend/allegati_backend');
-const notificheHandler = require('./backend/notifiche_handler');
+const statisticheBackend = require('./backend/statistiche_backend');
 const rateHandler = require('./backend/rate_handler');
+const notificheHandler = require('./backend/notifiche_handler');
+const strutturaBackend = require('./backend/struttura_backend');
 
-function registerBackendHandlers(registerApi, app, adestioDb) {
+function registerBackendHandlers(registerApi, app, context) {
     try {
-        dbUtils.configure(adestioDb);
+        initDB(context);
 
-        function on(action, fn) {
-            try {
-                registerApi(`dentalSuite:${action}`, (event, args) => fn(event, args));
-            } catch (e) {}
-        }
+        registerApi('pazienti:getAll', pazientiBackend.getAll);
+        registerApi('pazienti:getById', pazientiBackend.getById);
+        registerApi('pazienti:create', pazientiBackend.create);
+        registerApi('pazienti:update', pazientiBackend.update);
+        registerApi('pazienti:remove', pazientiBackend.remove);
+        registerApi('pazienti:saveAnamnesi', pazientiBackend.saveAnamnesi);
+        registerApi('pazienti:saveOdontogrammaDente', pazientiBackend.saveOdontogrammaDente);
+        registerApi('pazienti:addTrattamento', pazientiBackend.addTrattamento);
+        registerApi('pazienti:deleteTrattamento', pazientiBackend.deleteTrattamento);
+        registerApi('pazienti:addPrescrizione', pazientiBackend.addPrescrizione);
+        registerApi('pazienti:deletePrescrizione', pazientiBackend.deletePrescrizione);
+        registerApi('pazienti:getTrattamenti', pazientiBackend.getTrattamenti);
 
-        on('pazienti:getAll', pazientiBackend.getAll);
-        on('pazienti:getById', pazientiBackend.getById);
-        on('pazienti:create', pazientiBackend.create);
-        on('pazienti:update', pazientiBackend.update);
-        on('pazienti:remove', pazientiBackend.remove);
-        on('pazienti:saveAnamnesi', pazientiBackend.saveAnamnesi);
-        on('pazienti:saveOdontogrammaDente', pazientiBackend.saveOdontogrammaDente);
-        on('pazienti:addTrattamento', pazientiBackend.addTrattamento);
-        on('pazienti:deleteTrattamento', pazientiBackend.deleteTrattamento);
-        on('pazienti:addPrescrizione', pazientiBackend.addPrescrizione);
-        on('pazienti:deletePrescrizione', pazientiBackend.deletePrescrizione);
+        registerApi('prestazioni:getAll', prestazioniBackend.getAll);
+        registerApi('prestazioni:save', prestazioniBackend.save);
+        registerApi('prestazioni:remove', prestazioniBackend.remove);
 
-        on('agenda:getAppuntamenti', agendaBackend.getAppuntamenti);
-        on('agenda:createAppuntamento', agendaBackend.createAppuntamento);
-        on('agenda:updateAppuntamento', agendaBackend.updateAppuntamento);
-        on('agenda:updateStato', agendaBackend.updateStato);
-        on('agenda:deleteAppuntamento', agendaBackend.deleteAppuntamento);
+        registerApi('agenda:getAppuntamenti', agendaBackend.getAppuntamenti);
+        registerApi('agenda:saveAppuntamento', agendaBackend.saveAppuntamento);
+        registerApi('agenda:deleteAppuntamento', agendaBackend.deleteAppuntamento);
 
-        on('prestazioni:getAll', prestazioniBackend.getAll);
-        on('prestazioni:create', prestazioniBackend.create);
-        on('prestazioni:update', prestazioniBackend.update);
-        on('prestazioni:remove', prestazioniBackend.remove);
+        registerApi('staff:getAll', staffBackend.getAll);
+        registerApi('staff:save', staffBackend.save);
+        registerApi('staff:remove', staffBackend.remove);
+        registerApi('staff:getCurrentUser', staffBackend.getCurrentUser);
+        registerApi('staff:calcolaLiquidazione', staffBackend.calcolaLiquidazione);
+        registerApi('staff:salvaLiquidazione', staffBackend.salvaLiquidazione);
 
-        on('staff:getAll', staffBackend.getAll);
-        on('staff:create', staffBackend.create);
-        on('staff:update', staffBackend.update);
-        on('staff:remove', staffBackend.remove);
-        on('staff:getLiquidazioni', staffBackend.getLiquidazioni);
-        on('staff:creaLiquidazione', staffBackend.creaLiquidazione);
+        registerApi('contabilita:getPreventivi', contabilitaBackend.getPreventivi);
+        registerApi('contabilita:savePreventivo', contabilitaBackend.savePreventivo);
+        registerApi('contabilita:getIncassi', contabilitaBackend.getIncassi);
+        registerApi('contabilita:registraIncasso', contabilitaBackend.registraIncasso);
+        registerApi('contabilita:getSpese', contabilitaBackend.getSpese);
+        registerApi('contabilita:registraSpesa', contabilitaBackend.registraSpesa);
 
-        on('contabilita:getPreventivi', contabilitaBackend.getPreventivi);
-        on('contabilita:createPreventivo', contabilitaBackend.createPreventivo);
-        on('contabilita:updatePreventivo', contabilitaBackend.updatePreventivo);
-        on('contabilita:deletePreventivo', contabilitaBackend.deletePreventivo);
-        on('contabilita:getIncassi', contabilitaBackend.getIncassi);
-        on('contabilita:registraIncasso', contabilitaBackend.registraIncasso);
-        on('contabilita:getSpese', contabilitaBackend.getSpese);
-        on('contabilita:registraSpesa', contabilitaBackend.registraSpesa);
-        on('contabilita:deleteSpesa', contabilitaBackend.deleteSpesa);
+        registerApi('rate:getPianiByPaziente', rateHandler.getPianiByPaziente);
+        registerApi('rate:creaPianoRateale', rateHandler.creaPianoRateale);
+        registerApi('rate:saldaRata', rateHandler.saldaRata);
+        registerApi('rate:getAllScadenziario', rateHandler.getAllScadenziario);
 
-        on('statistiche:getGlobalStats', statisticheBackend.getGlobalStats);
-        on('statistiche:getStatsByMedico', statisticheBackend.getStatsByMedico);
-        on('statistiche:getStatsByBranca', statisticheBackend.getStatsByBranca);
+        registerApi('notifiche:sendManual', notificheHandler.sendManual);
+        registerApi('notifiche:getByPaziente', notificheHandler.getByPaziente);
 
-        on('allegati:getByPaziente', allegatiBackend.getByPaziente);
-        on('allegati:upload', allegatiBackend.uploadAllegato);
-        on('allegati:delete', allegatiBackend.deleteAllegato);
-        on('allegati:open', allegatiBackend.openAllegato);
+        registerApi('allegati:getAll', allegatiBackend.getAll);
+        registerApi('allegati:upload', allegatiBackend.upload);
+        registerApi('allegati:remove', allegatiBackend.remove);
 
-        on('notifiche:log', notificheHandler.logNotification);
-        on('notifiche:getByPaziente', notificheHandler.getLogsByPaziente);
+        registerApi('statistiche:getKpi', statisticheBackend.getKpi);
 
-        on('rate:creaPiano', rateHandler.creaPianoRateale);
-        on('rate:getPianiByPaziente', rateHandler.getPianiByPaziente);
-        on('rate:pagaRata', rateHandler.pagaRata);
+        registerApi('struttura:getAll', strutturaBackend.getAll);
+        registerApi('struttura:saveSede', strutturaBackend.saveSede);
+        registerApi('struttura:removeSede', strutturaBackend.removeSede);
+        registerApi('struttura:saveSala', strutturaBackend.saveSala);
+        registerApi('struttura:removeSala', strutturaBackend.removeSala);
+        registerApi('struttura:savePoltrona', strutturaBackend.savePoltrona);
+        registerApi('struttura:removePoltrona', strutturaBackend.removePoltrona);
 
         return true;
     } catch (e) {
