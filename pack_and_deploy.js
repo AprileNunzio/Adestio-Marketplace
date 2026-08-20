@@ -48,7 +48,7 @@ async function runDeploy() {
             manifest.version = version;
         }
 
-        manifest.integrity_hash = computeFileHash(manifestPath);
+        delete manifest.integrity_hash;
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
         const zipName = `${manifest.id}_v${version}.zip`;
