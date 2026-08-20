@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderHero, renderModal, formatCurrency, formatDate } from '../shared/ui_kit.js';
+import { renderHero, renderModal, formatCurrency, formatDate , showNotification } from '../shared/ui_kit.js';
 import { openInstallmentPlanModal } from '../components/installment_modal.js';
 import { createPatientSearchPicker } from '../components/patient_search_picker.js';
 
@@ -335,7 +335,7 @@ export default {
                     try {
                         const selPazId = patientPicker.getSelectedPazienteId();
                         if (!selPazId) {
-                            alert('Seleziona un paziente.');
+                            showNotification('Seleziona un paziente.', 'error');
                             return;
                         }
 
@@ -349,10 +349,10 @@ export default {
                             close();
                             renderScreen();
                         } else {
-                            alert(res.error || 'Errore');
+                            showNotification(res.error || 'Errore', 'error');
                         }
                     } catch (err) {
-                        alert(err.message);
+                        showNotification(err.message, 'error');
                     }
                 });
             }
@@ -436,10 +436,10 @@ export default {
                             close();
                             renderScreen();
                         } else {
-                            alert(res.error || 'Errore');
+                            showNotification(res.error || 'Errore', 'error');
                         }
                     } catch (err) {
-                        alert(err.message);
+                        showNotification(err.message, 'error');
                     }
                 });
             }

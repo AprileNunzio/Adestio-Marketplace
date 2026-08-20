@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderHero, renderModal, formatCurrency, formatDate } from '../shared/ui_kit.js';
+import { renderHero, renderModal, formatCurrency, formatDate , showNotification } from '../shared/ui_kit.js';
 
 export default {
     render: async (el, onNavigate) => {
@@ -187,10 +187,10 @@ export default {
                             close();
                             this.render(el, onNavigate);
                         } else {
-                            alert(sRes.error || 'Errore');
+                            showNotification(sRes.error || 'Errore', 'error');
                         }
                     } catch (err) {
-                        alert(err.message);
+                        showNotification(err.message, 'error');
                     }
                 });
             }
@@ -260,10 +260,10 @@ export default {
                             close();
                             this.render(el, onNavigate);
                         } else {
-                            alert(res.error || 'Errore');
+                            showNotification(res.error || 'Errore', 'error');
                         }
                     } catch (err) {
-                        alert(err.message);
+                        showNotification(err.message, 'error');
                     }
                 });
             }

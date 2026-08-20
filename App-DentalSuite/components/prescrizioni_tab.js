@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderModal, formatDate } from '../shared/ui_kit.js';
+import { renderModal, formatDate , showNotification } from '../shared/ui_kit.js';
 
 export function renderPrescrizioniTab(container, { pazienteId, prescrizioni = [], allStaff = [], onUpdated }) {
     try {
@@ -112,7 +112,7 @@ function openPrescrizioneModal(pazienteId, allStaff, onUpdated) {
                 close();
                 if (typeof onUpdated === 'function') onUpdated();
             } else {
-                alert(res.error || 'Errore');
+                showNotification(res.error || 'Errore', 'error');
             }
         });
     } catch (e) {}

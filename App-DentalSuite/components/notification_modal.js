@@ -1,4 +1,4 @@
-import { renderModal } from '../shared/ui_kit.js';
+import { renderModal , showNotification } from '../shared/ui_kit.js';
 import { sendWhatsAppManual, sendEmailManual } from '../services/notification_service.js';
 import { generateAppointmentWhatsAppMessage, generateAppointmentEmail, generateInstallmentReminderMessage } from '../domain/message_templates.js';
 
@@ -87,15 +87,15 @@ export function openNotificationModal({ paziente, appuntamento, rata, onSent }) 
                 const selectedChannel = mEl.querySelector('[name=ds_notify_channel]:checked').value;
                 if (selectedChannel === 'whatsapp') {
                     const res = await sendWhatsAppManual({ paziente, appuntamento, rata });
-                    if (!res.success) { alert(res.error); return; }
+                    if (!res.success) { showNotification(res.error, 'error'); return; }
                 } else {
                     const res = await sendEmailManual({ paziente, appuntamento, rata });
-                    if (!res.success) { alert(res.error); return; }
+                    if (!res.success) { showNotification(res.error, 'error'); return; }
                 }
                 close();
                 if (typeof onSent === 'function') onSent();
             } catch (err) {
-                alert(err.message);
+                showNotification(err.message, 'error');
             }
         });
     } catch (e) {}

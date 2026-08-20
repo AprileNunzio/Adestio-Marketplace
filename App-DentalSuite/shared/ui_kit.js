@@ -96,3 +96,32 @@ export function renderModal({ id, title, icon = 'edit', bodyHtml = '', footerHtm
         return '';
     }
 }
+
+export function showNotification(message, type = 'info') {
+    try {
+        let container = document.getElementById('ds-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'ds-toast-container';
+            container.style.cssText = 'position:fixed; top:20px; right:20px; z-index:999999; display:flex; flex-direction:column; gap:10px; pointer-events:none;';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = 'fade-in-up';
+        const color = type === 'error' || type === 'danger' ? '#e11d48' : (type === 'success' ? '#16a34a' : (type === 'warning' ? '#d97706' : '#0d9488'));
+        const icon = type === 'error' || type === 'danger' ? 'error' : (type === 'success' ? 'check_circle' : (type === 'warning' ? 'warning' : 'info'));
+        
+        toast.style.cssText = `pointer-events:auto; background:var(--md-surface, #ffffff); color:var(--md-on-surface, #1e293b); border:1.5px solid ${color}; border-left:6px solid ${color}; border-radius:14px; padding:0.85rem 1.2rem; box-shadow:0 10px 30px rgba(0,0,0,0.25); display:flex; align-items:center; gap:0.75rem; font-size:0.9rem; font-weight:700; max-width:420px;`;
+        toast.innerHTML = `
+            <span class="material-symbols-rounded" style="color:${color}; font-size:1.4rem;">${icon}</span>
+            <span style="flex:1;">${message}</span>
+            <button style="background:transparent; border:none; cursor:pointer; color:var(--md-on-surface-variant); padding:2px; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:1.1rem;">close</span></button>
+        `;
+        
+        container.appendChild(toast);
+        const close = () => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-10px)'; setTimeout(() => toast.remove(), 250); };
+        toast.querySelector('button').addEventListener('click', close);
+        setTimeout(close, 4500);
+    } catch (e) {}
+}

@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderHero } from '../shared/ui_kit.js';
+import { renderHero , showNotification } from '../shared/ui_kit.js';
 import { calculateAge, formatPatientDemographics } from '../shared/formatters.js';
 
 export default {
@@ -17,7 +17,7 @@ export default {
                     paziente = res.data.paziente || {};
                     anamnesi = res.data.anamnesi || {};
                 } else {
-                    alert('Paziente non trovato.');
+                    showNotification('Paziente non trovato.', 'error');
                     if (onNavigate) onNavigate('pazienti');
                     return;
                 }
@@ -324,27 +324,39 @@ export default {
             el.querySelector('#ds-editor-cancel').addEventListener('click', cancelHandler);
             el.querySelector('#ds-editor-cancel-bottom').addEventListener('click', cancelHandler);
 
-            const saveHandler = async () => {
+                        const saveHandler = async () => {
                 try {
                     const form = el.querySelector('#ds-form-paziente-full');
+                    if (!form) return;
+
+                    const cognome = (form.querySelector('[name=cognome]')?.value || '').trim();
+                    const nome = (form.querySelector('[name=nome]')?.value || '').trim();
+                    const codiceFiscale = (form.querySelector('[name=codice_fiscale]')?.value || '').trim().toUpperCase();
+
+                    if (!cognome || !nome) {
+                        showNotification('Cognome e Nome sono obbligatori.', 'danger');
+                        form.querySelector('[name=cognome]')?.focus();
+                        return;
+                    }
+                    if (!codiceFiscale) {
+                        showNotification('Il Codice Fiscale è obbligatorio.', 'danger');
+                        form.querySelector('[name=codice_fiscale]')?.focus();
+                        return;
+                    }
+
                     const formData = new FormData(form);
                     const payload = Object.fromEntries(formData.entries());
 
-                    if (!payload.cognome || !payload.nome) {
-                        alert('Cognome e Nome sono obbligatori.');
-                        return;
-                    }
-                    if (!payload.codice_fiscale) {
-                        alert('Il Codice Fiscale è obbligatorio.');
-                        return;
-                    }
+                    payload.cognome = cognome;
+                    payload.nome = nome;
+                    payload.codice_fiscale = codiceFiscale;
 
-                    payload.pacemaker = form.querySelector('[name=pacemaker]').checked;
-                    payload.terapia_anticoagulanti = form.querySelector('[name=terapia_anticoagulanti]').checked;
-                    payload.patologie_cardiovascolari = form.querySelector('[name=patologie_cardiovascolari]').checked;
-                    payload.diabete = form.querySelector('[name=diabete]').checked;
-                    payload.ipertensione = form.querySelector('[name=ipertensione]').checked;
-                    payload.ansia_odontoiatrica = form.querySelector('[name=ansia_odontoiatrica]').checked;
+                    payload.pacemaker = form.querySelector('[name=pacemaker]')?.checked || false;
+                    payload.terapia_anticoagulanti = form.querySelector('[name=terapia_anticoagulanti]')?.checked || false;
+                    payload.patologie_cardiovascolari = form.querySelector('[name=patologie_cardiovascolari]')?.checked || false;
+                    payload.diabete = form.querySelector('[name=diabete]')?.checked || false;
+                    payload.ipertensione = form.querySelector('[name=ipertensione]')?.checked || false;
+                    payload.ansia_odontoiatrica = form.querySelector('[name=ansia_odontoiatrica]')?.checked || false;
 
                     if (isEdit) payload.id = paziente.id;
 
@@ -352,13 +364,16 @@ export default {
                     const res = await callApi(action, payload);
 
                     if (res && res.success) {
+                        showNotification(isEdit ? 'Scheda paziente aggiornata con successo' : 'Paziente registrato con successo!', 'success');
                         const targetId = isEdit ? paziente.id : (res.data && res.data.id);
-                        if (onNavigate) onNavigate('pazienti', { pazienteId: targetId });
+                        setTimeout(() => {
+                            if (onNavigate) onNavigate('pazienti', { pazienteId: targetId });
+                        }, 500);
                     } else {
-                        alert(res.error || 'Errore nel salvataggio della scheda paziente');
+                        showNotification(res.error || 'Errore nel salvataggio della scheda paziente', 'danger');
                     }
                 } catch (err) {
-                    alert(err.message);
+                    showNotification(err.message, 'danger');
                 }
             };
 

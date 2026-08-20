@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderModal } from '../shared/ui_kit.js';
+import { renderModal , showNotification } from '../shared/ui_kit.js';
 
 export function openPazienteFormModal({ paziente = null, onSaved }) {
     try {
@@ -82,10 +82,10 @@ export function openPazienteFormModal({ paziente = null, onSaved }) {
                     close();
                     if (typeof onSaved === 'function') onSaved(isEdit ? paziente.id : (pRes.data && pRes.data.id));
                 } else {
-                    alert(pRes.error || 'Errore');
+                    showNotification(pRes.error || 'Errore', 'error');
                 }
             } catch (err) {
-                alert(err.message);
+                showNotification(err.message, 'error');
             }
         });
     } catch (e) {}

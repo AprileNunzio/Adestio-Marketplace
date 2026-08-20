@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderModal, formatCurrency, formatDate } from '../shared/ui_kit.js';
+import { renderModal, formatCurrency, formatDate , showNotification } from '../shared/ui_kit.js';
 
 export function renderTrattamentiTab(container, { pazienteId, trattamenti = [], allStaff = [], allPrestazioni = [], onUpdated }) {
     try {
@@ -176,7 +176,7 @@ function openTrattamentoModal(pazienteId, allStaff, allPrestazioni, onUpdated) {
                 close();
                 if (typeof onUpdated === 'function') onUpdated();
             } else {
-                alert(res.error || 'Errore');
+                showNotification(res.error || 'Errore', 'error');
             }
         });
     } catch (e) {}

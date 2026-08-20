@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderModal } from '../shared/ui_kit.js';
+import { renderModal , showNotification } from '../shared/ui_kit.js';
 import { detectAppointmentConflicts } from '../domain/appointment_validator.js';
 import { createPatientSearchPicker } from './patient_search_picker.js';
 
@@ -186,7 +186,7 @@ export function openAppointmentModal({ appointment = null, defaultDate = null, d
                     return;
                 }
                 if (!selectedPazienteId) {
-                    alert('Seleziona un paziente dal campo di ricerca.');
+                    showNotification('Seleziona un paziente dal campo di ricerca.', 'error');
                     return;
                 }
 
@@ -213,7 +213,7 @@ export function openAppointmentModal({ appointment = null, defaultDate = null, d
                     closeModal();
                     if (onSaved) onSaved();
                 } else {
-                    alert((res && res.error) || 'Errore salvataggio appuntamento');
+                    showNotification((res && res.error) || 'Errore salvataggio appuntamento', 'error');
                 }
             });
         }

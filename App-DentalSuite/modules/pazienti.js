@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderHero, formatDate } from '../shared/ui_kit.js';
+import { renderHero, formatDate , showNotification } from '../shared/ui_kit.js';
 import { openNotificationModal } from '../components/notification_modal.js';
 import { renderOdontogramTab } from '../components/odontogram_tab.js';
 import { renderAnamnesiTab } from '../components/anamnesi_tab.js';
@@ -150,7 +150,7 @@ export default {
                     ]);
 
                     if (!res || !res.success || !res.data) {
-                        alert('Impossibile caricare la cartella');
+                        showNotification('Impossibile caricare la cartella', 'error');
                         renderList();
                         return;
                     }

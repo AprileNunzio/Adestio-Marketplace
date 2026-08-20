@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderModal, formatCurrency, formatDate } from '../shared/ui_kit.js';
+import { renderModal, formatCurrency, formatDate , showNotification } from '../shared/ui_kit.js';
 import { calculateInstallmentPlan } from '../domain/installment_calculator.js';
 import { createPatientSearchPicker } from './patient_search_picker.js';
 
@@ -119,7 +119,7 @@ export function openInstallmentPlanModal({ pazienteId = null, preventivo = null,
                 try {
                     const selPazId = patientPicker.getSelectedPazienteId();
                     if (!selPazId) {
-                        alert('Seleziona un paziente.');
+                        showNotification('Seleziona un paziente.', 'error');
                         return;
                     }
 
@@ -143,10 +143,10 @@ export function openInstallmentPlanModal({ pazienteId = null, preventivo = null,
                         close();
                         if (typeof onCreated === 'function') onCreated(res.data);
                     } else {
-                        alert(res.error || 'Errore nella creazione del piano');
+                        showNotification(res.error || 'Errore nella creazione del piano', 'error');
                     }
                 } catch (err) {
-                    alert(err.message);
+                    showNotification(err.message, 'error');
                 }
             });
         }

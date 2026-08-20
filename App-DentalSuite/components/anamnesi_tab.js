@@ -1,3 +1,4 @@
+import { showNotification } from '../shared/ui_kit.js';
 import { callApi } from '../shared/api.js';
 
 export function renderAnamnesiTab(container, { pazienteId, anamnesi = {} }) {
@@ -78,7 +79,7 @@ export function renderAnamnesiTab(container, { pazienteId, anamnesi = {} }) {
                 note_mediche: form.querySelector('[name=note_mediche]').value
             };
             await callApi('pazienti:saveAnamnesi', payload);
-            alert('Anamnesi salvata');
+            showNotification('Anamnesi salvata', 'error');
         });
     } catch (e) {}
 }
