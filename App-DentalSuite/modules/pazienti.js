@@ -1,5 +1,5 @@
 import { callApi } from '../shared/api.js';
-import { renderHero, formatCurrency, formatDate } from '../shared/ui_kit.js';
+import { renderHero, formatDate } from '../shared/ui_kit.js';
 import { openNotificationModal } from '../components/notification_modal.js';
 import { openPazienteFormModal } from '../components/paziente_form_modal.js';
 import { renderOdontogramTab } from '../components/odontogram_tab.js';
@@ -37,7 +37,7 @@ export default {
                         <div class="ds-root fade-in-up">
                             ${renderHero({
                                 title: 'Cartelle Cliniche & Pazienti',
-                                subtitle: 'Anamnesi, odontogramma interattivo FDI, trattamenti, piani rateali e notifiche.',
+                                subtitle: 'Anamnesi sanitaria, odontogramma interattivo FDI, diario interventi e prescrizioni.',
                                 icon: 'person_search',
                                 actionsHtml: `<button class="ds-btn ds-btn-hero" id="ds-btn-new-paziente"><span class="material-symbols-rounded">person_add</span>Nuovo Paziente</button>`
                             })}
@@ -45,7 +45,7 @@ export default {
                             <div class="ds-panel">
                                 <div class="ds-panel-header">
                                     <div style="position:relative; flex:1; max-width:400px;">
-                                        <input type="text" id="ds-search-pazienti" class="ds-input" style="width:100%; padding-left:2.4rem;" placeholder="Cerca per nome, CF o telefono...">
+                                        <input type="text" id="ds-search-pazienti" class="ds-input" style="width:100%; padding-left:2.4rem;" placeholder="Cerca per cognome, nome, CF o telefono...">
                                         <span class="material-symbols-rounded" style="position:absolute; left:0.8rem; top:50%; transform:translateY(-50%); color:var(--md-on-surface-variant); font-size:1.2rem;">search</span>
                                     </div>
                                     <span class="ds-badge ds-badge-teal">${pazienti.length} Pazienti in Archivio</span>
@@ -159,15 +159,9 @@ export default {
                     const trattamenti = data.trattamenti || [];
                     const prescrizioni = data.prescrizioni || [];
                     const allegati = data.allegati || [];
-                    const pagamenti = data.pagamenti || [];
 
-                    const pianiRateali = (rateRes && rateRes.success && rateRes.data) ? rateRes.data.piani || [] : [];
                     const rateList = (rateRes && rateRes.success && rateRes.data) ? rateRes.data.rate || [] : [];
                     const notificheLog = (notifRes && notifRes.success) ? notifRes.data || [] : [];
-
-                    const totTrattamenti = trattamenti.reduce((acc, t) => acc + (Number(t.importo) || 0), 0);
-                    const totPagato = pagamenti.reduce((acc, pg) => acc + (Number(pg.importo) || 0), 0);
-                    const saldoResiduo = totTrattamenti - totPagato;
 
                     el.innerHTML = `
                         <div class="ds-root fade-in-up">
@@ -189,14 +183,9 @@ export default {
                                     <button class="ds-nav-btn ${currentTab === 'anamnesi' ? 'active' : ''}" data-tab="anamnesi"><span class="material-symbols-rounded">medical_information</span>Anamnesi</button>
                                     <button class="ds-nav-btn ${currentTab === 'odontogramma' ? 'active' : ''}" data-tab="odontogramma"><span class="material-symbols-rounded">dentistry</span>Odontogramma FDI</button>
                                     <button class="ds-nav-btn ${currentTab === 'trattamenti' ? 'active' : ''}" data-tab="trattamenti"><span class="material-symbols-rounded">healing</span>Diario Clinico (${trattamenti.length})</button>
-                                    <button class="ds-nav-btn ${currentTab === 'rate' ? 'active' : ''}" data-tab="rate"><span class="material-symbols-rounded">credit_card</span>Piani Rateali (${pianiRateali.length})</button>
+                                    <button class="ds-nav-btn ${currentTab === 'rate' ? 'active' : ''}" data-tab="rate"><span class="material-symbols-rounded">credit_card</span>Piani Rateali (${rateList.length})</button>
                                     <button class="ds-nav-btn ${currentTab === 'prescrizioni' ? 'active' : ''}" data-tab="prescrizioni"><span class="material-symbols-rounded">prescriptions</span>Ricette (${prescrizioni.length})</button>
                                     <button class="ds-nav-btn ${currentTab === 'allegati' ? 'active' : ''}" data-tab="allegati"><span class="material-symbols-rounded">perm_media</span>TAC / RMN / Rx (${allegati.length})</button>
-                                </div>
-                                <div style="display:flex; gap:0.6rem; align-items:center;">
-                                    <span class="ds-badge ds-badge-teal">Lavori: ${formatCurrency(totTrattamenti)}</span>
-                                    <span class="ds-badge ds-badge-green">Pagato: ${formatCurrency(totPagato)}</span>
-                                    <span class="ds-badge ${saldoResiduo > 0 ? 'ds-badge-rose' : 'ds-badge-blue'}">Saldo: ${formatCurrency(saldoResiduo)}</span>
                                 </div>
                             </div>
 

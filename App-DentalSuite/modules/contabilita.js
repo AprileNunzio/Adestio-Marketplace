@@ -1,24 +1,25 @@
 import { callApi } from '../shared/api.js';
 import { renderHero, renderModal, formatCurrency, formatDate } from '../shared/ui_kit.js';
 import { openInstallmentPlanModal } from '../components/installment_modal.js';
-import { openNotificationModal } from '../components/notification_modal.js';
 
 export default {
     render: async (el, onNavigate) => {
         try {
-            el.innerHTML = '<div class="ds-root"><p style="text-align:center; padding:2rem;">Caricamento Contabilità Studio...</p></div>';
+            el.innerHTML = '<div class="ds-root"><p style="text-align:center; padding:2rem;">Accesso Area Finanze & Amministrazione...</p></div>';
 
-            const [incRes, speseRes, prevRes, pazRes] = await Promise.all([
+            const [incRes, speseRes, prevRes, pazRes, liqRes] = await Promise.all([
                 callApi('contabilita:getIncassi'),
                 callApi('contabilita:getSpese'),
                 callApi('contabilita:getPreventivi'),
-                callApi('pazienti:getAll')
+                callApi('pazienti:getAll'),
+                callApi('staff:getLiquidazioni')
             ]);
 
             const incassi = (incRes && incRes.success) ? incRes.data : [];
             const spese = (speseRes && speseRes.success) ? speseRes.data : [];
             const preventivi = (prevRes && prevRes.success) ? prevRes.data : [];
             const pazienti = (pazRes && pazRes.success) ? pazRes.data : [];
+            const liquidazioni = (liqRes && liqRes.success) ? liqRes.data : [];
 
             let subTab = 'incassi';
 
@@ -27,11 +28,18 @@ export default {
                 const totSpese = spese.reduce((a, b) => a + (Number(b.importo) || 0), 0);
                 const bilancio = totInc - totSpese;
 
+                const SUB_CARDS = [
+                    { id: 'incassi', label: 'Ricevute & Incassi', icon: 'payments', count: incassi.length, color: '#16a34a', bg: 'rgba(22,163,74,0.12)' },
+                    { id: 'preventivi', label: 'Preventivi & Piani di Cura', icon: 'request_quote', count: preventivi.length, color: '#2563eb', bg: 'rgba(37,99,235,0.12)' },
+                    { id: 'spese', label: 'Spese & Uscite Studio', icon: 'shopping_bag', count: spese.length, color: '#e11d48', bg: 'rgba(225,29,72,0.12)' },
+                    { id: 'liquidazioni', label: 'Liquidazioni Staff', icon: 'receipt_long', count: liquidazioni.length, color: '#9333ea', bg: 'rgba(147,51,234,0.12)' }
+                ];
+
                 el.innerHTML = `
                     <div class="ds-root fade-in-up">
                         ${renderHero({
-                            title: 'Contabilità Studio & Incassi Pazienti',
-                            subtitle: 'Ricevute sanitarie, rateizzazioni, acconti, acquisto materiali dentali e spese di gestione.',
+                            title: 'Area Finanze & Amministrazione Riservata',
+                            subtitle: 'Gestione contabile centralizzata: ricevute sanitarie, acconti, rateizzazioni, preventivi e spese di studio.',
                             icon: 'account_balance_wallet',
                             actionsHtml: `
                                 <button class="ds-btn ds-btn-hero" id="ds-btn-new-incasso"><span class="material-symbols-rounded">add_card</span>Emetti Ricevuta / Acconto</button>
@@ -40,16 +48,28 @@ export default {
                             `
                         })}
 
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-                            <div class="ds-nav">
-                                <button class="ds-nav-btn ${subTab === 'incassi' ? 'active' : ''}" data-sub="incassi"><span class="material-symbols-rounded">payments</span>Incassi & Ricevute (${incassi.length})</button>
-                                <button class="ds-nav-btn ${subTab === 'preventivi' ? 'active' : ''}" data-sub="preventivi"><span class="material-symbols-rounded">request_quote</span>Preventivi (${preventivi.length})</button>
-                                <button class="ds-nav-btn ${subTab === 'spese' ? 'active' : ''}" data-sub="spese"><span class="material-symbols-rounded">shopping_bag</span>Spese & Uscite Studio (${spese.length})</button>
-                            </div>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                            ${SUB_CARDS.map(c => `
+                                <div class="ds-hub-card ${subTab === c.id ? 'active' : ''}" data-sub="${c.id}" style="padding:1.1rem; ${subTab === c.id ? 'border-color:var(--ds-teal); background:var(--ds-teal-soft);' : ''}">
+                                    <div class="ds-hub-card-header">
+                                        <div class="ds-hub-icon-wrap" style="background:${c.bg}; color:${c.color}; width:44px; height:44px; font-size:1.4rem;">
+                                            <span class="material-symbols-rounded">${c.icon}</span>
+                                        </div>
+                                        <span class="ds-badge" style="background:${c.bg}; color:${c.color};">${c.count} Voci</span>
+                                    </div>
+                                    <div class="ds-hub-card-body">
+                                        <h4 style="margin:0; font-size:0.95rem; font-weight:800; color:var(--md-on-surface);">${c.label}</h4>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--md-surface); padding:0.8rem 1.2rem; border-radius:14px; border:1px solid var(--md-outline-variant); flex-wrap:wrap; gap:0.6rem;">
+                            <span style="font-weight:700; font-size:0.88rem; color:var(--md-on-surface-variant);">Riepilogo Cassa:</span>
                             <div style="display:flex; gap:0.6rem; align-items:center;">
                                 <span class="ds-badge ds-badge-green">Entrate: ${formatCurrency(totInc)}</span>
                                 <span class="ds-badge ds-badge-rose">Uscite: ${formatCurrency(totSpese)}</span>
-                                <span class="ds-badge ${bilancio >= 0 ? 'ds-badge-teal' : 'ds-badge-amber'}">Flusso di Cassa: ${formatCurrency(bilancio)}</span>
+                                <span class="ds-badge ${bilancio >= 0 ? 'ds-badge-teal' : 'ds-badge-amber'}">Flusso Netto: ${formatCurrency(bilancio)}</span>
                             </div>
                         </div>
 
@@ -57,9 +77,9 @@ export default {
                     </div>
                 `;
 
-                el.querySelectorAll('.ds-nav-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        subTab = btn.dataset.sub;
+                el.querySelectorAll('.ds-hub-card[data-sub]').forEach(card => {
+                    card.addEventListener('click', () => {
+                        subTab = card.dataset.sub;
                         renderScreen();
                     });
                 });
@@ -209,6 +229,40 @@ export default {
                             renderScreen();
                         });
                     });
+                } else if (subTab === 'liquidazioni') {
+                    contentEl.innerHTML = `
+                        <div class="ds-panel">
+                            <div class="ds-panel-header">
+                                <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">receipt_long</span>Registro Liquidazioni Compensi Staff</div>
+                            </div>
+                            <div class="ds-table-wrap">
+                                <table class="ds-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Collaboratore / Medico</th>
+                                            <th>Ruolo</th>
+                                            <th>Periodo</th>
+                                            <th>Data Liquidazione</th>
+                                            <th>Metodo</th>
+                                            <th>Totale Liquidato</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${liquidazioni.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:1.8rem; color:var(--md-on-surface-variant);">Nessuna liquidazione registrata.</td></tr>' : liquidazioni.map(l => `
+                                            <tr>
+                                                <td><strong>${l.staff_cognome || ''} ${l.staff_nome || ''}</strong></td>
+                                                <td><span class="ds-badge ds-badge-teal">${(l.staff_ruolo || '').replace(/_/g, ' ').toUpperCase()}</span></td>
+                                                <td><strong>${l.periodo_riferimento}</strong></td>
+                                                <td>${formatDate(l.data_liquidazione)}</td>
+                                                <td>${(l.metodo_pagamento || 'bonifico').toUpperCase()}</td>
+                                                <td style="font-weight:800; color:var(--ds-green); font-size:0.95rem;">${formatCurrency(l.totale_competenze)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
                 }
             }
 
