@@ -1,0 +1,396 @@
+:root {
+    --ds-teal: #0d9488;
+    --ds-teal-dark: #0f766e;
+    --ds-teal-soft: rgba(13, 148, 136, 0.12);
+    --ds-cyan: #06b6d4;
+    --ds-blue: #2563eb;
+    --ds-amber: #d97706;
+    --ds-rose: #e11d48;
+    --ds-green: #16a34a;
+    --ds-purple: #9333ea;
+}
+
+.ds-root {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1.2rem;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.ds-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.4rem 1.8rem;
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 60%, #14b8a6 100%);
+    border-radius: 18px;
+    color: #ffffff;
+    box-shadow: 0 10px 25px -8px rgba(13, 148, 136, 0.35);
+}
+
+.ds-hero-info {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.ds-hero-icon {
+    font-size: 2.4rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.7rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ds-hero-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.ds-hero-subtitle {
+    font-size: 0.88rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+}
+
+.ds-hero-actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.ds-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.65rem 1.15rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.ds-btn-primary {
+    background: var(--ds-teal);
+    color: #fff;
+}
+.ds-btn-primary:hover {
+    background: var(--ds-teal-dark);
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+}
+
+.ds-btn-hero {
+    background: #ffffff;
+    color: var(--ds-teal-dark);
+}
+.ds-btn-hero:hover {
+    background: #f0fdfa;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.ds-btn-ghost {
+    background: var(--md-surface-variant);
+    color: var(--md-on-surface);
+    border: 1px solid var(--md-outline-variant);
+}
+.ds-btn-ghost:hover {
+    background: var(--md-surface-container-high);
+}
+
+.ds-btn-danger {
+    background: var(--md-error-container);
+    color: var(--md-on-error-container);
+}
+
+.ds-nav {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.3rem;
+}
+
+.ds-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    background: var(--md-surface);
+    border: 1px solid var(--md-outline-variant);
+    color: var(--md-on-surface-variant);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.16s ease;
+}
+.ds-nav-btn:hover {
+    border-color: var(--ds-teal);
+    color: var(--md-on-surface);
+}
+.ds-nav-btn.active {
+    background: var(--ds-teal);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+}
+
+.ds-grid-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem;
+}
+
+.ds-card-stat {
+    background: var(--md-surface);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: 16px;
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ds-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.ds-stat-val {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--md-on-surface);
+    line-height: 1.1;
+}
+
+.ds-stat-lbl {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--md-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 0.2rem;
+}
+
+.ds-panel {
+    background: var(--md-surface);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: 18px;
+    padding: 1.3rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ds-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ds-panel-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--md-on-surface);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ds-table-wrap {
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid var(--md-outline-variant);
+}
+
+.ds-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    text-align: left;
+}
+.ds-table th {
+    background: var(--md-surface-container-low);
+    color: var(--md-on-surface-variant);
+    font-weight: 700;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--md-outline-variant);
+}
+.ds-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--md-outline-variant);
+    color: var(--md-on-surface);
+}
+.ds-table tr:last-child td {
+    border-bottom: none;
+}
+.ds-table tr:hover td {
+    background: var(--md-surface-container-lowest);
+}
+
+.ds-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.ds-badge-green { background: #dcfce7; color: #15803d; }
+.ds-badge-blue { background: #dbeafe; color: #1d4ed8; }
+.ds-badge-amber { background: #fef3c7; color: #b45309; }
+.ds-badge-rose { background: #ffe4e6; color: #be123c; }
+.ds-badge-teal { background: #ccfbf1; color: #0f766e; }
+.ds-badge-purple { background: #f3e8ff; color: #7e22ce; }
+
+.ds-odontogram-wrap {
+    background: var(--md-surface-container-low);
+    border: 1.5px solid var(--md-outline-variant);
+    border-radius: 18px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.ds-odontogram-arch {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.ds-tooth-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem;
+    background: var(--md-surface);
+    border: 1.5px solid var(--md-outline-variant);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    min-width: 44px;
+}
+.ds-tooth-card:hover {
+    border-color: var(--ds-teal);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+}
+.ds-tooth-card.selected {
+    border-color: var(--ds-teal);
+    background: var(--ds-teal-soft);
+}
+.ds-tooth-num {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--md-on-surface);
+}
+.ds-tooth-icon {
+    font-size: 1.3rem;
+    color: var(--md-on-surface-variant);
+}
+.ds-tooth-card[data-state="carie"] .ds-tooth-icon { color: var(--ds-rose); }
+.ds-tooth-card[data-state="otturazione"] .ds-tooth-icon { color: var(--ds-blue); }
+.ds-tooth-card[data-state="devitalizzato"] .ds-tooth-icon { color: var(--ds-purple); }
+.ds-tooth-card[data-state="corona"] .ds-tooth-icon { color: var(--ds-amber); }
+.ds-tooth-card[data-state="impianto"] .ds-tooth-icon { color: var(--ds-cyan); }
+.ds-tooth-card[data-state="mancante"] { opacity: 0.4; }
+
+.ds-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    padding: 1.5rem;
+}
+.ds-modal-card {
+    background: var(--md-surface);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 650px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--md-outline-variant);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+.ds-modal-head {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--md-outline-variant);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ds-modal-head h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--md-on-surface);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ds-modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.ds-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+.ds-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.ds-form-field label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--md-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ds-input, .ds-select, .ds-textarea {
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    border: 1.5px solid var(--md-outline-variant);
+    background: var(--md-surface-container-lowest);
+    color: var(--md-on-surface);
+    font-size: 0.92rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.16s ease;
+}
+.ds-input:focus, .ds-select:focus, .ds-textarea:focus {
+    border-color: var(--ds-teal);
+}

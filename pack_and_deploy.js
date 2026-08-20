@@ -97,9 +97,17 @@ async function runDeploy() {
                     minCoreVersion: manifest.minCoreVersion || '1.0.0',
                     api_version: manifest.api_version || '1.0',
                     description: manifest.description,
+                    long_description: manifest.long_description || manifest.description,
+                    category: manifest.category || 'medical',
+                    author: manifest.author || 'NunzioTech',
                     icon: manifest.icon,
+                    color: manifest.color || '#0d9488',
+                    published_at: manifest.published_at || new Date().toISOString(),
+                    updated_at: manifest.updated_at || new Date().toISOString(),
                     downloadUrl: `https://nunziotech.it/software/adestio/${zipName}`,
                     sha256: zipHash,
+                    legal_info: manifest.legal_info || '',
+                    links: manifest.links || [],
                     ui_injections: manifest.ui_injections || []
                 };
 

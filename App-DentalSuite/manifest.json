@@ -1,0 +1,87 @@
+{
+  "id": "adestio_dental_suite",
+  "name": "Adestio DentalSuite",
+  "version": "1.0.1",
+  "minCoreVersion": "1.0.0",
+  "api_version": "1.0",
+  "published_at": "2026-08-20T10:00:00Z",
+  "updated_at": "2026-08-20T10:00:00Z",
+  "author": "NunzioTech",
+  "description": "Gestionale completo per studi dentistici: cartelle cliniche, odontogramma interattivo, agenda multi-medico, compensi staff, TAC/RMN e statistiche.",
+  "long_description": "Adestio DentalSuite e l applicazione all-in-one per la gestione professionale dello studio odontoiatrico. Include anagrafica pazienti con anamnesi approfondita, odontogramma grafico interattivo per dentizione permanente e decidua FDI, diario clinico, prescrizioni farmacologiche, archivio diagnostico (TAC CBCT, RMN, OPT, Rx), agenda poltrone e medici, catalogo prestazioni con ripartizione automatica compensi per medico e segreteria/ASO, contabilita con preventivi/acconti/spese e cruscotto statistiche con visione esclusiva per il Direttore Sanitario.",
+  "category": "medical",
+  "icon": "dentistry",
+  "color": "#0d9488",
+  "folder": "adestio_dental_suite",
+  "main": "app.js",
+  "backend": "backend.js",
+  "db": {
+    "namespace": "dental_suite",
+    "migrations": "./migrations.js"
+  },
+  "ipc": {
+    "namespace": "dentalSuite"
+  },
+  "permissions": [
+    "dentalSuite:*",
+    "anagrafica:*"
+  ],
+  "rbacPermissions": [
+    {
+      "id": "pazienti",
+      "label": "Gestione Pazienti & Cartelle Cliniche",
+      "default": true
+    },
+    {
+      "id": "agenda",
+      "label": "Agenda & Poltrone",
+      "default": true
+    },
+    {
+      "id": "prestazioni",
+      "label": "Listino Prestazioni & Compensi",
+      "default": true
+    },
+    {
+      "id": "staff",
+      "label": "Gestione Staff & Collaboratori",
+      "default": true
+    },
+    {
+      "id": "contabilita",
+      "label": "Contabilità, Incassi & Spese",
+      "default": true
+    },
+    {
+      "id": "stats",
+      "label": "Statistiche & Utili Direzionali (Direttore Sanitario)",
+      "default": false
+    }
+  ],
+  "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",
+  "links": [
+    {
+      "rel": "Sito Web",
+      "href": "https://github.com/AprileNunzio"
+    },
+    {
+      "rel": "Documentazione",
+      "href": "https://github.com/AprileNunzio/Adestio-Marketplace"
+    }
+  ],
+  "ui_injections": [
+    {
+      "target": "dashboard",
+      "type": "card",
+      "src": "index.html"
+    },
+    {
+      "target": "sidebar_menu",
+      "type": "menu_item",
+      "label": "DentalSuite",
+      "icon": "dentistry",
+      "src": "index.html"
+    }
+  ],
+  "integrity_hash": "37de9bdc937e060e243b9897efb4a95efc71ea22e5173e840da3006ffa02ebd2"
+}
