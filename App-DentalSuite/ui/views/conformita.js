@@ -1,6 +1,7 @@
 import { el, rimpiazza } from '../components/dom.js';
 import { radice, intestazione, scheletro, vuoto } from '../components/layout.js';
 import { can } from '../security/permissions.js';
+import { versione } from '../kernel/moduli.js';
 
 const SCHEDE = [
     {
@@ -8,21 +9,21 @@ const SCHEDE = [
         titolo: 'Consensi & Modelli',
         simbolo: 'assignment_turned_in',
         permesso: 'consensi_view',
-        modulo: () => import('./conformita/modelli.js')
+        modulo: () => import(`./conformita/modelli.js${versione()}`)
     },
     {
         id: 'privacy',
         titolo: 'Diritti degli interessati',
         simbolo: 'gavel',
         permesso: 'privacy_export',
-        modulo: () => import('./conformita/privacy.js')
+        modulo: () => import(`./conformita/privacy.js${versione()}`)
     },
     {
         id: 'registro',
         titolo: 'Registro accessi',
         simbolo: 'history',
         permesso: 'audit_view',
-        modulo: () => import('./conformita/registro.js')
+        modulo: () => import(`./conformita/registro.js${versione()}`)
     }
 ];
 

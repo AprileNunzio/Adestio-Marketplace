@@ -3,6 +3,7 @@ import { radice, intestazione, vuoto, scheletro } from './components/layout.js';
 import { errore } from './components/notifica.js';
 import { can, isUnresolved, unresolvedReason, invalidate } from './security/permissions.js';
 import { MODULI, trovaModulo } from './routes.js';
+import { impostaVersione } from './kernel/moduli.js';
 import { rendiHub } from './views/hub.js';
 
 function schermoErrore(messaggio, riprova) {
@@ -74,7 +75,13 @@ export function creaShell(contenitore) {
 
         rimpiazza(contenitore, radice(modulo.accento, scheletro(5)));
         try {
-            const caricato = await modulo.modulo();
+            let caricato;
+            try {
+                caricato = await modulo.modulo();
+            } catch (fallitoIlPrimoTentativo) {
+                impostaVersione(Date.now());
+                caricato = await modulo.modulo();
+            }
             const rendi = caricato.default && typeof caricato.default.rendi === 'function'
                 ? caricato.default.rendi
                 : null;

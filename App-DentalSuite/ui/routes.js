@@ -1,3 +1,5 @@
+import { versione } from './kernel/moduli.js';
+
 export const MODULI = [
     {
         id: 'pazienti',
@@ -6,7 +8,7 @@ export const MODULI = [
         simbolo: 'person_search',
         accento: 'pazienti',
         permesso: 'pazienti_view',
-        modulo: () => import('./views/pazienti.js')
+        modulo: () => import(`./views/pazienti.js${versione()}`)
     },
     {
         id: 'agenda',
@@ -15,7 +17,7 @@ export const MODULI = [
         simbolo: 'calendar_month',
         accento: 'agenda',
         permesso: 'agenda_view',
-        modulo: () => import('./views/agenda.js')
+        modulo: () => import(`./views/agenda.js${versione()}`)
     },
     {
         id: 'struttura',
@@ -24,7 +26,7 @@ export const MODULI = [
         simbolo: 'domain',
         accento: 'struttura',
         permesso: 'struttura_view',
-        modulo: () => import('./views/struttura.js')
+        modulo: () => import(`./views/struttura.js${versione()}`)
     },
     {
         id: 'prestazioni',
@@ -33,7 +35,7 @@ export const MODULI = [
         simbolo: 'list_alt',
         accento: 'prestazioni',
         permesso: 'prestazioni_view',
-        modulo: () => import('./views/prestazioni.js')
+        modulo: () => import(`./views/prestazioni.js${versione()}`)
     },
     {
         id: 'staff',
@@ -42,7 +44,7 @@ export const MODULI = [
         simbolo: 'badge',
         accento: 'staff',
         permesso: 'staff_view',
-        modulo: () => import('./views/staff.js')
+        modulo: () => import(`./views/staff.js${versione()}`)
     },
     {
         id: 'contabilita',
@@ -51,7 +53,7 @@ export const MODULI = [
         simbolo: 'account_balance_wallet',
         accento: 'contabilita',
         permesso: 'preventivi_view',
-        modulo: () => import('./views/contabilita.js')
+        modulo: () => import(`./views/contabilita.js${versione()}`)
     },
     {
         id: 'conformita',
@@ -60,7 +62,7 @@ export const MODULI = [
         simbolo: 'gpp_good',
         accento: 'conformita',
         permesso: 'consensi_view',
-        modulo: () => import('./views/conformita.js')
+        modulo: () => import(`./views/conformita.js${versione()}`)
     },
     {
         id: 'statistiche',
@@ -69,7 +71,7 @@ export const MODULI = [
         simbolo: 'monitoring',
         accento: 'statistiche',
         permesso: 'statistiche_view',
-        modulo: () => import('./views/statistiche.js')
+        modulo: () => import(`./views/statistiche.js${versione()}`)
     }
 ];
 
@@ -79,7 +81,7 @@ export const VISTE_INTERNE = {
         accento: 'pazienti',
         permesso: 'pazienti_view',
         genitore: 'pazienti',
-        modulo: () => import('./views/paziente.js')
+        modulo: () => import(`./views/paziente.js${versione()}`)
     }
 };
 

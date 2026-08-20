@@ -1,12 +1,13 @@
 import { el, rimpiazza } from '../components/dom.js';
 import { radice, intestazione, scheletro, vuoto } from '../components/layout.js';
 import { can } from '../security/permissions.js';
+import { versione } from '../kernel/moduli.js';
 
 const SCHEDE = [
-    { id: 'preventivi', titolo: 'Preventivi', simbolo: 'receipt_long', permesso: 'preventivi_view', modulo: () => import('./contabilita/preventivi.js') },
-    { id: 'incassi', titolo: 'Incassi', simbolo: 'payments', permesso: 'incassi_view', modulo: () => import('./contabilita/incassi.js') },
-    { id: 'spese', titolo: 'Prima nota passiva', simbolo: 'shopping_cart', permesso: 'spese_view', modulo: () => import('./contabilita/spese.js') },
-    { id: 'scadenziario', titolo: 'Scadenziario rate', simbolo: 'event_repeat', permesso: 'rate_view', modulo: () => import('./contabilita/scadenziario.js') }
+    { id: 'preventivi', titolo: 'Preventivi', simbolo: 'receipt_long', permesso: 'preventivi_view', modulo: () => import(`./contabilita/preventivi.js${versione()}`) },
+    { id: 'incassi', titolo: 'Incassi', simbolo: 'payments', permesso: 'incassi_view', modulo: () => import(`./contabilita/incassi.js${versione()}`) },
+    { id: 'spese', titolo: 'Prima nota passiva', simbolo: 'shopping_cart', permesso: 'spese_view', modulo: () => import(`./contabilita/spese.js${versione()}`) },
+    { id: 'scadenziario', titolo: 'Scadenziario rate', simbolo: 'event_repeat', permesso: 'rate_view', modulo: () => import(`./contabilita/scadenziario.js${versione()}`) }
 ];
 
 export default {

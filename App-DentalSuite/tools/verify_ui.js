@@ -116,11 +116,11 @@ function moduliRegistrati() {
     const riferimenti = [];
     registri.forEach(registro => {
         const sorgente = fs.readFileSync(registro, 'utf8');
-        [...sorgente.matchAll(/import\(\s*['"]([^'"]+)['"]\s*\)/g)].forEach(trovato => {
+        [...sorgente.matchAll(/import\(\s*(?:['"]([^'"]+)['"]|`([^`$]+)(?:\$\{[^}]*\})?`)\s*\)/g)].forEach(trovato => {
             riferimenti.push({
                 registro,
-                file: path.resolve(path.dirname(registro), trovato[1]),
-                specificato: trovato[1]
+                file: path.resolve(path.dirname(registro), trovato[1] || trovato[2]),
+                specificato: trovato[1] || trovato[2]
             });
         });
     });
