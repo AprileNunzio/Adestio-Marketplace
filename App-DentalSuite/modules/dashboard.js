@@ -1,5 +1,6 @@
 import { callApi } from '../shared/api.js';
 import { renderHero } from '../shared/ui_kit.js';
+import { openAppointmentModal } from '../components/appointment_modal.js';
 
 export default {
     render: async (el, onNavigate) => {
