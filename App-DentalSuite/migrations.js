@@ -19,6 +19,20 @@ module.exports = [
                 esenzioni TEXT DEFAULT '',
                 assicurazione TEXT DEFAULT '',
                 gruppo_sanguigno TEXT DEFAULT '',
+                professione TEXT DEFAULT '',
+                stato_civile TEXT DEFAULT '',
+                canale_preferito TEXT DEFAULT 'whatsapp',
+                consenso_promemoria INTEGER DEFAULT 1,
+                codice_sdi TEXT DEFAULT '',
+                pec TEXT DEFAULT '',
+                numero_polizza TEXT DEFAULT '',
+                medico_curante TEXT DEFAULT '',
+                tel_medico_curante TEXT DEFAULT '',
+                contatto_emergenza_nome TEXT DEFAULT '',
+                contatto_emergenza_parentela TEXT DEFAULT '',
+                contatto_emergenza_tel TEXT DEFAULT '',
+                preferenze_orari TEXT DEFAULT '',
+                pacemaker INTEGER DEFAULT 0,
                 note TEXT DEFAULT '',
                 created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
@@ -78,12 +92,44 @@ module.exports = [
                 quota_segretaria REAL NOT NULL DEFAULT 0,
                 costo_materiali REAL NOT NULL DEFAULT 0,
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
             CREATE INDEX IF NOT EXISTS idx_trattamenti_paziente ON trattamenti_paziente(paziente_id);
-            CREATE INDEX IF NOT EXISTS idx_trattamenti_medico ON trattamenti_paziente(medico_id);
+
+            CREATE TABLE IF NOT EXISTS prestazioni_catalogo (
+                id TEXT PRIMARY KEY,
+                codice TEXT NOT NULL DEFAULT '',
+                nome TEXT NOT NULL,
+                categoria TEXT NOT NULL DEFAULT 'generale',
+                durata_stimata_minuti INTEGER NOT NULL DEFAULT 30,
+                prezzo_paziente REAL NOT NULL DEFAULT 0,
+                tipo_quota_medico TEXT NOT NULL DEFAULT 'percentuale',
+                valore_quota_medico REAL NOT NULL DEFAULT 0,
+                tipo_quota_segretaria TEXT NOT NULL DEFAULT 'percentuale',
+                valore_quota_segretaria REAL NOT NULL DEFAULT 0,
+                costo_materiale_stimato REAL NOT NULL DEFAULT 0,
+                colore_badge TEXT DEFAULT '#0d9488',
+                note TEXT DEFAULT '',
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS appuntamenti (
+                id TEXT PRIMARY KEY,
+                paziente_id TEXT NOT NULL,
+                medico_id TEXT NOT NULL,
+                poltrona TEXT NOT NULL DEFAULT 'Unità 1',
+                data_ora_inizio INTEGER NOT NULL,
+                durata_minuti INTEGER NOT NULL DEFAULT 30,
+                motivo_visita TEXT NOT NULL DEFAULT '',
+                stato TEXT NOT NULL DEFAULT 'programmato',
+                colore_calendario TEXT DEFAULT '#0d9488',
+                note TEXT DEFAULT '',
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_appuntamenti_tempo ON appuntamenti(data_ora_inizio);
 
             CREATE TABLE IF NOT EXISTS prescrizioni_farmaci (
                 id TEXT PRIMARY KEY,
@@ -96,98 +142,37 @@ module.exports = [
                 durata_giorni INTEGER DEFAULT 5,
                 data_prescrizione TEXT NOT NULL,
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
-            CREATE INDEX IF NOT EXISTS idx_prescrizioni_paziente ON prescrizioni_farmaci(paziente_id);
 
             CREATE TABLE IF NOT EXISTS allegati_diagnostici (
                 id TEXT PRIMARY KEY,
                 paziente_id TEXT NOT NULL,
                 tipo TEXT NOT NULL DEFAULT 'rx',
                 titolo TEXT NOT NULL,
-                data_esame TEXT NOT NULL,
+                file_name TEXT NOT NULL,
                 file_path TEXT NOT NULL,
-                file_size INTEGER DEFAULT 0,
-                mime_type TEXT DEFAULT '',
+                file_size INTEGER NOT NULL DEFAULT 0,
+                mime_type TEXT DEFAULT 'image/jpeg',
+                data_esame TEXT NOT NULL,
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
-            CREATE INDEX IF NOT EXISTS idx_allegati_paziente ON allegati_diagnostici(paziente_id);
-
-            CREATE TABLE IF NOT EXISTS staff_clinico (
-                id TEXT PRIMARY KEY,
-                nome TEXT NOT NULL,
-                cognome TEXT NOT NULL,
-                ruolo TEXT NOT NULL,
-                codice_fiscale TEXT DEFAULT '',
-                albo_numero TEXT DEFAULT '',
-                specializzazione TEXT DEFAULT '',
-                telefono TEXT DEFAULT '',
-                email TEXT DEFAULT '',
-                colore_calendario TEXT DEFAULT '#0d9488',
-                tipo_compenso_default TEXT DEFAULT 'percentuale',
-                valore_compenso_default REAL DEFAULT 0,
-                attivo INTEGER DEFAULT 1,
-                created_at INTEGER NOT NULL,
-                last_modified INTEGER NOT NULL,
-                is_deleted INTEGER DEFAULT 0
-            );
-
-            CREATE TABLE IF NOT EXISTS catalogo_prestazioni (
-                id TEXT PRIMARY KEY,
-                codice TEXT DEFAULT '',
-                branca TEXT NOT NULL,
-                nome TEXT NOT NULL,
-                descrizione TEXT DEFAULT '',
-                durata_minuti INTEGER DEFAULT 30,
-                prezzo_paziente REAL NOT NULL DEFAULT 0,
-                tipo_quota_medico TEXT DEFAULT 'fisso',
-                valore_quota_medico REAL DEFAULT 0,
-                tipo_quota_segretaria TEXT DEFAULT 'fisso',
-                valore_quota_segretaria REAL DEFAULT 0,
-                costo_materiale_stimato REAL DEFAULT 0,
-                attivo INTEGER DEFAULT 1,
-                created_at INTEGER NOT NULL,
-                last_modified INTEGER NOT NULL,
-                is_deleted INTEGER DEFAULT 0
-            );
-
-            CREATE TABLE IF NOT EXISTS appuntamenti (
-                id TEXT PRIMARY KEY,
-                paziente_id TEXT NOT NULL,
-                medico_id TEXT NOT NULL,
-                prestazione_id TEXT DEFAULT '',
-                data_ora_inizio INTEGER NOT NULL,
-                data_ora_fine INTEGER NOT NULL,
-                poltrona TEXT DEFAULT 'Unità 1',
-                motivo TEXT DEFAULT '',
-                stato TEXT NOT NULL DEFAULT 'confermato',
-                note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
-                last_modified INTEGER NOT NULL,
-                is_deleted INTEGER DEFAULT 0
-            );
-            CREATE INDEX IF NOT EXISTS idx_appuntamenti_paziente ON appuntamenti(paziente_id);
-            CREATE INDEX IF NOT EXISTS idx_appuntamenti_medico ON appuntamenti(medico_id);
-            CREATE INDEX IF NOT EXISTS idx_appuntamenti_data ON appuntamenti(data_ora_inizio);
 
             CREATE TABLE IF NOT EXISTS preventivi (
                 id TEXT PRIMARY KEY,
-                numero_preventivo TEXT NOT NULL,
                 paziente_id TEXT NOT NULL,
                 medico_id TEXT DEFAULT '',
+                numero_preventivo TEXT NOT NULL,
                 data_emissione TEXT NOT NULL,
                 stato TEXT NOT NULL DEFAULT 'bozza',
-                totale_lordo REAL DEFAULT 0,
+                totale_lordo REAL NOT NULL DEFAULT 0,
                 sconto_percentuale REAL DEFAULT 0,
-                totale_netto REAL DEFAULT 0,
-                voci_json TEXT NOT NULL DEFAULT '[]',
+                totale_netto REAL NOT NULL DEFAULT 0,
+                acconto_richiesto REAL DEFAULT 0,
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
@@ -196,31 +181,44 @@ module.exports = [
                 id TEXT PRIMARY KEY,
                 paziente_id TEXT NOT NULL,
                 preventivo_id TEXT DEFAULT '',
-                trattamento_id TEXT DEFAULT '',
-                rata_id TEXT DEFAULT '',
-                data_pagamento TEXT NOT NULL,
-                importo REAL NOT NULL,
+                numero_documento TEXT NOT NULL,
+                tipo_documento TEXT NOT NULL DEFAULT 'ricevuta_sanitaria',
                 metodo_pagamento TEXT NOT NULL DEFAULT 'pos',
-                tipo_documento TEXT DEFAULT 'ricevuta_sanitaria',
-                numero_documento TEXT DEFAULT '',
+                importo REAL NOT NULL,
+                data_pagamento TEXT NOT NULL,
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
-            CREATE INDEX IF NOT EXISTS idx_pagamenti_paziente ON pagamenti_incassi(paziente_id);
 
             CREATE TABLE IF NOT EXISTS spese_studio (
                 id TEXT PRIMARY KEY,
                 categoria TEXT NOT NULL,
                 descrizione TEXT NOT NULL,
                 fornitore TEXT DEFAULT '',
-                data_spesa TEXT NOT NULL,
-                importo REAL NOT NULL,
-                metodo_pagamento TEXT DEFAULT 'bonifico',
                 numero_fattura TEXT DEFAULT '',
+                importo REAL NOT NULL,
+                data_spesa TEXT NOT NULL,
+                metodo_pagamento TEXT DEFAULT 'bonifico',
+                allegato_path TEXT DEFAULT '',
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
+                last_modified INTEGER NOT NULL,
+                is_deleted INTEGER DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS staff (
+                id TEXT PRIMARY KEY,
+                nome TEXT NOT NULL,
+                cognome TEXT NOT NULL,
+                codice_fiscale TEXT DEFAULT '',
+                ruolo TEXT NOT NULL DEFAULT 'medico',
+                specializzazione TEXT DEFAULT '',
+                percentuale_default REAL DEFAULT 0,
+                costo_orario REAL DEFAULT 0,
+                colore_agenda TEXT DEFAULT '#0d9488',
+                telefono TEXT DEFAULT '',
+                email TEXT DEFAULT '',
+                note TEXT DEFAULT '',
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
@@ -229,24 +227,27 @@ module.exports = [
                 id TEXT PRIMARY KEY,
                 staff_id TEXT NOT NULL,
                 periodo_riferimento TEXT NOT NULL,
-                data_liquidazione TEXT NOT NULL,
                 totale_competenze REAL NOT NULL,
-                trattamenti_inclusi_json TEXT DEFAULT '[]',
-                stato TEXT NOT NULL DEFAULT 'liquidato',
+                ritenuta_acconto REAL DEFAULT 0,
+                totale_liquidato REAL NOT NULL,
+                data_liquidazione TEXT NOT NULL,
                 metodo_pagamento TEXT DEFAULT 'bonifico',
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
-
+        `
+    },
+    {
+        version: 2,
+        sql: `
             CREATE TABLE IF NOT EXISTS piani_rateali (
                 id TEXT PRIMARY KEY,
-                preventivo_id TEXT DEFAULT '',
                 paziente_id TEXT NOT NULL,
+                preventivo_id TEXT DEFAULT '',
+                totale_piano REAL NOT NULL,
+                acconto_iniziale REAL NOT NULL DEFAULT 0,
                 numero_rate INTEGER NOT NULL DEFAULT 3,
-                totale_importo REAL NOT NULL DEFAULT 0,
-                acconto_versato REAL NOT NULL DEFAULT 0,
                 stato TEXT NOT NULL DEFAULT 'attivo',
                 note TEXT DEFAULT '',
                 created_at INTEGER NOT NULL,
@@ -264,8 +265,9 @@ module.exports = [
                 data_scadenza TEXT NOT NULL,
                 data_pagamento TEXT DEFAULT '',
                 stato TEXT NOT NULL DEFAULT 'in_scadenza',
+                metodo_pagamento TEXT DEFAULT '',
+                numero_ricevuta TEXT DEFAULT '',
                 note TEXT DEFAULT '',
-                created_at INTEGER NOT NULL,
                 last_modified INTEGER NOT NULL,
                 is_deleted INTEGER DEFAULT 0
             );
@@ -274,17 +276,33 @@ module.exports = [
             CREATE TABLE IF NOT EXISTS log_notifiche (
                 id TEXT PRIMARY KEY,
                 paziente_id TEXT NOT NULL,
-                appuntamento_id TEXT DEFAULT '',
                 tipo_canale TEXT NOT NULL,
                 destinatario TEXT NOT NULL,
-                template_usato TEXT DEFAULT '',
                 messaggio TEXT NOT NULL,
-                data_invio TEXT NOT NULL,
                 stato_esito TEXT NOT NULL DEFAULT 'inviato',
-                created_at INTEGER NOT NULL,
-                is_deleted INTEGER DEFAULT 0
+                data_invio TEXT NOT NULL,
+                created_at INTEGER NOT NULL
             );
-            CREATE INDEX IF NOT EXISTS idx_notifiche_paziente ON log_notifiche(paziente_id);
+            CREATE INDEX IF NOT EXISTS idx_log_notif_paz ON log_notifiche(paziente_id);
+        `
+    },
+    {
+        version: 3,
+        sql: `
+            ALTER TABLE pazienti ADD COLUMN professione TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN stato_civile TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN canale_preferito TEXT DEFAULT 'whatsapp';
+            ALTER TABLE pazienti ADD COLUMN consenso_promemoria INTEGER DEFAULT 1;
+            ALTER TABLE pazienti ADD COLUMN codice_sdi TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN pec TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN numero_polizza TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN medico_curante TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN tel_medico_curante TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN contatto_emergenza_nome TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN contatto_emergenza_parentela TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN contatto_emergenza_tel TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN preferenze_orari TEXT DEFAULT '';
+            ALTER TABLE pazienti ADD COLUMN pacemaker INTEGER DEFAULT 0;
         `
     }
 ];

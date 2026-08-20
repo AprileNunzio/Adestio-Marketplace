@@ -1,5 +1,6 @@
 import dashboardModule from './modules/dashboard.js';
 import pazientiModule from './modules/pazienti.js';
+import pazienteEditorModule from './modules/paziente_editor.js';
 import agendaModule from './modules/agenda.js';
 import prestazioniModule from './modules/prestazioni.js';
 import staffModule from './modules/staff.js';
@@ -14,6 +15,7 @@ export default {
             const MODULES = {
                 dashboard: { label: 'Home Hub', icon: 'grid_view', module: dashboardModule },
                 pazienti: { label: 'Pazienti & Cartelle', icon: 'person_search', module: pazientiModule },
+                paziente_editor: { label: 'Scheda Paziente', icon: 'person_add', module: pazienteEditorModule },
                 agenda: { label: 'Agenda Poltrone', icon: 'calendar_month', module: agendaModule },
                 prestazioni: { label: 'Listino Prestazioni', icon: 'list_alt', module: prestazioniModule },
                 staff: { label: 'Staff & Collaboratori', icon: 'badge', module: staffModule },
@@ -21,7 +23,7 @@ export default {
                 statistiche: { label: 'Statistiche Direzione', icon: 'monitoring', module: statisticheModule }
             };
 
-            function renderShell() {
+            function renderShell(initialParams = {}) {
                 try {
                     const isHub = currentModule === 'dashboard';
                     el.innerHTML = `
@@ -58,15 +60,14 @@ export default {
                     const returnHub = el.querySelector('#ds-btn-return-hub');
                     if (returnHub) returnHub.addEventListener('click', () => navigateTo('dashboard'));
 
-                    loadCurrentModule();
+                    loadCurrentModule(initialParams);
                 } catch (e) {}
             }
 
             function navigateTo(modKey, navParams = {}) {
                 try {
                     currentModule = modKey;
-                    renderShell();
-                    loadCurrentModule(navParams);
+                    renderShell(navParams);
                 } catch (e) {}
             }
 
@@ -85,7 +86,7 @@ export default {
                 }
             }
 
-            renderShell();
+            renderShell(params);
 
         } catch (e) {
             el.innerHTML = `<div class="ds-root"><p style="color:var(--md-error);">Errore generale: ${e.message}</p></div>`;

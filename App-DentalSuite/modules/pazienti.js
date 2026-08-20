@@ -1,7 +1,6 @@
 import { callApi } from '../shared/api.js';
 import { renderHero, formatDate } from '../shared/ui_kit.js';
 import { openNotificationModal } from '../components/notification_modal.js';
-import { openPazienteFormModal } from '../components/paziente_form_modal.js';
 import { renderOdontogramTab } from '../components/odontogram_tab.js';
 import { renderAnamnesiTab } from '../components/anamnesi_tab.js';
 import { renderTrattamentiTab } from '../components/trattamenti_tab.js';
@@ -40,7 +39,7 @@ export default {
                                 title: 'Cartelle Cliniche & Pazienti',
                                 subtitle: 'Anamnesi sanitaria, odontogramma interattivo FDI, diario interventi e prescrizioni.',
                                 icon: 'person_search',
-                                actionsHtml: `<button class="ds-btn ds-btn-hero" id="ds-btn-new-paziente"><span class="material-symbols-rounded">person_add</span>Nuovo Paziente</button>`
+                                actionsHtml: `<button class="ds-btn ds-btn-hero" id="ds-btn-new-paziente"><span class="material-symbols-rounded">person_add</span>Nuova Cartella Paziente</button>`
                             })}
 
                             <div class="ds-panel">
@@ -87,12 +86,12 @@ export default {
                     }
 
                     const btnNew = el.querySelector('#ds-btn-new-paziente');
-                    if (btnNew) btnNew.addEventListener('click', () => openPazienteFormModal({ onSaved: (id) => renderDetail(id) }));
+                    if (btnNew) btnNew.addEventListener('click', () => onNavigate('paziente_editor'));
 
                     attachRowEvents();
 
                     if (params.openNew) {
-                        openPazienteFormModal({ onSaved: (id) => renderDetail(id) });
+                        onNavigate('paziente_editor');
                     }
                 } catch (e) {
                     el.innerHTML = `<div class="ds-root"><p style="color:var(--md-error);">Errore: ${e.message}</p></div>`;
@@ -177,14 +176,14 @@ export default {
                                 actionsHtml: `
                                     <button class="ds-btn ds-btn-hero" id="ds-btn-back"><span class="material-symbols-rounded">arrow_back</span>Elenco</button>
                                     <button class="ds-btn ds-btn-hero" id="ds-btn-notify-paz"><span class="material-symbols-rounded">chat</span>Notifica</button>
-                                    <button class="ds-btn ds-btn-hero" id="ds-btn-edit-paziente"><span class="material-symbols-rounded">edit</span>Modifica</button>
+                                    <button class="ds-btn ds-btn-hero" id="ds-btn-edit-paziente"><span class="material-symbols-rounded">edit_document</span>Modifica Scheda</button>
                                     <button class="ds-btn ds-btn-danger" id="ds-btn-del-paziente"><span class="material-symbols-rounded">delete</span></button>
                                 `
                             })}
 
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
                                 <div class="ds-nav">
-                                    <button class="ds-nav-btn ${currentTab === 'anagrafica' ? 'active' : ''}" data-tab="anagrafica"><span class="material-symbols-rounded">badge</span>Anagrafica</button>
+                                    <button class="ds-nav-btn ${currentTab === 'anagrafica' ? 'active' : ''}" data-tab="anagrafica"><span class="material-symbols-rounded">badge</span>Anagrafica & Info</button>
                                     <button class="ds-nav-btn ${currentTab === 'anamnesi' ? 'active' : ''}" data-tab="anamnesi"><span class="material-symbols-rounded">medical_information</span>Anamnesi</button>
                                     <button class="ds-nav-btn ${currentTab === 'odontogramma' ? 'active' : ''}" data-tab="odontogramma"><span class="material-symbols-rounded">dentistry</span>Odontogramma FDI</button>
                                     <button class="ds-nav-btn ${currentTab === 'trattamenti' ? 'active' : ''}" data-tab="trattamenti"><span class="material-symbols-rounded">healing</span>Diario Clinico (${trattamenti.length})</button>
@@ -200,7 +199,7 @@ export default {
 
                     el.querySelector('#ds-btn-back').addEventListener('click', () => renderList());
                     el.querySelector('#ds-btn-notify-paz').addEventListener('click', () => openNotificationModal({ paziente: p, onSent: () => renderDetail(p.id) }));
-                    el.querySelector('#ds-btn-edit-paziente').addEventListener('click', () => openPazienteFormModal({ paziente: p, onSaved: () => renderDetail(p.id) }));
+                    el.querySelector('#ds-btn-edit-paziente').addEventListener('click', () => onNavigate('paziente_editor', { pazienteId: p.id }));
                     el.querySelector('#ds-btn-del-paziente').addEventListener('click', async () => {
                         if (!confirm('Eliminare definitivamente questo paziente?')) return;
                         await callApi('pazienti:remove', { id: p.id });
@@ -222,24 +221,49 @@ export default {
 
                         if (currentTab === 'anagrafica') {
                             contentEl.innerHTML = `
-                                <div class="ds-panel">
-                                    <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">badge</span>Dati Anagrafici e Previdenziali</div>
-                                    <div class="ds-form-grid">
-                                        <div><strong>Nome e Cognome:</strong> ${p.nome} ${p.cognome}</div>
-                                        <div><strong>Anagrafica & Età:</strong> ${demo ? `<span class="ds-badge ds-badge-teal">${demo}</span>` : '-'}</div>
-                                        <div><strong>Codice Fiscale:</strong> ${p.codice_fiscale || '-'}</div>
-                                        <div><strong>Data di Nascita:</strong> ${formatDate(p.data_nascita)}</div>
-                                        <div><strong>Luogo di Nascita:</strong> ${p.luogo_nascita || '-'}</div>
-                                        <div><strong>Sesso:</strong> ${p.sesso || '-'}</div>
-                                        <div><strong>Gruppo Sanguigno:</strong> ${p.gruppo_sanguigno || 'Non specificato'}</div>
-                                        <div><strong>Telefono:</strong> ${p.telefono || '-'}</div>
-                                        <div><strong>Email:</strong> ${p.email || '-'}</div>
-                                        <div><strong>Indirizzo:</strong> ${p.indirizzo ? p.indirizzo + ', ' + (p.cap || '') + ' ' + (p.citta || '') + ' (' + (p.provincia || '') + ')' : '-'}</div>
-                                        <div><strong>Esenzioni Sanitarie:</strong> ${p.esenzioni || 'Nessuna'}</div>
-                                        <div><strong>Fondo Sanitario:</strong> ${p.assicurazione || 'Nessuna'}</div>
+                                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.2rem;">
+                                    <div class="ds-panel">
+                                        <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-teal);">badge</span>Dati Anagrafici</div>
+                                        <div class="ds-form-grid" style="grid-template-columns:1fr 1fr;">
+                                            <div><strong>Nome e Cognome:</strong><br>${p.cognome} ${p.nome}</div>
+                                            <div><strong>Dati Demografici:</strong><br>${demo ? `<span class="ds-badge ds-badge-teal">${demo}</span>` : '-'}</div>
+                                            <div><strong>Codice Fiscale:</strong><br><code style="font-family:monospace; font-weight:700;">${p.codice_fiscale || '-'}</code></div>
+                                            <div><strong>Data di Nascita:</strong><br>${formatDate(p.data_nascita)}</div>
+                                            <div><strong>Luogo di Nascita:</strong><br>${p.luogo_nascita || '-'}</div>
+                                            <div><strong>Professione:</strong><br>${p.professione || '-'}</div>
+                                        </div>
                                     </div>
-                                    ${p.note ? `<div style="margin-top:1rem; padding:0.8rem; background:var(--md-surface-container-low); border-radius:12px;"><strong>Note:</strong><br>${p.note}</div>` : ''}
+
+                                    <div class="ds-panel">
+                                        <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-blue);">contact_phone</span>Recapiti & Notifiche</div>
+                                        <div class="ds-form-grid" style="grid-template-columns:1fr 1fr;">
+                                            <div><strong>Cellulare:</strong><br>${p.telefono || '-'}</div>
+                                            <div><strong>Email:</strong><br>${p.email || '-'}</div>
+                                            <div><strong>Canale Preferito:</strong><br><span class="ds-badge ds-badge-teal">${(p.canale_preferito || 'whatsapp').toUpperCase()}</span></div>
+                                            <div><strong>Consenso Promemoria:</strong><br>${p.consenso_promemoria !== 0 ? '<span class="ds-badge ds-badge-green">Attivo</span>' : '<span class="ds-badge ds-badge-rose">Disattivato</span>'}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="ds-panel">
+                                        <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-green);">home_pin</span>Residenza & Fatturazione</div>
+                                        <div class="ds-form-grid" style="grid-template-columns:1fr 1fr;">
+                                            <div style="grid-column:1/-1;"><strong>Indirizzo:</strong><br>${p.indirizzo ? p.indirizzo + ', ' + (p.cap || '') + ' ' + (p.citta || '') + ' (' + (p.provincia || '') + ')' : '-'}</div>
+                                            <div><strong>Codice SDI:</strong><br>${p.codice_sdi || '-'}</div>
+                                            <div><strong>PEC:</strong><br>${p.pec || '-'}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="ds-panel">
+                                        <div class="ds-panel-title"><span class="material-symbols-rounded" style="color:var(--ds-purple);">medical_services</span>Fondo Sanitario & Assistenza</div>
+                                        <div class="ds-form-grid" style="grid-template-columns:1fr 1fr;">
+                                            <div><strong>Fondo Sanitario:</strong><br>${p.assicurazione ? `<span class="ds-badge ds-badge-blue">${p.assicurazione}</span>` : 'Nessuno'}</div>
+                                            <div><strong>N° Polizza:</strong><br>${p.numero_polizza || '-'}</div>
+                                            <div><strong>Medico di Base:</strong><br>${p.medico_curante || '-'} ${p.tel_medico_curante ? '(' + p.tel_medico_curante + ')' : ''}</div>
+                                            <div><strong>Esenzioni:</strong><br>${p.esenzioni || 'Nessuna'}</div>
+                                        </div>
+                                    </div>
                                 </div>
+                                ${p.note ? `<div class="ds-panel" style="margin-top:1.2rem;"><strong>Note Cliniche e Gestionali:</strong><br>${p.note}</div>` : ''}
                             `;
                         } else if (currentTab === 'anamnesi') {
                             renderAnamnesiTab(contentEl, { pazienteId: p.id, anamnesi });
