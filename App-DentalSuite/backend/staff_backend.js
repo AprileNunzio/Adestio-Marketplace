@@ -39,9 +39,9 @@ async function create(event, payload = {}) {
         const id = crypto.randomUUID();
         const now = Date.now();
         d.run(
-            "INSERT INTO staff_clinico (id, nome, cognome, ruolo, codice_fiscale, albo_numero, specializzazione, telefono, email, colore_calendario, tipo_compenso_default, valore_compenso_default, attivo, created_at, last_modified, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+            "INSERT INTO staff_clinico (id, nome, secondo_nome, cognome, ruolo, codice_fiscale, albo_numero, specializzazione, telefono, email, colore_calendario, tipo_compenso_default, valore_compenso_default, attivo, created_at, last_modified, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
             [
-                id, nome, cognome, ruolo, payload.codice_fiscale || '',
+                id, nome, payload.secondo_nome || '', cognome, ruolo, payload.codice_fiscale || '',
                 payload.albo_numero || '', payload.specializzazione || '',
                 payload.telefono || '', payload.email || '',
                 payload.colore_calendario || '#0d9488',
@@ -66,9 +66,9 @@ async function update(event, payload = {}) {
         if (!d) return { success: false, error: 'Database non inizializzato' };
         const now = Date.now();
         d.run(
-            "UPDATE staff_clinico SET nome = ?, cognome = ?, ruolo = ?, codice_fiscale = ?, albo_numero = ?, specializzazione = ?, telefono = ?, email = ?, colore_calendario = ?, tipo_compenso_default = ?, valore_compenso_default = ?, attivo = ?, last_modified = ? WHERE id = ?",
+            "UPDATE staff_clinico SET nome = ?, secondo_nome = ?, cognome = ?, ruolo = ?, codice_fiscale = ?, albo_numero = ?, specializzazione = ?, telefono = ?, email = ?, colore_calendario = ?, tipo_compenso_default = ?, valore_compenso_default = ?, attivo = ?, last_modified = ? WHERE id = ?",
             [
-                nome, cognome, ruolo, payload.codice_fiscale || '',
+                nome, payload.secondo_nome || '', cognome, ruolo, payload.codice_fiscale || '',
                 payload.albo_numero || '', payload.specializzazione || '',
                 payload.telefono || '', payload.email || '',
                 payload.colore_calendario || '#0d9488',

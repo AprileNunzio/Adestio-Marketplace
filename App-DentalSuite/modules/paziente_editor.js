@@ -57,8 +57,12 @@ export default {
                                         <input type="text" name="cognome" id="ds-inp-cognome" class="ds-input" required placeholder="Es. Rossi" value="${paziente.cognome || ''}">
                                     </div>
                                     <div class="ds-form-field">
-                                        <label>Nome *</label>
+                                        <label>Nome Principale *</label>
                                         <input type="text" name="nome" id="ds-inp-nome" class="ds-input" required placeholder="Es. Mario" value="${paziente.nome || ''}">
+                                    </div>
+                                    <div class="ds-form-field">
+                                        <label>Secondo Nome / Altri Nomi</label>
+                                        <input type="text" name="secondo_nome" id="ds-inp-secondo-nome" class="ds-input" placeholder="Es. Teresa, Luigi, Elena" value="${paziente.secondo_nome || ''}">
                                     </div>
                                     <div class="ds-form-field">
                                         <label>Codice Fiscale *</label>
@@ -349,6 +353,7 @@ export default {
 
                     payload.cognome = cognome;
                     payload.nome = nome;
+                    payload.secondo_nome = (form.querySelector('[name=secondo_nome]')?.value || '').trim();
                     payload.codice_fiscale = codiceFiscale;
 
                     payload.pacemaker = form.querySelector('[name=pacemaker]')?.checked || false;

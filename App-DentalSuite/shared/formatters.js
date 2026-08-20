@@ -56,7 +56,7 @@ export function formatPatientDemographics(paziente) {
 export function formatPatientFullLabel(paziente) {
     try {
         if (!paziente) return '';
-        const name = `${paziente.cognome || ''} ${paziente.nome || ''}`.trim();
+        const name = `${paziente.cognome || ''} ${paziente.nome || ''}${paziente.secondo_nome ? ' ' + paziente.secondo_nome : ''}`.trim();
         const demo = formatPatientDemographics(paziente);
         const cf = paziente.codice_fiscale ? `CF: ${paziente.codice_fiscale}` : '';
         const tel = paziente.telefono ? `Tel: ${paziente.telefono}` : '';

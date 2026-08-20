@@ -358,4 +358,11 @@ module.exports = [
             CREATE INDEX IF NOT EXISTS idx_poltrone_sala ON poltrone_studio(sala_id);
         `
     }
+    {
+        version: 5,
+        sql: `
+            ALTER TABLE pazienti ADD COLUMN secondo_nome TEXT DEFAULT '';
+            ALTER TABLE staff_clinico ADD COLUMN secondo_nome TEXT DEFAULT '';
+        `
+    }
 ];

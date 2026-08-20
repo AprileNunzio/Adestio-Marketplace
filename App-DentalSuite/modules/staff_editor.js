@@ -42,8 +42,12 @@ export default {
                                         <input type="text" name="cognome" id="ds-inp-s-cognome" class="ds-input" required placeholder="Es. Rossi" value="${s.cognome || ''}">
                                     </div>
                                     <div class="ds-form-field">
-                                        <label>Nome *</label>
+                                        <label>Nome Principale *</label>
                                         <input type="text" name="nome" id="ds-inp-s-nome" class="ds-input" required placeholder="Es. Marco" value="${s.nome || ''}">
+                                    </div>
+                                    <div class="ds-form-field">
+                                        <label>Secondo Nome</label>
+                                        <input type="text" name="secondo_nome" class="ds-input" placeholder="Es. Antonio" value="${s.secondo_nome || ''}">
                                     </div>
                                     <div class="ds-form-field">
                                         <label>Ruolo Professionale nello Studio *</label>
@@ -151,6 +155,7 @@ export default {
                     const payload = Object.fromEntries(formData.entries());
                     payload.cognome = cognome;
                     payload.nome = nome;
+                    payload.secondo_nome = (form.querySelector('[name=secondo_nome]')?.value || '').trim();
                     payload.attivo = payload.attivo === '1';
 
                     if (isEdit) payload.id = s.id;

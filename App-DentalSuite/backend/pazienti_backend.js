@@ -12,15 +12,15 @@ async function getAll(event, args = {}) {
             if (tokens.length <= 1) {
                 const like = `%${query}%`;
                 rows = d.query(
-                    "SELECT * FROM pazienti WHERE is_deleted = 0 AND (nome LIKE ? OR cognome LIKE ? OR (cognome || ' ' || nome) LIKE ? OR (nome || ' ' || cognome) LIKE ? OR codice_fiscale LIKE ? OR telefono LIKE ?) ORDER BY cognome, nome LIMIT 100",
-                    [like, like, like, like, like, like]
+                    "SELECT * FROM pazienti WHERE is_deleted = 0 AND (nome LIKE ? OR secondo_nome LIKE ? OR cognome LIKE ? OR (cognome || ' ' || nome || ' ' || IFNULL(secondo_nome, '')) LIKE ? OR (nome || ' ' || IFNULL(secondo_nome, '') || ' ' || cognome) LIKE ? OR codice_fiscale LIKE ? OR telefono LIKE ?) ORDER BY cognome, nome LIMIT 100",
+                    [like, like, like, like, like, like, like]
                 );
             } else {
                 const conditions = tokens.map(() => "(nome LIKE ? OR cognome LIKE ? OR (cognome || ' ' || nome) LIKE ? OR (nome || ' ' || cognome) LIKE ? OR codice_fiscale LIKE ? OR telefono LIKE ?)").join(" AND ");
                 const params = [];
                 tokens.forEach(t => {
                     const l = `%${t}%`;
-                    params.push(l, l, l, l, l, l);
+                    params.push(l, l, l, l, l, l, l);
                 });
                 rows = d.query(`SELECT * FROM pazienti WHERE is_deleted = 0 AND ${conditions} ORDER BY cognome, nome LIMIT 100`, params);
             }
