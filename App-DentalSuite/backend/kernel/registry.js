@@ -73,12 +73,18 @@ function registerAll(registerApi, handlers) {
     }
     audit.reimposta();
     const actionIds = Object.keys(contract.actions);
+    let count = 0;
     actionIds.forEach(actionId => {
-        const spec = contract.actions[actionId];
-        const method = resolveMethod(handlers, spec, actionId);
-        registerApi(channelFor(actionId), wrap(actionId, spec, method));
+        try {
+            const spec = contract.actions[actionId];
+            const method = resolveMethod(handlers, spec, actionId);
+            registerApi(channelFor(actionId), wrap(actionId, spec, method));
+            count += 1;
+        } catch (e) {
+            console.error(`[DentalSuite] Registrazione saltata per ${actionId}:`, e.message);
+        }
     });
-    return actionIds.length;
+    return count;
 }
 
 module.exports = { registerAll, channelFor };

@@ -45,8 +45,8 @@ async function avvia(portaPersonalizzata) {
             })
         });
 
-        if (locale.indirizzo_archivio) {
-            collegaRiunito(locale.indirizzo_archivio).catch(() => {});
+        if (locale.indirizzo_archivio && typeof cliente.collega === 'function') {
+            cliente.collega(locale.indirizzo_archivio).catch(() => {});
         }
 
         avviato = true;
@@ -120,7 +120,6 @@ function stato() {
 module.exports = {
     ascolta,
     avvia,
-    collegaRiunito,
     ferma,
     riavvia,
     riallinea,

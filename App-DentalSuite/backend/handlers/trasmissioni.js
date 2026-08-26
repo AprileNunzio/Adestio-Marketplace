@@ -334,6 +334,17 @@ async function attiva(payload = {}) {
     };
 }
 
+async function scaricaAllegato(payload = {}) {
+    try {
+        const allegati = require('../repositories/allegati');
+        if (!payload.id) return { successo: false, errore: 'ID allegato mancante' };
+        const record = await allegati.get(payload.id);
+        return { successo: Boolean(record), allegato: record };
+    } catch (e) {
+        return { successo: false, errore: e.message };
+    }
+}
+
 async function heartbeatPostazione(payload = {}) {
     try {
         const locale = await identita.assicura();
@@ -357,6 +368,7 @@ module.exports = {
     chiudiLocale,
     elenco: elencoTrasmissioni,
     dichiaraSchermo,
+    scaricaAllegato,
     attiva,
     diagnosticaRete,
     heartbeatPostazione
