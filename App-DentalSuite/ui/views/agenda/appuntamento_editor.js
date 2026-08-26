@@ -33,6 +33,8 @@ function timestampDa(giornoIso, oraTesto) {
 }
 
 export async function apriAppuntamento({ appuntamento, poltrone, giorno, permessi, onEliminato }) {
+    const isModifica = Boolean(appuntamento && appuntamento.id);
+
     const [elencoPazienti, staff, prestazioni] = await Promise.all([
         call('pazienti.list', { dimensione: 500, ordina: 'cognome ASC, nome ASC' }).then(pagina),
         call('staff.list', {}).then(elenco),
@@ -40,22 +42,22 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
     ]);
     const pazienti = elencoPazienti.righe;
 
-    const giornoBase = appuntamento
+    const giornoBase = appuntamento && appuntamento.data_ora_inizio
         ? fmt.isoDa(new Date(Number(appuntamento.data_ora_inizio)))
         : giorno;
 
     const stato = {
-        paziente_id: appuntamento ? appuntamento.paziente_id : '',
-        medico_id: appuntamento ? appuntamento.medico_id : '',
-        assistente_id: appuntamento ? appuntamento.assistente_id : '',
-        poltrona_id: appuntamento ? appuntamento.poltrona_id : (poltrone[0] ? poltrone[0].id : ''),
-        prestazione_id: appuntamento ? appuntamento.prestazione_id : '',
+        paziente_id: appuntamento ? (appuntamento.paziente_id || '') : '',
+        medico_id: appuntamento ? (appuntamento.medico_id || '') : '',
+        assistente_id: appuntamento ? (appuntamento.assistente_id || '') : '',
+        poltrona_id: appuntamento ? (appuntamento.poltrona_id || (poltrone[0] ? poltrone[0].id : '')) : (poltrone[0] ? poltrone[0].id : ''),
+        prestazione_id: appuntamento ? (appuntamento.prestazione_id || '') : '',
         giorno: giornoBase,
-        ora: appuntamento ? oraDa(appuntamento.data_ora_inizio) : '09:00',
-        durata_minuti: appuntamento ? Number(appuntamento.durata_minuti) : 30,
-        stato: appuntamento ? appuntamento.stato : 'programmato',
-        motivo_visita: appuntamento ? appuntamento.motivo_visita : '',
-        note: appuntamento ? appuntamento.note : ''
+        ora: appuntamento && appuntamento.data_ora_inizio ? oraDa(appuntamento.data_ora_inizio) : '09:00',
+        durata_minuti: appuntamento && appuntamento.durata_minuti ? Number(appuntamento.durata_minuti) : 30,
+        stato: appuntamento && appuntamento.stato ? appuntamento.stato : 'programmato',
+        motivo_visita: appuntamento ? (appuntamento.motivo_visita || '') : '',
+        note: appuntamento ? (appuntamento.note || '') : ''
     };
 
     const campi = [
@@ -117,13 +119,13 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
             ora: stato.ora,
             durata_minuti: stato.durata_minuti,
             timestamp: timestampDa(stato.giorno, stato.ora)
-        }, appuntamento ? appuntamento.id : undefined);
+        }, isModifica ? appuntamento.id : undefined);
         forzatura.mostra(permessi.modifica && ammissibile === false);
     };
 
     const azioni = [{ etichetta: 'Chiudi', variante: 'ghost', esito: null }];
 
-    if (appuntamento && stato.paziente_id) {
+    if (isModifica && stato.paziente_id) {
         azioni.push({
             etichetta: 'Invia a Monitor',
             variante: 'secondary',
@@ -145,7 +147,7 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
         });
     }
 
-    if (appuntamento && permessi.elimina) {
+    if (isModifica && permessi.elimina) {
         azioni.push({
             etichetta: 'Elimina',
             variante: 'danger',
@@ -156,7 +158,7 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
 
     if (permessi.modifica) {
         azioni.push({
-            etichetta: appuntamento ? 'Aggiorna' : 'Prenota',
+            etichetta: isModifica ? 'Aggiorna' : 'Prenota',
             simbolo: 'save',
             onAzione: async () => {
                 const payload = {
@@ -167,10 +169,10 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
                 };
                 delete payload.giorno;
                 delete payload.ora;
-                const risultato = appuntamento
+                const risultato = isModifica
                     ? await call('agenda.update', { ...payload, id: appuntamento.id })
                     : await call('agenda.create', payload);
-                return esito(risultato, appuntamento ? 'Appuntamento aggiornato' : 'Appuntamento prenotato');
+                return esito(risultato, isModifica ? 'Appuntamento aggiornato' : 'Appuntamento prenotato');
             }
         });
     }
@@ -194,7 +196,7 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
     aggiornaDisponibilita();
 
     return apriModale({
-        titolo: appuntamento ? 'Modifica appuntamento' : 'Nuovo appuntamento',
+        titolo: isModifica ? 'Modifica appuntamento' : 'Nuovo appuntamento',
         corpo,
         ampia: true,
         azioni
