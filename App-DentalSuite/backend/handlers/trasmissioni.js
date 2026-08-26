@@ -109,9 +109,15 @@ async function postazioniDisponibili() {
         const perImpronta = new Map(vive.filter(r => r.impronta_postazione).map(r => [r.impronta_postazione, r]));
 
         const collegate = dest.map(voce => {
-            const attiva = perSessione.get(voce.sessione_id)
-                || (voce.impronta ? perImpronta.get(voce.impronta) : null);
-            const paziente = attiva && attiva.paziente_id ? lettura.schedaPaziente(attiva.paziente_id) : null;
+            const attiva = vive.find(r =>
+                r.sessione_id === voce.sessione_id
+                || (voce.impronta && r.impronta_postazione === voce.impronta)
+                || (voce.ip && r.indirizzo_consegna && r.indirizzo_consegna.includes(voce.ip))
+            );
+            const inSedutaEffettiva = voce.stato_osservato ? Boolean(voce.in_seduta) : Boolean(attiva);
+            const paziente = (inSedutaEffettiva && attiva && attiva.paziente_id)
+                ? lettura.schedaPaziente(attiva.paziente_id)
+                : null;
             const raggiungibileOra = voce.tipo_connessione === 'canale' || Boolean(voce.ip);
             return {
                 sessione_id: voce.sessione_id,
@@ -121,9 +127,9 @@ async function postazioniDisponibili() {
                 tipo_connessione: voce.tipo_connessione,
                 aperta_il: voce.aperta_il,
                 online: raggiungibileOra,
-                in_seduta: Boolean(voce.in_seduta || attiva),
-                trasmissione_id: attiva ? attiva.id : null,
-                paziente_nome: paziente ? `${paziente.cognome} ${paziente.nome}`.trim() : (attiva ? 'Paziente in consultazione' : null)
+                in_seduta: inSedutaEffettiva,
+                trasmissione_id: inSedutaEffettiva && attiva ? attiva.id : null,
+                paziente_nome: paziente ? `${paziente.cognome} ${paziente.nome}`.trim() : null
             };
         });
 

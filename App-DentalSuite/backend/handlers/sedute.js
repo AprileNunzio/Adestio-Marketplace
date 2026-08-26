@@ -9,7 +9,8 @@ async function chiudiPrecedenti(bersaglio, nuovaId) {
     const aperte = trasmissioni.findAll({ stato: 'aperta' }).filter(riga =>
         riga.id !== nuovaId
         && (riga.sessione_id === bersaglio.sessione_id
-            || (bersaglio.impronta && riga.impronta_postazione === bersaglio.impronta))
+            || (bersaglio.impronta && riga.impronta_postazione === bersaglio.impronta)
+            || (bersaglio.ip && riga.indirizzo_consegna && riga.indirizzo_consegna.includes(bersaglio.ip)))
     );
 
     for (const riga of aperte) {
@@ -24,18 +25,18 @@ async function chiudiPrecedenti(bersaglio, nuovaId) {
 }
 
 async function riconcilia(aperte, dest) {
-    const perSessione = new Map(dest.map(voce => [voce.sessione_id, voce]));
-    const perImpronta = new Map(dest.filter(v => v.impronta).map(voce => [voce.impronta, voce]));
     const orfane = [];
 
     for (const riga of aperte) {
-        const bersaglio = perSessione.get(riga.sessione_id)
-            || (riga.impronta_postazione ? perImpronta.get(riga.impronta_postazione) : null);
+        const bersaglio = dest.find(voce =>
+            voce.sessione_id === riga.sessione_id
+            || (riga.impronta_postazione && voce.impronta === riga.impronta_postazione)
+            || (voce.ip && riga.indirizzo_consegna && riga.indirizzo_consegna.includes(voce.ip))
+        );
 
         if (!bersaglio) continue;
         if (!bersaglio.stato_osservato) continue;
         if (bersaglio.in_seduta) continue;
-        if (Date.now() - (riga.aperta_il || 0) < GRAZIA_RICONCILIAZIONE_MS) continue;
 
         await trasmissioni.update(riga.id, {
             stato: 'chiusa',
@@ -48,4 +49,4 @@ async function riconcilia(aperte, dest) {
     return orfane;
 }
 
-module.exports = { chiudiPrecedenti, riconcilia, GRAZIA_RICONCILIAZIONE_MS };
+module.exports = { chiudiPrecedenti, riconcilia };
