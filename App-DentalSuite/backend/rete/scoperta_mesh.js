@@ -120,14 +120,14 @@ function _accettabile(scheda, marchioLocale, ipsLocali) {
     return !_seStesso(scheda, marchioLocale, ipsLocali);
 }
 
+let _inAggiornamento = false;
 let _scansioneSubnetInCorso = false;
 let _ultimoScanSubnet = 0;
 
-async function scansionaStazioni(forza = false) {
+async function _eseguiSonda(forza = false) {
+    if (_inAggiornamento) return _cacheStazioni;
+    _inAggiornamento = true;
     const adesso = Date.now();
-    if (!forza && _ultimoScan > 0 && adesso - _ultimoScan < CACHE_TTL_MS) {
-        return _cacheStazioni;
-    }
 
     try {
         const marchioLocale = typeof identita.marchioNodo === 'function' ? identita.marchioNodo() : null;
@@ -146,13 +146,13 @@ async function scansionaStazioni(forza = false) {
         const vicini = _bersagliDaVicini();
         if (vicini.length > 0) {
             const esiti = await _inLotti(
-                vicini.map(b => () => sondaHttp(b.ip, b.porta, 600)),
+                vicini.map(b => () => sondaHttp(b.ip, b.porta, 400)),
                 SONDE_PARALLELE
             );
             esiti.forEach(registra);
         }
 
-        if (trovati.size === 0 && (forza || adesso - _ultimoScanSubnet > 20000)) {
+        if (trovati.size === 0 && (forza || adesso - _ultimoScanSubnet > 25000)) {
             if (!_scansioneSubnetInCorso) {
                 _scansioneSubnetInCorso = true;
                 _ultimoScanSubnet = adesso;
@@ -163,7 +163,7 @@ async function scansionaStazioni(forza = false) {
                     []
                 );
                 const esiti = await _inLotti(
-                    bersagli.map(b => () => sondaHttp(b.ip, b.porta, 350)),
+                    bersagli.map(b => () => sondaHttp(b.ip, b.porta, 300)),
                     SONDE_PARALLELE
                 );
                 esiti.forEach(registra);
@@ -173,11 +173,24 @@ async function scansionaStazioni(forza = false) {
 
         _cacheStazioni = [...trovati.values()];
         _ultimoScan = adesso;
+        _inAggiornamento = false;
         return _cacheStazioni;
     } catch (_) {
+        _inAggiornamento = false;
         _scansioneSubnetInCorso = false;
         return _cacheStazioni;
     }
+}
+
+async function scansionaStazioni(forza = false) {
+    const adesso = Date.now();
+    if (!forza && _cacheStazioni.length > 0) {
+        if (adesso - _ultimoScan > CACHE_TTL_MS && !_inAggiornamento) {
+            _eseguiSonda(false).catch(() => {});
+        }
+        return _cacheStazioni;
+    }
+    return _eseguiSonda(forza);
 }
 
 async function scansionaMonitors(forza = false) {
