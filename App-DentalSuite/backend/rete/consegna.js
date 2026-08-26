@@ -2,6 +2,13 @@
 
 const http = require('http');
 
+const _agenteKeepAlive = new http.Agent({
+    keepAlive: true,
+    maxSockets: 64,
+    maxFreeSockets: 32,
+    keepAliveMsecs: 30000
+});
+
 const ATTESA_BASE_MS = 4000;
 const ATTESA_PER_MB_MS = 3000;
 const TENTATIVI_CONSEGNA = 2;
@@ -17,6 +24,7 @@ function postDiretto(ip, porta, rotta, payloadCorpo) {
                 port: porta,
                 path: rotta,
                 method: 'POST',
+                agent: _agenteKeepAlive,
                 headers: {
                     'Content-Type': 'application/json',
                     'Content-Length': byte
