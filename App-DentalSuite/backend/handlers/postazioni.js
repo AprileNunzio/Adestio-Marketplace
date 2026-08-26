@@ -148,6 +148,15 @@ async function riallinea() {
     return trasporto.riallinea();
 }
 
+async function diagnosticaRete() {
+    try {
+        const scopertaMesh = require('../rete/scoperta_mesh');
+        return await scopertaMesh.diagnosticaCompleta();
+    } catch (e) {
+        return { errore: e.message };
+    }
+}
+
 module.exports = {
     profilo,
     situazione,
@@ -163,5 +172,6 @@ module.exports = {
     rimuovi,
     attiva,
     verifica,
-    riallinea
+    riallinea,
+    diagnosticaRete
 };

@@ -147,6 +147,8 @@
         "allegati.salvaDerivate": { "handler": "allegati", "method": "salvaDerivate", "permission": "allegati_upload", "mutates": true, "traccia": false },
         "allegati.verificaIntegrita": { "handler": "allegati", "method": "verificaIntegrita", "permission": "allegati_view", "mutates": false },
         "postazioni.situazione": { "handler": "postazioni", "method": "situazione", "permission": "rete_view", "mutates": false, "traccia": false },
-        "postazioni.configura": { "handler": "postazioni", "method": "configura", "permission": "rete_manage", "mutates": true }
+        "postazioni.configura": { "handler": "postazioni", "method": "configura", "permission": "rete_manage", "mutates": true },
+        "postazioni.diagnosticaRete": { "handler": "postazioni", "method": "diagnosticaRete", "permission": "rete_view", "mutates": false },
+        "trasmissioni.diagnosticaRete": { "handler": "trasmissioni", "method": "diagnosticaRete", "permission": "trasmissione_invia", "mutates": false }
     }
 }

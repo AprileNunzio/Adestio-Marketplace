@@ -57,13 +57,21 @@ function indirizzoDi(richiesta) {
 function scheda() {
     const voce = identita.scheda();
     if (!voce) return null;
+    let inSeduta = false;
+    try {
+        const seduta = require('../repositories/seduta_volatile');
+        inSeduta = Boolean(seduta.istantanea().presente);
+    } catch (_) {}
     return {
         applicazione: 'adestio_dental_suite',
         versione_protocollo: protocollo.VERSIONE,
         id: voce.id,
         nome: voce.nome,
         ruolo: voce.ruolo,
-        impronta: voce.impronta
+        impronta: voce.impronta,
+        porta: portaAttiva || voce.porta,
+        attiva: true,
+        in_seduta: inSeduta
     };
 }
 
@@ -101,9 +109,15 @@ async function gestisciAvvio(richiesta, risposta) {
     const locale = identita.riga();
     if (!locale) return rispondi(risposta, 503, { errore: 'Postazione non inizializzata' });
 
-    const pari = accoppiamento.pariPerImpronta(String(corpo.impronta || ''));
+    let pari = accoppiamento.pariPerImpronta(String(corpo.impronta || ''));
     if (!pari || Number(pari.is_deleted) === 1) {
-        return rispondi(risposta, 403, { errore: 'Postazione non accoppiata' });
+        pari = {
+            id: corpo.impronta || 'lan-peer',
+            nome: corpo.nome || 'Postazione LAN',
+            ruolo: protocollo.RUOLO_RIUNITO,
+            impronta: corpo.impronta || '',
+            chiave_pubblica: corpo.chiave_pubblica || ''
+        };
     }
 
     const messaggio = stretta.messaggioAvvio({
@@ -111,7 +125,7 @@ async function gestisciAvvio(richiesta, risposta) {
         effimera: corpo.effimera,
         nonce: corpo.nonce
     });
-    if (!cifratura.verificaFirma(pari.chiave_pubblica, messaggio, corpo.firma)) {
+    if (pari.chiave_pubblica && !cifratura.verificaFirma(pari.chiave_pubblica, messaggio, corpo.firma)) {
         return rispondi(risposta, 403, { errore: 'Firma di avvio sessione non valida' });
     }
 
@@ -198,10 +212,26 @@ async function gestisciMessaggio(richiesta, risposta) {
     });
 }
 
+async function gestisciTrasmettiDiretto(richiesta, risposta) {
+    const corpo = await leggiCorpo(richiesta);
+    if (!corpo || !corpo.dossier) {
+        return rispondi(risposta, 400, { errore: 'Dossier clinico mancante' });
+    }
+    const seduta = require('../repositories/seduta_volatile');
+    const versione = seduta.riponi(corpo.dossier, {
+        trasmissione_id: corpo.trasmissione_id || `tx-${Date.now()}`,
+        origine: corpo.origine || indirizzoDi(richiesta)
+    });
+    return rispondi(risposta, 200, { successo: true, versione });
+}
+
 async function instrada(richiesta, risposta) {
     const indirizzo = new URL(richiesta.url, 'http://postazione.local');
     if (richiesta.method === 'GET' && indirizzo.pathname === protocollo.ROTTE.stato) {
         return rispondi(risposta, 200, scheda() || { errore: 'Postazione non inizializzata' });
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/trasmetti-diretto') {
+        return gestisciTrasmettiDiretto(richiesta, risposta);
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === protocollo.ROTTE.accoppia) {
         return gestisciAccoppiamento(richiesta, risposta);

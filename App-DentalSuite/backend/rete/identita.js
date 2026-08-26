@@ -35,7 +35,7 @@ async function assicura() {
         chiave_pubblica: identita.pubblica,
         chiave_privata: identita.privata,
         impronta: identita.impronta,
-        attiva: 0,
+        attiva: 1,
         indirizzo_archivio: ''
     });
     return riga();

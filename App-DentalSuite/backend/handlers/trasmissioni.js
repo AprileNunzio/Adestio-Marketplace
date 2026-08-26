@@ -56,35 +56,104 @@ function componiDossier(pazienteId, dentizione, schermo) {
     });
 }
 
-function destinazioni() {
-    return trasporto.stato().canali.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
+const scopertaMesh = require('../rete/scoperta_mesh');
+const http = require('http');
+
+async function destinazioni() {
+    try {
+        const canaliLocali = trasporto.stato().canali.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
+        const monitorLan = await scopertaMesh.scansionaMonitors();
+        const mappa = new Map();
+
+        for (const voce of canaliLocali) {
+            mappa.set(voce.sessione_id, {
+                ...voce,
+                tipo_connessione: 'canale'
+            });
+        }
+
+        for (const m of monitorLan) {
+            const idSessione = `lan-${m.ip}:${m.porta}`;
+            if (!mappa.has(idSessione)) {
+                mappa.set(idSessione, {
+                    sessione_id: idSessione,
+                    nome: m.nome || `Studio (${m.ip})`,
+                    impronta: m.impronta || m.id,
+                    indirizzo: m.indirizzo,
+                    ip: m.ip,
+                    porta: m.porta,
+                    ruolo: protocollo.RUOLO_RIUNITO,
+                    aperta_il: Date.now(),
+                    in_seduta: Boolean(m.in_seduta),
+                    tipo_connessione: 'diretto'
+                });
+            }
+        }
+
+        return Array.from(mappa.values());
+    } catch (_) {
+        return [];
+    }
 }
 
-function postazioniDisponibili() {
-    const aperte = trasmissioni.findAll({ stato: 'aperta' });
-    const perSessione = new Map(aperte.map(r => [r.sessione_id, r]));
+async function postazioniDisponibili() {
+    try {
+        const aperte = trasmissioni.findAll({ stato: 'aperta' });
+        const perSessione = new Map(aperte.map(r => [r.sessione_id, r]));
+        const dest = await destinazioni();
 
-    return destinazioni().map(voce => {
-        const attiva = perSessione.get(voce.sessione_id);
-        const paziente = attiva && attiva.paziente_id ? lettura.schedaPaziente(attiva.paziente_id) : null;
-        return {
-            sessione_id: voce.sessione_id,
-            nome: voce.nome,
-            impronta: voce.impronta,
-            indirizzo: voce.indirizzo,
-            aperta_il: voce.aperta_il,
-            online: true,
-            in_seduta: Boolean(attiva),
-            trasmissione_id: attiva ? attiva.id : null,
-            paziente_nome: paziente ? `${paziente.cognome} ${paziente.nome}`.trim() : (attiva ? 'Paziente in consultazione' : null)
-        };
+        return dest.map(voce => {
+            const attiva = perSessione.get(voce.sessione_id);
+            const paziente = attiva && attiva.paziente_id ? lettura.schedaPaziente(attiva.paziente_id) : null;
+            return {
+                sessione_id: voce.sessione_id,
+                nome: voce.nome,
+                impronta: voce.impronta,
+                indirizzo: voce.indirizzo,
+                aperta_il: voce.aperta_il,
+                online: true,
+                in_seduta: Boolean(attiva || voce.in_seduta),
+                trasmissione_id: attiva ? attiva.id : null,
+                paziente_nome: paziente ? `${paziente.cognome} ${paziente.nome}`.trim() : (attiva ? 'Paziente in consultazione' : null)
+            };
+        });
+    } catch (_) {
+        return [];
+    }
+}
+
+function trasmettiDiretto(ip, porta, payloadCorpo) {
+    return new Promise((resolve) => {
+        try {
+            const data = JSON.stringify(payloadCorpo);
+            const req = http.request({
+                hostname: ip,
+                port: porta,
+                path: '/trasmetti-diretto',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(data)
+                },
+                timeout: 5000
+            }, (res) => {
+                if (res.statusCode === 200) resolve(true);
+                else resolve(false);
+            });
+            req.on('error', () => resolve(false));
+            req.on('timeout', () => { try { req.destroy(); } catch (_) {} resolve(false); });
+            req.write(data);
+            req.end();
+        } catch (_) {
+            resolve(false);
+        }
     });
 }
 
 async function invia(payload = {}) {
     if (!payload.paziente_id) throw validationError('Selezionare il paziente da trasmettere');
 
-    const aperte = destinazioni();
+    const aperte = await destinazioni();
     if (aperte.length === 0) {
         throw conflictError('Nessun monitor collegato: verificare la rete di studio');
     }
@@ -94,6 +163,8 @@ async function invia(payload = {}) {
         : [payload.sessione_id || (aperte[0] && aperte[0].sessione_id)];
 
     const risultati = [];
+    const locale = identita.scheda();
+
     for (const sessioneId of sessioni) {
         const bersaglio = aperte.find(voce => voce.sessione_id === sessioneId);
         if (!bersaglio) continue;
@@ -111,10 +182,19 @@ async function invia(payload = {}) {
             impronta_dossier: impronta
         }, actor.stamp());
 
-        const consegnato = trasporto.versoRiunito(bersaglio.sessione_id, protocollo.MESSAGGI.dossier, {
-            trasmissione_id: id,
-            dossier
-        });
+        let consegnato = false;
+        if (bersaglio.tipo_connessione === 'diretto' || bersaglio.sessione_id.startsWith('lan-')) {
+            consegnato = await trasmettiDiretto(bersaglio.ip, bersaglio.porta, {
+                trasmissione_id: id,
+                dossier,
+                origine: locale ? locale.nome : 'Segreteria'
+            });
+        } else {
+            consegnato = trasporto.versoRiunito(bersaglio.sessione_id, protocollo.MESSAGGI.dossier, {
+                trasmissione_id: id,
+                dossier
+            });
+        }
 
         if (!consegnato) {
             await trasmissioni.update(id, {
@@ -122,7 +202,7 @@ async function invia(payload = {}) {
                 chiusa_il: Date.now(),
                 motivo_chiusura: 'Canale non disponibile al momento dell\'invio'
             });
-            throw conflictError(`Il canale verso "${bersaglio.nome}" si è chiuso durante l'invio`);
+            throw conflictError(`Impossibile raggiungere "${bersaglio.nome}" (${bersaglio.indirizzo || bersaglio.sessione_id})`);
         }
 
         risultati.push({
@@ -140,6 +220,14 @@ async function invia(payload = {}) {
     return risultati.length === 1
         ? risultati[0]
         : { inviati: risultati.length, dettagli: risultati, paziente: risultati[0].paziente, postazione: `${risultati.length} monitor` };
+}
+
+async function diagnosticaRete() {
+    try {
+        return await scopertaMesh.diagnosticaCompleta();
+    } catch (e) {
+        return { errore: e.message };
+    }
 }
 
 async function chiudi(payload = {}) {
@@ -300,5 +388,6 @@ module.exports = {
     chiudiLocale,
     accogli,
     chiudiPerSessione,
-    componiDossier
+    componiDossier,
+    diagnosticaRete
 };

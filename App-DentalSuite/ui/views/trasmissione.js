@@ -162,9 +162,12 @@ export default {
         let vistaCorrente = (parametri && parametri.modo) ? parametri.modo : 'scelta';
 
         const mostraScelta = async () => {
-            const rete = await statoRete();
+            const [rete, postazioniDati] = await Promise.all([
+                statoRete(),
+                call('trasmissioni.postazioni', {}).then(r => oggetto(r, { collegate: [] }))
+            ]);
             const postazione = rete ? rete.postazione : null;
-            const canali = rete && rete.canali ? rete.canali.filter(v => v.ruolo === RUOLO_RIUNITO) : [];
+            const monitorOnlineCount = (postazioniDati.collegate || []).length;
 
             rimpiazza(contenitorePrincipale, [
                 intestazione({
@@ -174,7 +177,7 @@ export default {
                     indietro
                 }),
                 hubSceltaModalita({
-                    monitorOnline: canali.length,
+                    monitorOnline: monitorOnlineCount,
                     postazione,
                     puoTrasmettere,
                     puoRicevere,

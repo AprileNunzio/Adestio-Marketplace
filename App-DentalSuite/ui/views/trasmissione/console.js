@@ -32,6 +32,76 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
         }
     };
 
+    const apriDiagnosticaRete = () => {
+        const overlay = el('div', { class: 'ds-modal-overlay ds-diagnostica-overlay', style: 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px);' });
+        const modal = el('div', { class: 'ds-modal ds-diagnostica-modal', style: 'max-width: 650px; width: 90%; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);' });
+
+        const renderCorpo = async () => {
+            rimpiazza(modal, [
+                el('div', { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;' }, [
+                    el('h3', { style: 'margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;' }, 'Diagnostica Rete & Monitor DentalSuite'),
+                    el('button', {
+                        class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                        type: 'button',
+                        onClick: () => overlay.remove()
+                    }, icona('close'))
+                ]),
+                el('div', { style: 'padding: 24px; text-align: center; color: #64748b;' }, [
+                    icona('radar'),
+                    el('div', { style: 'margin-top: 8px; font-weight: 500;' }, 'Scansione nodi e monitor in corso...')
+                ])
+            ]);
+
+            const diag = await call('trasmissioni.diagnosticaRete', {});
+            const locale = diag.postazione_locale || {};
+            const monitors = diag.monitor_rilevati || [];
+
+            rimpiazza(modal, [
+                el('div', { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;' }, [
+                    el('h3', { style: 'margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;' }, 'Diagnostica Rete & Monitor DentalSuite'),
+                    el('button', {
+                        class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                        type: 'button',
+                        onClick: () => overlay.remove()
+                    }, icona('close'))
+                ]),
+                el('div', { style: 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 16px;' }, [
+                    el('div', { style: 'font-weight: 700; color: #0f172a; margin-bottom: 4px;' }, `Postazione Locale: ${locale.nome_pc || 'PC Locale'}`),
+                    el('div', { style: 'font-size: 0.85rem; color: #475569;' }, `Nome: ${locale.nome || '-'} · Ruolo: ${locale.ruolo === 'riunito' ? 'Monitor Studio' : 'Segreteria'} · Porta: ${locale.porta || 7345}`),
+                    el('div', { style: 'font-size: 0.85rem; color: #475569;' }, `IP Locali: ${(locale.interfacce || []).map(i => i.ip).join(', ') || '127.0.0.1'}`)
+                ]),
+                el('div', { style: 'font-weight: 700; color: #0f172a; margin-bottom: 8px;' }, `Monitor Rilevati sulla Rete LAN (${monitors.length}):`),
+                monitors.length === 0
+                    ? el('div', { style: 'padding: 16px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; color: #b45309; font-size: 0.9rem;' }, 'Nessun monitor rilevato in ascolto sugli altri computer. Verifica che DentalSuite sia aperto sul PC dello studio in modalità "Ricevi".')
+                    : el('div', { style: 'display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; margin-bottom: 16px;' }, monitors.map(m => el('div', {
+                        style: 'display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;'
+                    }, [
+                        el('div', {}, [
+                            el('div', { style: 'font-weight: 700; color: #166534;' }, m.nome || 'Monitor Studio'),
+                            el('div', { style: 'font-size: 0.8rem; color: #15803d;' }, `IP: ${m.ip}:${m.porta} · Ping: ${m.latenza_ms}ms · ${m.in_seduta ? 'In seduta' : 'Pronto a ricevere'}`)
+                        ]),
+                        el('span', { style: 'display: inline-block; padding: 4px 10px; background: #22c55e; color: #ffffff; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;' }, 'ONLINE')
+                    ]))),
+                el('div', { style: 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;' }, [
+                    el('button', {
+                        class: 'ds-btn ds-btn--ghost',
+                        type: 'button',
+                        onClick: renderCorpo
+                    }, [icona('refresh'), 'Scansiona di nuovo']),
+                    el('button', {
+                        class: 'ds-btn ds-btn--primary',
+                        type: 'button',
+                        onClick: () => overlay.remove()
+                    }, 'Chiudi')
+                ])
+            ]);
+        };
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        renderCorpo();
+    };
+
     const disegna = async () => {
         const [statoPostazioni, storico] = await Promise.all([
             call('trasmissioni.postazioni', {}).then(risultato => oggetto(risultato, { collegate: [], rete: null })),
@@ -134,31 +204,20 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                         el('button', {
                             class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
                             type: 'button',
-                            onClick: async () => {
-                                const scelto = await selettorePaziente();
-                                if (scelto) {
-                                    pazienteSelezionatoId = scelto;
-                                    await caricaPaziente(scelto);
-                                    disegna();
-                                }
+                            onClick: () => {
+                                pazienteSelezionatoId = null;
+                                pazienteSelezionatoDati = null;
+                                disegna();
                             }
-                        }, [icona('swap_horiz'), 'Cambia Paziente'])
+                        }, [icona('close'), 'Cambia'])
                     ])
-                    : el('div', { class: 'ds-paziente-non-selezionato' }, [
-                        el('p', { class: 'ds-muted' }, 'Nessun paziente selezionato.'),
-                        el('button', {
-                            class: 'ds-btn ds-btn--secondary ds-btn--tocco',
-                            type: 'button',
-                            onClick: async () => {
-                                const scelto = await selettorePaziente();
-                                if (scelto) {
-                                    pazienteSelezionatoId = scelto;
-                                    await caricaPaziente(scelto);
-                                    disegna();
-                                }
-                            }
-                        }, [icona('search'), 'Seleziona Paziente dalla Rubrica'])
-                    ])
+                    : selettorePaziente({
+                        onSelezionato: paziente => {
+                            pazienteSelezionatoId = paziente ? paziente.id : null;
+                            pazienteSelezionatoDati = paziente || null;
+                            disegna();
+                        }
+                    })
             ]);
         };
 
@@ -176,7 +235,7 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                     : null
             ].filter(Boolean)),
 
-            griglia('stats', [
+            griglia({ colonne: 3 }, [
                 statistica({ etichetta: 'Monitor online', valore: String(collegate.length), tono: collegate.length > 0 ? 'positivo' : undefined }),
                 statistica({ etichetta: 'Sedute attive adesso', valore: String(aperte.length), tono: aperte.length > 0 ? 'positivo' : undefined }),
                 statistica({ etichetta: 'Monitor selezionati', valore: String(postazioniSelezionate.size) })
@@ -186,6 +245,12 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                 titolo: '1. Seleziona i monitor online di destinazione',
                 azioni: [
                     spaziatore(),
+                    bottone({
+                        etichetta: 'Diagnostica Rete',
+                        simbolo: 'radar',
+                        variante: 'ghost',
+                        onClick: apriDiagnosticaRete
+                    }),
                     bottone({
                         etichetta: 'Aggiorna schermi',
                         simbolo: 'refresh',
@@ -255,7 +320,7 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
         } else {
             clearInterval(intervalloAggiornamento);
         }
-    }, 15000);
+    }, 3000);
 
     return contenitore;
 }
