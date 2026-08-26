@@ -72,6 +72,10 @@ async function applica(atto, contesto = {}) {
 
     try {
         riferimento = await ESECUTORI[atto.tipo](contenuto);
+        if (contenuto.paziente_id) {
+            const trasmissioni = require('./trasmissioni');
+            trasmissioni.propagaAggiornamentoDossier(contenuto.paziente_id).catch(() => {});
+        }
     } catch (errore) {
         esito = 'rifiutato';
         messaggio = errore.message;
@@ -152,6 +156,10 @@ async function registra(payload = {}) {
         trasmissione_id: istantanea.trasmissione_id,
         contenuto
     };
+
+    if (payload.tipo === 'reperto') {
+        seduta.applicaReperto(contenuto);
+    }
 
     try {
         const risposta = await trasporto.versoArchivio(protocollo.MESSAGGI.atto, atto);

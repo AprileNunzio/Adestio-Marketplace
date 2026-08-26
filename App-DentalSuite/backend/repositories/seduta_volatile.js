@@ -130,4 +130,33 @@ function attendi(versioneNota) {
     });
 }
 
-module.exports = { riponi, svuota, tocca, istantanea, estrai, attendi, mittente, daVerificare, segnaVerificata, segnaContatto, silenzioDa, presente, INATTIVITA_MS };
+function applicaReperto(datiDente) {
+    try {
+        if (!stato.dossier || !stato.dossier.odontogramma) return false;
+        const codice = String(datiDente.numero_dente || datiDente.dente_fdi || datiDente.dente || '');
+        if (!codice) return false;
+
+        stato.dossier.odontogramma.denti = stato.dossier.odontogramma.denti || {};
+        const superf = Array.isArray(datiDente.superfici)
+            ? datiDente.superfici
+            : (datiDente.superfici ? String(datiDente.superfici).split(',').filter(Boolean) : []);
+
+        stato.dossier.odontogramma.denti[codice] = {
+            ...(stato.dossier.odontogramma.denti[codice] || {}),
+            ...datiDente,
+            numero_dente: codice,
+            stato: datiDente.stato || 'sano',
+            superfici: superf,
+            aggiornato_il: Date.now()
+        };
+
+        stato.versione += 1;
+        programmaScadenza();
+        notifica();
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+module.exports = { riponi, svuota, tocca, istantanea, estrai, attendi, mittente, daVerificare, segnaVerificata, segnaContatto, silenzioDa, presente, applicaReperto, INATTIVITA_MS };

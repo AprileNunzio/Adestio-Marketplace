@@ -437,6 +437,41 @@ async function scaricaAllegato(payload = {}) {
     }
 }
 
+async function propagaAggiornamentoDossier(pazienteId) {
+    try {
+        if (!pazienteId) return 0;
+        const aperte = trasmissioni.findAll({ where: { paziente_id: pazienteId, stato: 'aperta' } });
+        if (!aperte || aperte.length === 0) return 0;
+
+        const locale = identita.scheda();
+        const origine = locale ? locale.nome : 'Segreteria';
+        let propagati = 0;
+
+        for (const riga of aperte) {
+            const memorizzato = consegna.recapitoDa(riga.indirizzo_consegna);
+            if (!memorizzato || !memorizzato.ip || !memorizzato.porta) continue;
+
+            const dossier = componiDossier(pazienteId);
+            if (!dossier) continue;
+
+            const busta = {
+                trasmissione_id: riga.id,
+                dossier,
+                origine,
+                origine_impronta: locale ? locale.impronta : '',
+                origine_porta: locale ? locale.porta : protocollo.PORTA_SERVIZIO
+            };
+
+            await consegna.postDiretto(memorizzato.ip, memorizzato.porta, '/trasmetti-diretto', busta);
+            propagati += 1;
+        }
+
+        return propagati;
+    } catch (_) {
+        return 0;
+    }
+}
+
 async function heartbeatPostazione(payload = {}) {
     try {
         const locale = await identita.assicura();
@@ -465,6 +500,7 @@ module.exports = {
     diagnosticaRete,
     heartbeatPostazione,
     cambiaPaziente,
+    propagaAggiornamentoDossier,
     chiudiPerRete: riscontri.chiudiPerRete,
     statoSeduta: riscontri.statoSeduta,
     segnalaChiusuraRemota: riscontri.segnalaChiusuraRemota,

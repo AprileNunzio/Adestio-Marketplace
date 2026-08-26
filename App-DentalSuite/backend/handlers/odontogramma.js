@@ -113,6 +113,10 @@ async function saveDente(payload = {}) {
     }, actor.stamp());
 
     await proiettaCorrente(payload.paziente_id, numero);
+    try {
+        const trasmissioni = require('./trasmissioni');
+        trasmissioni.propagaAggiornamentoDossier(payload.paziente_id).catch(() => {});
+    } catch (_) {}
     return { id, numero_dente: numero };
 }
 
@@ -134,6 +138,10 @@ async function modificaRilevazione(payload = {}) {
     }, actor.stamp());
 
     await proiettaCorrente(rilevazione.paziente_id, rilevazione.numero_dente);
+    try {
+        const trasmissioni = require('./trasmissioni');
+        trasmissioni.propagaAggiornamentoDossier(rilevazione.paziente_id).catch(() => {});
+    } catch (_) {}
     return { id: payload.id, numero_dente: rilevazione.numero_dente };
 }
 
@@ -142,6 +150,10 @@ async function eliminaRilevazione(payload = {}) {
     if (!rilevazione) throw notFoundError('Rilevazione non trovata');
     await rilevazioniDente.archive(payload.id);
     await proiettaCorrente(rilevazione.paziente_id, rilevazione.numero_dente);
+    try {
+        const trasmissioni = require('./trasmissioni');
+        trasmissioni.propagaAggiornamentoDossier(rilevazione.paziente_id).catch(() => {});
+    } catch (_) {}
     return { id: payload.id, numero_dente: rilevazione.numero_dente };
 }
 
