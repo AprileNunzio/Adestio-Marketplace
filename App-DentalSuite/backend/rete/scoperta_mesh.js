@@ -279,14 +279,22 @@ async function diagnosticaCompleta() {
     }
 }
 
-function impostaStato(ip, inSeduta) {
+function impostaStato(ip, inSeduta, pazienteNome = null) {
     try {
         if (!ip) return;
         const trovato = _cacheStazioni.find(s => s.ip === ip || (s.indirizzo && s.indirizzo.includes(ip)));
         if (trovato) {
             trovato.in_seduta = Boolean(inSeduta);
+            if (pazienteNome !== null) trovato.paziente_nome = pazienteNome;
             _ultimoScan = Date.now();
         }
+    } catch (_) {}
+}
+
+function invalidaCache() {
+    try {
+        _ultimoScan = 0;
+        _eseguiSonda(false).catch(() => {});
     } catch (_) {}
 }
 
@@ -312,5 +320,6 @@ module.exports = {
     scansionaStazioni,
     diagnosticaCompleta,
     sondaHttp,
-    impostaStato
+    impostaStato,
+    invalidaCache
 };

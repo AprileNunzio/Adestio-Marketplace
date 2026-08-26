@@ -92,7 +92,7 @@ async function invia(payload = {}, ottieniDestinazioni) {
             }, actor.stamp());
 
             if (bersaglio.ip) {
-                scopertaMesh.impostaStato(bersaglio.ip, true);
+                scopertaMesh.impostaStato(bersaglio.ip, true, dossier.paziente ? dossier.paziente.nominativo : null);
             }
 
             riusciti.push({

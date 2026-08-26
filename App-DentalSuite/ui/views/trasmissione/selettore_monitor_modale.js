@@ -112,12 +112,12 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
                     id: voce.trasmissione_id || null,
                     sessione_id: voce.sessione_id
                 });
-                if (esito(risposta, `Scheda chiusa su ${voce.nome || 'Monitor'}`)) {
+                if (esito(risposta, `Seduta chiusa su ${voce.nome || 'Monitor'}`)) {
                     await caricaPostazioni();
                     renderLista();
                 }
             } catch (e) {
-                errore(e.message || 'Errore durante la chiusura della scheda');
+                errore(e.message || 'Errore durante la chiusura della seduta');
             }
         };
 
@@ -149,6 +149,30 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
                             'Libero'
                         ]);
 
+                    const bottoniAzione = inSeduta
+                        ? [
+                            el('button', {
+                                class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                                style: 'color: #e11d48;',
+                                type: 'button',
+                                title: 'Chiudi la seduta attualmente aperta su questo monitor',
+                                onClick: () => chiudiMonitor(voce)
+                            }, [icona('logout'), 'Chiudi seduta']),
+                            el('button', {
+                                class: 'ds-btn ds-btn--primary ds-btn--piccolo',
+                                type: 'button',
+                                title: 'Sovrascrivi e trasmetti comunque la nuova scheda a questo monitor',
+                                onClick: () => inviaASessioni([voce.sessione_id])
+                            }, [icona('bolt'), 'Forza invio'])
+                        ]
+                        : [
+                            el('button', {
+                                class: `ds-btn ${isDefault ? 'ds-btn--primary' : 'ds-btn--secondary'} ds-btn--piccolo`,
+                                type: 'button',
+                                onClick: () => inviaASessioni([voce.sessione_id])
+                            }, [icona('send'), 'Invia'])
+                        ];
+
                     return el('div', {
                         style: `display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: ${isDefault ? '#f0fdfa' : '#ffffff'}; border: 2px solid ${isDefault ? '#0d9488' : '#e2e8f0'}; border-radius: 14px; gap: 12px; box-shadow: ${isDefault ? '0 4px 12px rgba(13, 148, 136, 0.12)' : 'none'};`
                     }, [
@@ -169,20 +193,7 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
                                 ])
                             ])
                         ]),
-                        el('div', { style: 'display: flex; align-items: center; gap: 8px; flex-shrink: 0;' }, [
-                            inSeduta ? el('button', {
-                                class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
-                                style: 'color: #e11d48;',
-                                type: 'button',
-                                title: 'Chiudi la scheda attualmente aperta su questo monitor',
-                                onClick: () => chiudiMonitor(voce)
-                            }, [icona('logout'), 'Chiudi']) : null,
-                            el('button', {
-                                class: `ds-btn ${isDefault ? 'ds-btn--primary' : 'ds-btn--secondary'} ds-btn--piccolo`,
-                                type: 'button',
-                                onClick: () => inviaASessioni([voce.sessione_id])
-                            }, [icona('send'), isDefault ? 'Invia' : 'Invia'])
-                        ].filter(Boolean))
+                        el('div', { style: 'display: flex; align-items: center; gap: 8px; flex-shrink: 0;' }, bottoniAzione)
                     ]);
                 });
 

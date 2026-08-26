@@ -9,6 +9,7 @@ const sessioni = require('./sessioni');
 const canale = require('./canale');
 const stretta = require('./stretta');
 const identita = require('./identita');
+const seduta = require('../repositories/seduta_volatile');
 
 let servitore = null;
 let portaAttiva = 0;
@@ -273,7 +274,21 @@ async function gestisciRiceviAtto(richiesta, risposta) {
 async function instrada(richiesta, risposta) {
     const indirizzo = new URL(richiesta.url, 'http://postazione.local');
     if (richiesta.method === 'GET' && indirizzo.pathname === protocollo.ROTTE.stato) {
-        return rispondi(risposta, 200, scheda() || { errore: 'Postazione non inizializzata' });
+        const info = identita.scheda() || { errore: 'Postazione non inizializzata' };
+        try {
+            const s = seduta.istantanea();
+            if (s && s.presente && s.dossier && s.dossier.paziente) {
+                info.in_seduta = true;
+                info.paziente_id = s.dossier.paziente.id || null;
+                info.paziente_nome = `${s.dossier.paziente.cognome || ''} ${s.dossier.paziente.nome || ''}`.trim() || 'Paziente in seduta';
+                info.trasmissione_id = s.trasmissione_id || null;
+            } else {
+                info.in_seduta = false;
+                info.paziente_id = null;
+                info.paziente_nome = null;
+            }
+        } catch (_) {}
+        return rispondi(risposta, 200, info);
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === '/trasmetti-diretto') {
         return gestisciTrasmettiDiretto(richiesta, risposta);
