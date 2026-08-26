@@ -49,12 +49,6 @@ function schermoDisplay({ indietro, onCambiaPostazione }) {
         }
         rimpiazza(contenitore, schermoAttesa({
             postazione: rete ? rete.postazione : null,
-            collegato,
-            motivo: ultimoMotivo,
-            onRicollega: async () => {
-                await call('postazioni.attiva', { attiva: true });
-                await ciclo();
-            },
             onCambiaPostazione
         }));
     };
@@ -151,6 +145,7 @@ export default {
     rendi: async ({ parametri, naviga, indietro }) => {
         assicuraFoglio('riunito');
         assicuraFoglio('monitor');
+        assicuraFoglio('attesa');
 
         const [puoTrasmettere, puoRicevere] = await Promise.all([
             can('trasmissione_invia'),

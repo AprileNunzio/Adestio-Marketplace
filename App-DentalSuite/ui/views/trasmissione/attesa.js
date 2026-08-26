@@ -1,104 +1,99 @@
 import { el, icona, rimpiazza } from '../../components/dom.js';
-import { esito } from '../../components/notifica.js';
 import { call } from '../../kernel/transport.js';
-import { elenco } from '../shared/vista.js';
-import { tastoRiunito } from './livello.js';
 
 function orologio() {
-    const nodo = el('div', { class: 'ds-attesa__orologio' }, '--:--');
+    const oraEl = el('div', { class: 'ds-attesa__ora' }, '--:--');
+    const dataEl = el('div', { class: 'ds-attesa__data' }, '---');
+    const wrap = el('div', { class: 'ds-attesa__orologio-box' }, [oraEl, dataEl]);
+
     const aggiorna = () => {
-        const adesso = new Date();
-        nodo.textContent = `${String(adesso.getHours()).padStart(2, '0')}:${String(adesso.getMinutes()).padStart(2, '0')}`;
+        try {
+            const adesso = new Date();
+            const ore = String(adesso.getHours()).padStart(2, '0');
+            const min = String(adesso.getMinutes()).padStart(2, '0');
+            oraEl.textContent = `${ore}:${min}`;
+
+            const opzioni = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            const dataStr = adesso.toLocaleDateString('it-IT', opzioni);
+            dataEl.textContent = dataStr.charAt(0).toUpperCase() + dataStr.slice(1);
+        } catch (_) {}
     };
+
     aggiorna();
-    const cadenza = setInterval(aggiorna, 20000);
-    nodo.dataset.cadenza = String(cadenza);
-    return nodo;
+    const timer = setInterval(aggiorna, 1000);
+    wrap.dataset.timer = String(timer);
+    return wrap;
 }
 
-function spia(collegato) {
-    return el('span', { class: 'ds-attesa__riga' }, [
-        el('span', { class: 'ds-riunito__spia', dataset: { collegato: collegato ? 'true' : 'false' } }),
-        collegato ? 'Pronto a ricevere dalla segreteria' : 'Non collegato alla segreteria'
+function cardInfo({ iconaNome, etichetta, valore, colore = 'teal' }) {
+    return el('div', { class: 'ds-attesa__card', dataset: { colore } }, [
+        el('div', { class: 'ds-attesa__card-icona' }, icona(iconaNome)),
+        el('div', { class: 'ds-attesa__card-testi' }, [
+            el('span', { class: 'ds-attesa__card-etichetta' }, etichetta),
+            el('strong', { class: 'ds-attesa__card-valore' }, valore || '—')
+        ])
     ]);
 }
 
-function moduloAccoppiamento(vicini, onFatto) {
-    const stato = { indirizzo: vicini.length > 0 ? `${vicini[0].indirizzo}:${vicini[0].porta}` : '', codice: '' };
-
-    const campoIndirizzo = el('input', {
-        class: 'ds-input ds-input--tocco',
-        type: 'text',
-        value: stato.indirizzo,
-        placeholder: 'Indirizzo della segreteria (es. 192.168.1.20)',
-        onInput: evento => { stato.indirizzo = evento.target.value; }
-    });
-
-    const campoCodice = el('input', {
-        class: 'ds-input ds-input--tocco',
-        type: 'text',
-        inputmode: 'numeric',
-        maxlength: '11',
-        placeholder: 'Codice a 8 cifre',
-        onInput: evento => { stato.codice = evento.target.value; }
-    });
-
-    const scelta = vicini.length > 0
-        ? el('select', {
-            class: 'ds-select ds-input--tocco',
-            onChange: evento => {
-                stato.indirizzo = evento.target.value;
-                campoIndirizzo.value = evento.target.value;
-            }
-        }, vicini.map(voce => el('option', {
-            value: `${voce.indirizzo}:${voce.porta}`
-        }, `${voce.nome} · ${voce.indirizzo}`)))
-        : null;
-
-    const collega = async () => {
-        const risposta = await call('postazioni.accoppia', {
-            indirizzo: stato.indirizzo.split(':')[0],
-            porta: Number(stato.indirizzo.split(':')[1]) || undefined,
-            codice: stato.codice
-        });
-        if (!esito(risposta, 'Monitor collegato alla segreteria')) return;
-        await onFatto();
-    };
-
-    return el('div', { class: 'ds-attesa__corpo' }, [
-        scelta,
-        campoIndirizzo,
-        campoCodice,
-        tastoRiunito({ simbolo: 'link', etichetta: 'Collega alla segreteria', primario: true, onClick: collega })
-    ].filter(Boolean));
-}
-
-export function schermoAttesa({ postazione, collegato, motivo, onRicollega, onCambiaPostazione }) {
+export function schermoAttesa({ postazione, onCambiaPostazione }) {
     const contenitore = el('div', { class: 'ds-attesa' });
 
     const disegna = async () => {
-        const vicini = collegato ? [] : elenco(await call('postazioni.vicini', {}));
+        try {
+            let nomeStudio = 'Studio Odontoiatrico';
+            let nomeMedico = 'In servizio';
+            let nomePoltrona = postazione?.nome || 'Riunito Operatorio';
 
-        rimpiazza(contenitore, el('div', { class: 'ds-attesa__corpo' }, [
-            el('div', { class: 'ds-attesa__marchio' }, icona('monitor')),
-            orologio(),
-            el('h1', { class: 'ds-attesa__titolo' }, postazione ? postazione.nome : 'Monitor del Medico'),
-            el('p', { class: 'ds-attesa__testo' }, collegato
-                ? 'In attesa. La segreteria può inviare la cartella clinica del paziente: comparirà qui a schermo intero.'
-                : 'Questo monitor non è ancora collegato alla segreteria. Richiedi il codice e inseriscilo qui sotto.'),
-            spia(collegato),
-            postazione ? el('div', { class: 'ds-attesa__impronta' }, `Impronta di sicurezza: ${postazione.impronta}`) : null,
-            motivo ? el('p', { class: 'ds-attesa__testo' }, motivo) : null,
-            el('div', { class: 'ds-attesa__pulsanti-touch' }, [
-                collegato
-                    ? tastoRiunito({ simbolo: 'refresh', etichetta: 'Controlla connessione', onClick: onRicollega })
-                    : null,
-                onCambiaPostazione
-                    ? tastoRiunito({ simbolo: 'tune', etichetta: 'Cambia postazione', onClick: onCambiaPostazione })
-                    : null
-            ].filter(Boolean)),
-            !collegato ? moduloAccoppiamento(vicini, onRicollega) : null
-        ].filter(Boolean)));
+            try {
+                if (window.electronAPI?.datiAzienda?.get) {
+                    const datiAz = await window.electronAPI.datiAzienda.get();
+                    if (datiAz?.ragione_sociale || datiAz?.nome_commerciale) {
+                        nomeStudio = datiAz.nome_commerciale || datiAz.ragione_sociale;
+                    }
+                }
+            } catch (_) {}
+
+            try {
+                const staffList = await call('staff.list', {});
+                if (Array.isArray(staffList) && staffList.length > 0) {
+                    const medico = staffList.find(s => s.ruolo === 'odontoiatra' || s.ruolo === 'medico') || staffList[0];
+                    if (medico) {
+                        nomeMedico = `Dott. ${medico.cognome || ''} ${medico.nome || ''}`.trim();
+                    }
+                }
+            } catch (_) {}
+
+            const badgeStato = el('div', { class: 'ds-attesa__badge-online' }, [
+                el('span', { class: 'ds-attesa__radar-pulse' }),
+                el('span', { class: 'ds-attesa__badge-testo' }, 'MONITOR ONLINE · PRONTO A RICEVERE')
+            ]);
+
+            const griglia = el('div', { class: 'ds-attesa__griglia' }, [
+                cardInfo({ iconaNome: 'domain', etichetta: 'Studio / Struttura', valore: nomeStudio, colore: 'teal' }),
+                cardInfo({ iconaNome: 'dentistry', etichetta: 'Riunito / Poltrona', valore: nomePoltrona, colore: 'cyan' }),
+                cardInfo({ iconaNome: 'person', etichetta: 'Medico Collegato', valore: nomeMedico, colore: 'indigo' }),
+                cardInfo({ iconaNome: 'sensors', etichetta: 'Canale Live', valore: 'Pronto per trasmissione', colore: 'emerald' })
+            ]);
+
+            const btnCambia = onCambiaPostazione
+                ? el('button', {
+                    class: 'ds-attesa__btn-action',
+                    type: 'button',
+                    onClick: onCambiaPostazione
+                }, [
+                    icona('tune'),
+                    el('span', {}, 'Cambia Postazione')
+                ])
+                : null;
+
+            rimpiazza(contenitore, el('div', { class: 'ds-attesa__container' }, [
+                badgeStato,
+                orologio(),
+                griglia,
+                el('p', { class: 'ds-attesa__hint' }, 'In attesa. La segreteria può inviare la cartella clinica del paziente: comparirà automaticamente a schermo intero.'),
+                btnCambia
+            ].filter(Boolean)));
+        } catch (_) {}
     };
 
     disegna();

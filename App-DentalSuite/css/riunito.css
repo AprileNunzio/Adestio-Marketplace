@@ -228,27 +228,6 @@
 .ds-riunito__spia { width: .7em; height: .7em; border-radius: 50%; background: var(--ds-success); }
 .ds-riunito__spia[data-collegato="false"] { background: var(--ds-danger); }
 
-.ds-attesa {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: grid;
-    place-items: center;
-    background: var(--ds-surface);
-    color: var(--ds-text);
-    padding: 2rem;
-    text-align: center;
-}
-
-.ds-attesa__corpo { display: flex; flex-direction: column; align-items: center; gap: 1.1rem; max-width: 44rem; }
-.ds-attesa__marchio { width: 84px; height: 84px; border-radius: 24px; display: grid; place-items: center; background: var(--ds-accent-soft); color: var(--ds-accent); }
-.ds-attesa__marchio .material-symbols-rounded { font-size: 3rem; }
-.ds-attesa__titolo { font-size: clamp(1.6rem, 3.4vw, 2.6rem); font-weight: 700; letter-spacing: -.03em; margin: 0; }
-.ds-attesa__testo { color: var(--ds-muted); font-size: 1.05rem; margin: 0; line-height: 1.6; }
-.ds-attesa__orologio { font-size: clamp(3rem, 9vw, 6rem); font-weight: 700; letter-spacing: -.05em; font-variant-numeric: tabular-nums; line-height: 1; }
-.ds-attesa__impronta { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .06em; color: var(--ds-muted); font-size: .9rem; }
-.ds-attesa__riga { display: flex; align-items: center; gap: .6rem; color: var(--ds-muted); }
-
 .ds-livello {
     position: fixed;
     inset: 0;
