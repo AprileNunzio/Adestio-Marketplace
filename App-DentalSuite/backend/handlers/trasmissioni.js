@@ -19,9 +19,6 @@ const scopertaMesh = require('../rete/scoperta_mesh');
 const sorveglianza = require('../rete/sorveglianza');
 const consegna = require('../rete/consegna');
 
-
-
-
 async function destinazioni() {
     try {
         const mappa = new Map();

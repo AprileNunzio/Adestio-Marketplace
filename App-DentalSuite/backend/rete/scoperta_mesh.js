@@ -36,12 +36,15 @@ function ottieniSubnetLocali() {
     }
 }
 
-function sondaHttp(ip, porta, timeoutMs = 800) {
+function sondaHttp(ip, porta, timeoutMs = 400) {
     return new Promise((resolve) => {
         const t0 = Date.now();
         try {
-            const req = http.get(`http://${ip}:${porta}${protocollo.ROTTE.stato}`, { timeout: timeoutMs }, (res) => {
-                if (res.statusCode !== 200) return resolve(null);
+            const req = http.get(`http://${ip}:${porta}${protocollo.ROTTE.stato}`, { timeout: timeoutMs, agent: false }, (res) => {
+                if (res.statusCode !== 200) {
+                    res.resume();
+                    return resolve(null);
+                }
                 let data = '';
                 res.on('data', c => data += c);
                 res.on('end', () => {
@@ -64,7 +67,10 @@ function sondaHttp(ip, porta, timeoutMs = 800) {
                     }
                 });
             });
-            req.on('error', () => resolve(null));
+            req.on('error', () => {
+                try { req.destroy(); } catch (_) {}
+                resolve(null);
+            });
             req.on('timeout', () => {
                 try { req.destroy(); } catch (_) {}
                 resolve(null);
@@ -152,7 +158,7 @@ async function _eseguiSonda(forza = false) {
             esiti.forEach(registra);
         }
 
-        if (trovati.size === 0 && (forza || adesso - _ultimoScanSubnet > 25000)) {
+        if (forza && trovati.size === 0) {
             if (!_scansioneSubnetInCorso) {
                 _scansioneSubnetInCorso = true;
                 _ultimoScanSubnet = adesso;
@@ -163,7 +169,7 @@ async function _eseguiSonda(forza = false) {
                     []
                 );
                 const esiti = await _inLotti(
-                    bersagli.map(b => () => sondaHttp(b.ip, b.porta, 300)),
+                    bersagli.map(b => () => sondaHttp(b.ip, b.porta, 250)),
                     SONDE_PARALLELE
                 );
                 esiti.forEach(registra);
