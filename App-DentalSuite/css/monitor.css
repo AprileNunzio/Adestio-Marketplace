@@ -401,9 +401,11 @@
 
 .ds-selettore-postazione__azioni {
     display: flex;
-    justify-content: flex-end;
-    gap: 0.8rem;
-    margin-top: 0.5rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    width: 100%;
 }
 
 .ds-monitor-full-view {

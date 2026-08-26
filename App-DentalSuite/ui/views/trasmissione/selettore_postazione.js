@@ -25,15 +25,19 @@ export function selettorePostazioneModalita({ postazioneAttuale, onSelezionato, 
     });
 
     const salvaConfigurazione = async (nome) => {
-        const nomeFinale = String(nome || nomeScelto).trim();
-        if (!nomeFinale) return;
-        const risposta = await call('postazioni.configura', {
-            ruolo: 'riunito',
-            nome: nomeFinale
-        });
-        if (!esito(risposta, `Postazione impostata su "${nomeFinale}"`)) return;
-        if (typeof onSelezionato === 'function') {
-            onSelezionato(nomeFinale);
+        try {
+            const nomeFinale = String(nome || nomeScelto).trim();
+            if (!nomeFinale) return;
+            const risposta = await call('postazioni.configura', {
+                ruolo: 'riunito',
+                nome: nomeFinale
+            });
+            if (!esito(risposta, `Postazione impostata su "${nomeFinale}"`)) return;
+            if (typeof onSelezionato === 'function') {
+                onSelezionato(nomeFinale);
+            }
+        } catch (e) {
+            esito({ error: e.message || 'Impossibile configurare postazione' });
         }
     };
 
@@ -50,6 +54,20 @@ export function selettorePostazioneModalita({ postazioneAttuale, onSelezionato, 
         el('span', { class: 'ds-selettore-postazione__preset-titolo' }, preset.nome)
     ]));
 
+    const btnAnnulla = onAnnulla
+        ? el('button', {
+            class: 'ds-btn ds-btn--ghost ds-btn--tocco',
+            type: 'button',
+            onClick: onAnnulla
+        }, [icona('arrow_back'), el('span', {}, 'Indietro')])
+        : null;
+
+    const btnConferma = el('button', {
+        class: 'ds-btn ds-btn--primary ds-btn--tocco',
+        type: 'button',
+        onClick: () => salvaConfigurazione(nomeScelto)
+    }, [icona('check_circle'), el('span', {}, 'Attiva Postazione')]);
+
     return el('div', { class: 'ds-selettore-postazione' }, [
         el('div', { class: 'ds-selettore-postazione__foglio' }, [
             el('div', { class: 'ds-selettore-postazione__testa' }, [
@@ -65,18 +83,8 @@ export function selettorePostazioneModalita({ postazioneAttuale, onSelezionato, 
                 campoNome
             ]),
             el('div', { class: 'ds-selettore-postazione__azioni' }, [
-                onAnnulla
-                    ? el('button', {
-                        class: 'ds-btn ds-btn--ghost ds-btn--tocco',
-                        type: 'button',
-                        onClick: onAnnulla
-                    }, [icona('arrow_back'), 'Indietro'])
-                    : null,
-                el('button', {
-                    class: 'ds-btn ds-btn--primary ds-btn--tocco',
-                    type: 'button',
-                    onClick: () => salvaConfigurazione(nomeScelto)
-                }, [icona('check'), 'Attiva Monitor'])
+                btnAnnulla,
+                btnConferma
             ].filter(Boolean))
         ])
     ]);
