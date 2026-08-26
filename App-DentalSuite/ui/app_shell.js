@@ -45,17 +45,20 @@ function schermoNegato(modulo, indietro) {
     ]);
 }
 
-let _versioneApp = '';
 async function ottieniVersioneApp() {
     try {
-        if (_versioneApp) return _versioneApp;
-        const res = await fetch(new URL('../manifest.json', import.meta.url).href);
+        if (window.electronAPI?.getAppsRegistry) {
+            const apps = await window.electronAPI.getAppsRegistry();
+            const app = apps.find(a => a.id === 'adestio_dental_suite' || a.folder === 'adestio_dental_suite' || a.folder === 'App-DentalSuite');
+            if (app && app.version) return app.version;
+        }
+        const res = await fetch(new URL(`../manifest.json?t=${Date.now()}`, import.meta.url).href, { cache: 'no-store' });
         if (res.ok) {
             const dati = await res.json();
-            if (dati && dati.version) _versioneApp = dati.version;
+            if (dati && dati.version) return dati.version;
         }
     } catch (_) {}
-    return _versioneApp;
+    return '';
 }
 
 export function creaShell(contenitore) {

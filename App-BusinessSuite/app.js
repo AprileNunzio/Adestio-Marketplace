@@ -132,10 +132,17 @@ const appInstance = {
 
                     let appVer = '';
                     try {
-                        const res = await fetch(new URL('manifest.json', APP_BASE).href);
-                        if (res.ok) {
-                            const m = await res.json();
-                            if (m && m.version) appVer = m.version.replace(/^v\s*/i, '');
+                        if (window.electronAPI?.getAppsRegistry) {
+                            const apps = await window.electronAPI.getAppsRegistry();
+                            const app = apps.find(a => a.id === 'adestio_business_suite' || a.folder === 'adestio_business_suite' || a.folder === 'App-BusinessSuite');
+                            if (app && app.version) appVer = app.version.replace(/^v\s*/i, '');
+                        }
+                        if (!appVer) {
+                            const res = await fetch(new URL(`manifest.json?t=${Date.now()}`, APP_BASE).href, { cache: 'no-store' });
+                            if (res.ok) {
+                                const m = await res.json();
+                                if (m && m.version) appVer = m.version.replace(/^v\s*/i, '');
+                            }
                         }
                     } catch (_) {}
 
