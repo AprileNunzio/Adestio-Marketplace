@@ -30,6 +30,7 @@ function calcolaTotali(righe, scontoTestata = 0) {
 }
 
 function puoTransitare(statoCorrente, statoTarget) {
+    if (statoCorrente === statoTarget) return true;
     const consentiti = TRANSIZIONI[statoCorrente];
     return Array.isArray(consentiti) && consentiti.includes(statoTarget);
 }

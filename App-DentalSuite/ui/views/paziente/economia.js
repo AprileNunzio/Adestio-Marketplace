@@ -171,6 +171,18 @@ export default {
                         },
                         { titolo: 'Totale', numerica: true, rendi: riga => fmt.euro(riga.totale_netto) },
                         {
+                            titolo: 'Pagamento & Rate',
+                            rendi: riga => {
+                                if (riga.numero_rate > 1) {
+                                    return distintivo(`${riga.numero_rate} rate`, 'info');
+                                }
+                                if (riga.metodo_pagamento) {
+                                    return el('span', { class: 'ds-muted', style: 'font-size: 0.82rem;' }, fmt.etichettaStato(riga.metodo_pagamento));
+                                }
+                                return el('span', { class: 'ds-muted' }, '—');
+                            }
+                        },
+                        {
                             titolo: '',
                             rendi: riga => azioniRiga([
                                 permessi.preventivi ? bottone({

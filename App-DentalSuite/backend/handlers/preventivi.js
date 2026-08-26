@@ -1,6 +1,6 @@
 'use strict';
 
-const { preventivi, righePreventivo, incassi } = require('../repositories/financial');
+const { preventivi, righePreventivo, incassi, pianiRateali } = require('../repositories/financial');
 const { pazienti } = require('../repositories/clinical');
 const { db } = require('../kernel/database');
 const { validationError, conflictError } = require('../kernel/errors');
@@ -9,6 +9,7 @@ const riferimenti = require('../kernel/riferimenti');
 const dominio = require('../domain/preventivo');
 const money = require('../domain/money');
 const { oggiIso } = require('../domain/rateizzazione');
+const rateHandler = require('./rate');
 
 function prossimoNumero() {
     const anno = oggiIso().slice(0, 4);
@@ -64,39 +65,86 @@ async function scriviRighe(preventivoId, righe) {
     }
 }
 
+async function sincronizzaPianoRateale(preventivoId, pazienteId, totaleNetto, payload) {
+    try {
+        const numRate = Number(payload.numero_rate || 0);
+        if (numRate <= 1) return;
+        const esistenti = pianiRateali.findAll({ where: { preventivo_id: preventivoId } });
+        if (esistenti.length === 0) {
+            await rateHandler.creaPiano({
+                paziente_id: pazienteId,
+                preventivo_id: preventivoId,
+                totale_piano: totaleNetto,
+                acconto_iniziale: Number(payload.acconto_richiesto || 0),
+                numero_rate: numRate,
+                cadenza_mesi: Number(payload.cadenza_mesi || 1),
+                prima_scadenza: payload.prima_scadenza || oggiIso(),
+                note: `Piano rateale preventivo (${numRate} rate)`
+            });
+        }
+    } catch (_) {}
+}
+
 async function create(payload = {}) {
     if (!payload.paziente_id) throw validationError('Selezionare il paziente');
     pazienti.requireById(payload.paziente_id, { includeArchived: true });
     const calcolo = dominio.calcolaTotali(payload.righe || [], payload.sconto_percentuale || 0);
 
+    const statoIniziale = payload.stato && dominio.STATI.includes(payload.stato) ? payload.stato : 'bozza';
+
     const id = await preventivi.insert({
         ...payload,
         numero_preventivo: payload.numero_preventivo || prossimoNumero(),
         data_emissione: payload.data_emissione || oggiIso(),
-        stato: 'bozza',
+        stato: statoIniziale,
         totale_lordo: calcolo.totale_lordo,
-        totale_netto: calcolo.totale_netto
+        totale_netto: calcolo.totale_netto,
+        metodo_pagamento: payload.metodo_pagamento || '',
+        tipo_rateizzazione: payload.tipo_rateizzazione || '',
+        numero_rate: Number(payload.numero_rate) || 0,
+        cadenza_mesi: Number(payload.cadenza_mesi) || 1,
+        prima_scadenza: payload.prima_scadenza || '',
+        acconto_richiesto: Number(payload.acconto_richiesto) || 0
     }, actor.stamp());
 
     await scriviRighe(id, calcolo.righe);
+
+    if (statoIniziale === 'accettato') {
+        await sincronizzaPianoRateale(id, payload.paziente_id, calcolo.totale_netto, payload);
+    }
+
     return { id, totale_netto: calcolo.totale_netto };
 }
 
 async function update(payload = {}) {
     if (!payload.id) throw validationError('Identificativo preventivo mancante');
     const corrente = preventivi.requireById(payload.id, { includeArchived: true });
-    if (corrente.stato === 'accettato' || corrente.stato === 'annullato') {
-        throw conflictError(`Un preventivo in stato "${corrente.stato}" non è modificabile`);
+    if (corrente.stato === 'annullato' && payload.stato === 'annullato') {
+        throw conflictError(`Un preventivo annullato non è modificabile`);
     }
-    const calcolo = dominio.calcolaTotali(payload.righe || righeDi(payload.id), payload.sconto_percentuale || 0);
+    const calcolo = dominio.calcolaTotali(payload.righe || righeDi(payload.id), payload.sconto_percentuale !== undefined ? payload.sconto_percentuale : corrente.sconto_percentuale);
+
+    const nuovoStato = payload.stato && dominio.STATI.includes(payload.stato) ? payload.stato : corrente.stato;
 
     await preventivi.update(payload.id, {
         ...payload,
+        stato: nuovoStato,
         totale_lordo: calcolo.totale_lordo,
-        totale_netto: calcolo.totale_netto
+        totale_netto: calcolo.totale_netto,
+        metodo_pagamento: payload.metodo_pagamento !== undefined ? payload.metodo_pagamento : corrente.metodo_pagamento,
+        tipo_rateizzazione: payload.tipo_rateizzazione !== undefined ? payload.tipo_rateizzazione : corrente.tipo_rateizzazione,
+        numero_rate: payload.numero_rate !== undefined ? Number(payload.numero_rate) : corrente.numero_rate,
+        cadenza_mesi: payload.cadenza_mesi !== undefined ? Number(payload.cadenza_mesi) : corrente.cadenza_mesi,
+        prima_scadenza: payload.prima_scadenza !== undefined ? payload.prima_scadenza : corrente.prima_scadenza,
+        acconto_richiesto: payload.acconto_richiesto !== undefined ? Number(payload.acconto_richiesto) : corrente.acconto_richiesto
     }, actor.stamp());
 
     if (payload.righe) await scriviRighe(payload.id, calcolo.righe);
+
+    if (nuovoStato === 'accettato') {
+        await sincronizzaPianoRateale(payload.id, corrente.paziente_id, calcolo.totale_netto, payload);
+    }
+
     return { id: payload.id, totale_netto: calcolo.totale_netto };
 }
 
@@ -109,6 +157,11 @@ async function setStato(payload = {}) {
         throw conflictError(`Transizione non ammessa: da "${corrente.stato}" a "${payload.stato}"`);
     }
     await preventivi.update(payload.id, { stato: payload.stato }, actor.stamp());
+
+    if (payload.stato === 'accettato') {
+        await sincronizzaPianoRateale(payload.id, corrente.paziente_id, corrente.totale_netto, corrente);
+    }
+
     return { id: payload.id, stato: payload.stato };
 }
 

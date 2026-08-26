@@ -16,12 +16,12 @@ const TONI = {
 };
 
 const TRANSIZIONI = {
-    bozza: ['inviato', 'annullato'],
-    inviato: ['accettato', 'rifiutato', 'scaduto', 'annullato'],
-    accettato: ['annullato'],
-    rifiutato: ['bozza', 'annullato'],
-    scaduto: ['bozza', 'annullato'],
-    annullato: []
+    bozza: ['inviato', 'accettato', 'rifiutato', 'annullato'],
+    inviato: ['bozza', 'accettato', 'rifiutato', 'scaduto', 'annullato'],
+    accettato: ['bozza', 'inviato', 'annullato'],
+    rifiutato: ['bozza', 'inviato', 'accettato', 'annullato'],
+    scaduto: ['bozza', 'inviato', 'accettato', 'annullato'],
+    annullato: ['bozza']
 };
 
 export default {
@@ -127,6 +127,18 @@ export default {
                         { titolo: 'Stato', rendi: riga => distintivo(fmt.etichettaStato(riga.stato), TONI[riga.stato] || 'neutral') },
                         { titolo: 'Lordo', numerica: true, rendi: riga => fmt.euro(riga.totale_lordo) },
                         { titolo: 'Netto', numerica: true, rendi: riga => fmt.euro(riga.totale_netto) },
+                        {
+                            titolo: 'Pagamento & Rate',
+                            rendi: riga => {
+                                if (riga.numero_rate > 1) {
+                                    return distintivo(`${riga.numero_rate} rate`, 'info');
+                                }
+                                if (riga.metodo_pagamento) {
+                                    return el('span', { class: 'ds-muted', style: 'font-size: 0.82rem;' }, fmt.etichettaStato(riga.metodo_pagamento));
+                                }
+                                return el('span', { class: 'ds-muted' }, '—');
+                            }
+                        },
                         {
                             titolo: '',
                             rendi: riga => azioniRiga([

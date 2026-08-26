@@ -6,7 +6,8 @@ const AUTORE = ['autore_id'];
 
 const preventivi = createRepository('preventivi', [
     'paziente_id', 'medico_id', 'numero_preventivo', 'data_emissione', 'data_scadenza',
-    'stato', 'totale_lordo', 'sconto_percentuale', 'totale_netto', 'acconto_richiesto', 'note'
+    'stato', 'totale_lordo', 'sconto_percentuale', 'totale_netto', 'acconto_richiesto',
+    'metodo_pagamento', 'tipo_rateizzazione', 'numero_rate', 'cadenza_mesi', 'prima_scadenza', 'note'
 ], { label: 'Preventivo', orderBy: 'data_emissione DESC', systemColumns: AUTORE });
 
 const righePreventivo = createRepository('preventivi_righe', [

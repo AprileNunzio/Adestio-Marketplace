@@ -26,6 +26,13 @@ const turniDelPersonale = [].concat(personale).join('\n');
 const derivateImmagini = [].concat(immagini).join('\n');
 const identitaPerNodo = `ALTER TABLE rete_postazione ADD COLUMN nodo TEXT DEFAULT '';`;
 const recapitoConsegna = `ALTER TABLE trasmissioni ADD COLUMN indirizzo_consegna TEXT DEFAULT '';`;
+const preventivoCampiAvanzati = `
+ALTER TABLE preventivi ADD COLUMN metodo_pagamento TEXT DEFAULT '';
+ALTER TABLE preventivi ADD COLUMN tipo_rateizzazione TEXT DEFAULT '';
+ALTER TABLE preventivi ADD COLUMN numero_rate INTEGER DEFAULT 0;
+ALTER TABLE preventivi ADD COLUMN cadenza_mesi INTEGER DEFAULT 1;
+ALTER TABLE preventivi ADD COLUMN prima_scadenza TEXT DEFAULT '';
+`;
 
 module.exports = [
     {
@@ -75,5 +82,9 @@ module.exports = [
     {
         version: 12,
         sql: recapitoConsegna
+    },
+    {
+        version: 13,
+        sql: preventivoCampiAvanzati
     }
 ];
