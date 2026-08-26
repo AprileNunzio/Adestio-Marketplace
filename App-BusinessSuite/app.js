@@ -130,11 +130,22 @@ const appInstance = {
                         }
                     };
 
+                    let appVer = '';
+                    try {
+                        const res = await fetch(new URL('manifest.json', APP_BASE).href);
+                        if (res.ok) {
+                            const m = await res.json();
+                            if (m && m.version) appVer = m.version.replace(/^v\s*/i, '');
+                        }
+                    } catch (_) {}
+
+                    const verBadge = appVer ? `<span style="font-size:1.15rem;font-weight:500;color:var(--md-on-surface-variant);opacity:0.85;margin-left:0.6rem;">(v ${appVer})</span>` : '';
+
                     el.innerHTML = `
                         <div class="fade-in-up" style="width:100%;flex:1;display:flex;flex-direction:column;">
                             <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:3rem;width:100%;">
                                 <div style="flex:1;min-width:280px;">
-                                    <h1 class="text-title" style="font-size:2.4rem;color:var(--md-primary);margin-bottom:0.2rem;letter-spacing:-0.02em;text-align:left;">Business Suite</h1>
+                                    <h1 class="text-title" style="font-size:2.4rem;color:var(--md-primary);margin-bottom:0.2rem;letter-spacing:-0.02em;text-align:left;">Business Suite ${verBadge}</h1>
                                     <p class="text-body" style="color:var(--md-on-surface-variant);font-size:1.05rem;text-align:left;">Gestionale enterprise all-in-one per la tua azienda</p>
                                 </div>
                             </div>

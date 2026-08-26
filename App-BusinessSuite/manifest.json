@@ -5,7 +5,7 @@
   "icon": "icon.png",
   "main": "app.js",
   "color": "#6366F1",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "NunzioTech",
   "category": "erp",
   "minCoreVersion": "1.0.0",

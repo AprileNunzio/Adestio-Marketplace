@@ -45,6 +45,19 @@ function schermoNegato(modulo, indietro) {
     ]);
 }
 
+let _versioneApp = '';
+async function ottieniVersioneApp() {
+    try {
+        if (_versioneApp) return _versioneApp;
+        const res = await fetch(new URL('../manifest.json', import.meta.url).href);
+        if (res.ok) {
+            const dati = await res.json();
+            if (dati && dati.version) _versioneApp = dati.version;
+        }
+    } catch (_) {}
+    return _versioneApp;
+}
+
 export function creaShell(contenitore) {
     let corrente = null;
 
@@ -62,9 +75,11 @@ export function creaShell(contenitore) {
         const stati = await Promise.all(MODULI.map(modulo => verificaPermesso(modulo.permesso)));
         const nonRisolto = await isUnresolved();
         const motivo = await unresolvedReason();
+        const versione = await ottieniVersioneApp();
         rimpiazza(contenitore, rendiHub({
             moduli: MODULI.map((modulo, indice) => ({ ...modulo, consentito: stati[indice] })),
             avvisoAccessi: nonRisolto ? motivo : null,
+            versione,
             onApri: id => naviga(id)
         }));
     };

@@ -2,7 +2,7 @@
   {
     "id": "presa_di_servizio",
     "name": "Presa di Servizio",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "author": "NunzioTech",
@@ -13,7 +13,7 @@
     "folder": "presa_di_servizio",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v2.0.0.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v2.0.1.zip",
     "ipc": {
       "namespace": "presa_di_servizio",
       "handlers": [
@@ -47,15 +47,15 @@
         "src": "index.html"
       }
     ],
-    "sha256": "fdee3a7debcaf7a77850ceca403636dfed71d281481720d928c1a5d4fe63103c",
+    "sha256": "4d881597c4cde17c86ee9be0a67b972366a33c7f12439cab82ce3a9dec638980",
     "color": "#3B82F6",
-    "published_at": "2026-08-26T07:34:29.426Z",
-    "updated_at": "2026-08-26T07:34:29.426Z"
+    "published_at": "2026-08-26T13:44:40.493Z",
+    "updated_at": "2026-08-26T13:44:40.494Z"
   },
   {
     "id": "adestio_business_suite",
     "name": "Adestio Business Suite",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "author": "NunzioTech",
@@ -66,7 +66,7 @@
     "folder": "adestio_business_suite",
     "main": "app.js",
     "backend": "backend.js",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v2.0.0.zip",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v2.0.1.zip",
     "ipc": {
       "namespace": "businessSuite",
       "handlers": [
@@ -108,15 +108,15 @@
         "src": "index.html"
       }
     ],
-    "sha256": "9a817ec36e24ac7a3598f6c224dbdd5583e791ba3eea92784419d0e7fe3aa555",
+    "sha256": "a43d999f0428e77753b0f6e96c0d7809f851b2d95163193ae052bf0c30de30eb",
     "color": "#6366F1",
-    "published_at": "2026-08-26T07:26:59.406Z",
-    "updated_at": "2026-08-26T07:26:59.406Z"
+    "published_at": "2026-08-26T13:44:38.538Z",
+    "updated_at": "2026-08-26T13:44:38.538Z"
   },
   {
     "id": "adestio_dental_suite",
     "name": "Adestio DentalSuite",
-    "version": "2.0.29",
+    "version": "2.0.30",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "description": "Gestionale completo per studi dentistici: cartelle cliniche, odontogramma interattivo, agenda con turni e disponibilita dei collaboratori, trasmissione della scheda al monitor del medico, compensi staff e cruscotto economico.",
@@ -126,9 +126,9 @@
     "icon": "dentistry",
     "color": "#0d9488",
     "published_at": "2026-08-20T10:00:00Z",
-    "updated_at": "2026-08-26T15:40:00Z",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v2.0.29.zip",
-    "sha256": "e3741d25e9bb72131f2571293af36c060890ec8af054f98bb798e7c182ab403a",
+    "updated_at": "2026-08-26T15:44:00Z",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v2.0.30.zip",
+    "sha256": "b518a7e318740b2c19a6d379f1674c560babfad8266006d5344d02cafc7e6bb1",
     "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",
     "links": [
       {

@@ -3,7 +3,7 @@ import { avviso } from '../components/layout.js';
 
 const APP_BASE = new URL('../../', import.meta.url).href;
 
-export function rendiHub({ moduli, avvisoAccessi, onApri }) {
+export function rendiHub({ moduli, avvisoAccessi, onApri, versione }) {
     const cards = moduli.map((modulo, idx) => {
         const allowed = modulo.consentito;
         const card = document.createElement('div');
@@ -33,10 +33,15 @@ export function rendiHub({ moduli, avvisoAccessi, onApri }) {
         return card;
     });
 
+    const testoVersione = versione ? ` (v ${versione.replace(/^v\s*/i, '')})` : '';
+
     const root = el('div', { class: 'fade-in-up', style: 'width:100%;flex:1;display:flex;flex-direction:column;' }, [
         el('div', { style: 'display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:3rem;width:100%;' }, [
             el('div', { style: 'flex:1;min-width:280px;' }, [
-                el('h1', { class: 'text-title', style: 'font-size:2.4rem;color:var(--md-primary);margin-bottom:0.2rem;letter-spacing:-0.02em;text-align:left;' }, 'DentalSuite'),
+                el('h1', { class: 'text-title', style: 'font-size:2.4rem;color:var(--md-primary);margin-bottom:0.2rem;letter-spacing:-0.02em;text-align:left;' }, [
+                    'DentalSuite',
+                    testoVersione ? el('span', { style: 'font-size:1.15rem;font-weight:500;color:var(--md-on-surface-variant);opacity:0.85;margin-left:0.6rem;' }, testoVersione) : null
+                ].filter(Boolean)),
                 el('p', { class: 'text-body', style: 'color:var(--md-on-surface-variant);font-size:1.05rem;text-align:left;' }, 'Gestionale clinico ed economico per studi odontoiatrici')
             ])
         ]),
