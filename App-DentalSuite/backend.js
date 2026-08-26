@@ -4,6 +4,7 @@ const host = require('./backend/kernel/host');
 const authz = require('./backend/kernel/authz');
 const registry = require('./backend/kernel/registry');
 const trasporto = require('./backend/rete/trasporto');
+const sorveglianza = require('./backend/rete/sorveglianza');
 const protocollo = require('./backend/rete/protocollo');
 
 const handlers = {
@@ -46,6 +47,7 @@ function instradaMessaggioDiRete(messaggio) {
 
 function avviaReteDiStudio() {
     trasporto.ascolta(instradaMessaggioDiRete);
+    sorveglianza.avvia();
     trasporto
         .avvia()
         .then(esito => {

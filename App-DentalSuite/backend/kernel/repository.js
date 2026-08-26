@@ -1,6 +1,7 @@
 'use strict';
 
 const { db, persist, newId, now } = require('./database');
+const host = require('./host');
 const { validationError, notFoundError } = require('./errors');
 const criteri = require('./criteri');
 
@@ -98,6 +99,19 @@ function createRepository(table, columns, options = {}) {
         return row;
     }
 
+    function propaga(eventType, id) {
+        try {
+            if (!host.replicaSupportata()) return false;
+            const payload = eventType === 'DELETE'
+                ? null
+                : findById(id, { includeArchived: true });
+            if (eventType !== 'DELETE' && !payload) return false;
+            return host.replica(eventType, table, id, payload);
+        } catch (e) {
+            return false;
+        }
+    }
+
     async function insert(data = {}, system = {}) {
         const payload = Object.assign(pick(data, columns), pick(system, systemColumns));
         const id = data.id || newId();
@@ -114,6 +128,7 @@ function createRepository(table, columns, options = {}) {
             values
         );
         await persist();
+        propaga('INSERT', id);
         return id;
     }
 
@@ -128,6 +143,7 @@ function createRepository(table, columns, options = {}) {
             [...Object.values(payload), now(), id]
         );
         await persist();
+        propaga('UPDATE', id);
         return id;
     }
 
@@ -139,6 +155,7 @@ function createRepository(table, columns, options = {}) {
             [flag, now(), id]
         );
         await persist();
+        propaga('UPDATE', id);
         return id;
     }
 
@@ -154,13 +171,18 @@ function createRepository(table, columns, options = {}) {
         requireById(id, { includeArchived: true });
         db().run(`DELETE FROM ${table} WHERE id = ?`, [id]);
         await persist();
+        propaga('DELETE', id);
         return id;
     }
 
     async function removeWhere(column, value) {
         assertIdentifier(column, 'Colonna');
+        const colpite = host.replicaSupportata()
+            ? db().query(`SELECT id FROM ${table} WHERE ${column} = ?`, [value]).map(riga => riga.id)
+            : [];
         db().run(`DELETE FROM ${table} WHERE ${column} = ?`, [value]);
         await persist();
+        colpite.forEach(id => propaga('DELETE', id));
     }
 
     function count(criteria = {}) {

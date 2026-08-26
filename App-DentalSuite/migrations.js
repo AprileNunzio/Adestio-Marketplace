@@ -24,6 +24,8 @@ const reteDiStudio = [].concat(rete).join('\n');
 const trasmissioneClinica = [].concat(trasmissione).join('\n');
 const turniDelPersonale = [].concat(personale).join('\n');
 const derivateImmagini = [].concat(immagini).join('\n');
+const identitaPerNodo = `ALTER TABLE rete_postazione ADD COLUMN nodo TEXT DEFAULT '';`;
+const recapitoConsegna = `ALTER TABLE trasmissioni ADD COLUMN indirizzo_consegna TEXT DEFAULT '';`;
 
 module.exports = [
     {
@@ -65,5 +67,13 @@ module.exports = [
     {
         version: 10,
         sql: derivateImmagini
+    },
+    {
+        version: 11,
+        sql: identitaPerNodo
+    },
+    {
+        version: 12,
+        sql: recapitoConsegna
     }
 ];

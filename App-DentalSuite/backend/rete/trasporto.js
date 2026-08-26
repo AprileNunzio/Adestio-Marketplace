@@ -45,6 +45,10 @@ async function avvia(portaPersonalizzata) {
             })
         });
 
+        try {
+            await annuncio.avvia();
+        } catch (erroreAnnuncio) {}
+
         if (locale.indirizzo_archivio && typeof cliente.collega === 'function') {
             cliente.collega(locale.indirizzo_archivio).catch(() => {});
         }

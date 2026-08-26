@@ -1,5 +1,6 @@
 import { el, icona } from './dom.js';
 import { bottone } from './layout.js';
+import { adattaAlTelaio } from '../kernel/telaio.js';
 
 function chiudi(fondale, risolvi, esito) {
     if (!fondale.isConnected) return;
@@ -48,6 +49,7 @@ export function apriModale({ titolo, corpo, azioni = [], ampia = false, suChiusu
             if (evento.key === 'Escape') termina(null);
         };
         document.addEventListener('keydown', fondale.gestoreTasti);
+        adattaAlTelaio(fondale);
         document.body.appendChild(fondale);
 
         const primo = finestra.querySelector('input, select, textarea, button');

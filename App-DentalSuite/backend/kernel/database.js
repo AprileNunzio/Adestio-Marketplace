@@ -34,4 +34,13 @@ function tableExists(name) {
     }
 }
 
-module.exports = { db, persist, newId, now, tableExists, DB_DOMAIN };
+function columnExists(table, column) {
+    try {
+        const rows = db().query(`PRAGMA table_info(${table})`);
+        return (rows || []).some(voce => voce && voce.name === column);
+    } catch (e) {
+        return false;
+    }
+}
+
+module.exports = { db, persist, newId, now, tableExists, columnExists, DB_DOMAIN };

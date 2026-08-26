@@ -1,6 +1,7 @@
 'use strict';
 
 const dgram = require('dgram');
+const os = require('os');
 const protocollo = require('./protocollo');
 const identita = require('./identita');
 
@@ -43,19 +44,46 @@ function messaggio() {
     }), 'utf8');
 }
 
+function bersagli() {
+    const elenco = new Set([protocollo.GRUPPO_ANNUNCIO]);
+    try {
+        const interfacce = os.networkInterfaces();
+        for (const nome of Object.keys(interfacce)) {
+            for (const voce of interfacce[nome] || []) {
+                if (!voce || voce.family !== 'IPv4' || voce.internal) continue;
+                const parti = voce.address.split('.');
+                if (parti.length !== 4) continue;
+                parti[3] = '255';
+                elenco.add(parti.join('.'));
+            }
+        }
+    } catch (e) {
+        ultimoErrore = e.message;
+    }
+    return [...elenco];
+}
+
 function diffondi() {
     if (!presa) return false;
     const locale = identita.riga();
-    if (!locale || locale.ruolo !== protocollo.RUOLO_ARCHIVIO) return false;
+    if (!locale || Number(locale.attiva) !== 1) return false;
     const corpo = messaggio();
     if (!corpo) return false;
-    try {
-        presa.send(corpo, 0, corpo.length, protocollo.PORTA_ANNUNCIO, protocollo.GRUPPO_ANNUNCIO);
-        return true;
-    } catch (errore) {
-        ultimoErrore = errore.message;
-        return false;
+
+    let inviati = 0;
+    for (const bersaglio of bersagli()) {
+        try {
+            presa.send(corpo, 0, corpo.length, protocollo.PORTA_ANNUNCIO, bersaglio, errore => {
+                if (errore && !['EACCES', 'EHOSTUNREACH', 'ENETUNREACH'].includes(errore.code)) {
+                    ultimoErrore = errore.message;
+                }
+            });
+            inviati += 1;
+        } catch (errore) {
+            ultimoErrore = errore.message;
+        }
     }
+    return inviati > 0;
 }
 
 function avvia() {
@@ -120,7 +148,12 @@ function vicini() {
 }
 
 function stato() {
-    return { attivo: Boolean(presa), vicini: vicini().length, ultimo_errore: ultimoErrore };
+    return {
+        attivo: Boolean(presa),
+        vicini: vicini().length,
+        bersagli: presa ? bersagli() : [],
+        ultimo_errore: ultimoErrore
+    };
 }
 
 module.exports = { avvia, ferma, vicini, stato, diffondi };

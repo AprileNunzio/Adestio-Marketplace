@@ -6,7 +6,7 @@ const AUTORE = ['autore_id'];
 
 const postazione = createRepository('rete_postazione', [
     'nome', 'ruolo', 'porta', 'chiave_pubblica', 'chiave_privata',
-    'impronta', 'attiva', 'indirizzo_archivio'
+    'impronta', 'attiva', 'indirizzo_archivio', 'nodo'
 ], { label: 'Postazione', orderBy: 'created_at ASC', systemColumns: AUTORE });
 
 const pari = createRepository('rete_pari', [

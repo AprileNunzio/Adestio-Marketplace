@@ -1,48 +1,95 @@
-import { el } from '../../components/dom.js';
+import { el, icona } from '../../components/dom.js';
 import { creaArcata } from '../../components/arcata_dentale.js';
 import * as fmt from '../../kernel/format.js';
-import { zona, zonaIdentita, zonaAllerte, zonaStoria, zonaSeduta, zonaPrescrizioni, zonaRilevazioni } from './zone.js';
-import { zonaGalleria } from './galleria.js';
-import { apriLivello, tastoRiunito } from './livello.js';
+import { intestazionePaziente } from './intestazione.js';
+import {
+    pannello,
+    pannelloStoria,
+    pannelloPrescrizioni,
+    pannelloReferti,
+    pannelloRilevazioni
+} from './pannelli.js';
+import { apriLivello } from './livello.js';
 import { apriReperto } from './reperto.js';
-
-function orologioDiSeduta(ricevutoIl) {
-    const nodo = el('span', { class: 'ds-riunito__stato' }, '');
-    const aggiorna = () => {
-        const minuti = Math.max(Math.round((Date.now() - Number(ricevutoIl || Date.now())) / 60000), 0);
-        nodo.textContent = `seduta aperta da ${minuti} min`;
-    };
-    aggiorna();
-    setInterval(aggiorna, 30000);
-    return nodo;
-}
+import { adattaAlTelaio } from '../../kernel/telaio.js';
 
 function voceTrattamento(voce) {
-    return el('li', { class: 'ds-riunito__voce' }, [
-        el('time', {}, fmt.data(voce.data)),
-        el('strong', {}, `${voce.dente ? `${voce.dente} · ` : ''}${voce.descrizione}`),
-        el('span', {}, `${fmt.etichettaStato(voce.stato)} · ${fmt.euro(voce.importo)}`)
+    return el('li', { class: 'ds-mn__riga' }, [
+        el('time', { class: 'ds-mn__quando' }, fmt.data(voce.data)),
+        el('span', { class: 'ds-mn__titolo' }, `${voce.dente ? `${voce.dente} · ` : ''}${voce.descrizione}`),
+        el('span', { class: 'ds-mn__coda' }, `${fmt.etichettaStato(voce.stato)} · ${fmt.euro(voce.importo)}`)
     ]);
 }
 
 function vocePrescrizione(voce) {
-    return el('li', { class: 'ds-riunito__voce' }, [
-        el('time', {}, fmt.data(voce.data)),
-        el('strong', {}, `${voce.farmaco} ${voce.dosaggio}`.trim()),
-        el('span', {}, [voce.posologia, voce.durata_giorni ? `${voce.durata_giorni} gg` : '']
+    return el('li', { class: 'ds-mn__riga' }, [
+        el('time', { class: 'ds-mn__quando' }, fmt.data(voce.data)),
+        el('span', { class: 'ds-mn__titolo' }, `${voce.farmaco} ${voce.dosaggio}`.trim()),
+        el('span', { class: 'ds-mn__coda' }, [voce.posologia, voce.durata_giorni ? `${voce.durata_giorni} gg` : '']
             .filter(Boolean).join(' · '))
     ]);
 }
 
 function voceReferto(voce) {
-    return el('li', { class: 'ds-riunito__voce' }, [
-        el('time', {}, fmt.data(voce.data)),
-        el('strong', {}, voce.titolo),
-        el('span', {}, fmt.etichettaStato(voce.tipo))
+    return el('li', { class: 'ds-mn__riga' }, [
+        el('time', { class: 'ds-mn__quando' }, fmt.data(voce.data)),
+        el('span', { class: 'ds-mn__titolo' }, voce.titolo),
+        el('span', { class: 'ds-mn__coda' }, voce.tipo || '')
     ]);
 }
 
-function zonaOdontogramma(dossier, onDente) {
+function azione({ simbolo, etichetta, onClick, tono, disabilitato = false }) {
+    return el('button', {
+        class: 'ds-mn__azione',
+        type: 'button',
+        disabled: disabilitato,
+        dataset: tono ? { tono } : {},
+        onClick
+    }, [
+        icona(simbolo),
+        el('span', { class: 'ds-mn__azione-eti' }, etichetta)
+    ]);
+}
+
+function barraAzioni({ dossier, collegato, onChiudi, onAggiorna, onCambiaPaziente, onEsci, onCambiaPostazione, approfondimenti }) {
+    return el('footer', { class: 'ds-mn__barra' }, [
+        el('div', { class: 'ds-mn__azioni' }, [
+            azione({
+                simbolo: 'medical_services',
+                etichetta: 'Trattamenti',
+                disabilitato: dossier.trattamenti.length === 0,
+                onClick: approfondimenti.onApriTrattamenti
+            }),
+            azione({
+                simbolo: 'prescriptions',
+                etichetta: 'Prescrizioni',
+                disabilitato: dossier.prescrizioni.length === 0,
+                onClick: approfondimenti.onApriPrescrizioni
+            }),
+            azione({
+                simbolo: 'imagesmode',
+                etichetta: 'Referti',
+                disabilitato: dossier.referti.length === 0,
+                onClick: approfondimenti.onApriReferti
+            }),
+            azione({ simbolo: 'refresh', etichetta: 'Aggiorna', onClick: onAggiorna }),
+            onCambiaPaziente
+                ? azione({ simbolo: 'switch_account', etichetta: 'Cambia paziente', onClick: onCambiaPaziente })
+                : null,
+            azione({ simbolo: 'logout', etichetta: 'Chiudi seduta', tono: 'pericolo', onClick: onChiudi }),
+            onCambiaPostazione
+                ? azione({ simbolo: 'tune', etichetta: 'Postazione', onClick: onCambiaPostazione })
+                : null,
+            onEsci ? azione({ simbolo: 'arrow_back', etichetta: 'Esci', onClick: onEsci }) : null
+        ].filter(Boolean)),
+        el('div', { class: 'ds-mn__collegamento', dataset: { collegato: collegato ? 'true' : 'false' } }, [
+            el('span', { class: 'ds-mn__spia' }),
+            el('span', {}, collegato ? 'Collegato alla segreteria' : 'Canale interrotto: gli atti restano in coda')
+        ])
+    ]);
+}
+
+function pannelloOdontogramma(dossier, onDente) {
     const arcata = creaArcata({
         denti: dossier.odontogramma.denti,
         stati: dossier.odontogramma.stati,
@@ -51,79 +98,19 @@ function zonaOdontogramma(dossier, onDente) {
         onSeleziona: onDente
     });
 
-    return zona({
-        titolo: `Odontogramma FDI · ${dossier.odontogramma.con_reperto} elementi con reperto`,
+    return pannello({
+        titolo: 'Odontogramma FDI',
         simbolo: 'dentistry',
-        modificatore: 'odontogramma',
-        fitto: true
-    }, el('div', { class: 'ds-riunito__arcata' }, arcata));
+        chiave: 'odontogramma',
+        conteggio: dossier.odontogramma.con_reperto,
+        pieno: true
+    }, el('div', { class: 'ds-mn__arcata' }, arcata));
 }
 
-function zonaAzioni({ dossier, collegato, onChiudi, onAggiorna }) {
-    return zona({ titolo: 'Azioni della seduta', simbolo: 'touch_app', modificatore: 'azioni', fitto: true },
-        el('div', { class: 'ds-riunito__azioni' }, [
-            tastoRiunito({
-                simbolo: 'medical_services',
-                etichetta: 'Trattamenti',
-                onClick: () => apriLivello({
-                    titolo: 'Trattamenti precedenti',
-                    sottotitolo: dossier.paziente.nominativo,
-                    voci: dossier.trattamenti,
-                    rendiVoce: voceTrattamento
-                })
-            }),
-            tastoRiunito({
-                simbolo: 'prescriptions',
-                etichetta: 'Prescrizioni',
-                disabilitato: dossier.prescrizioni.length === 0,
-                onClick: () => apriLivello({
-                    titolo: 'Prescrizioni',
-                    sottotitolo: dossier.paziente.nominativo,
-                    voci: dossier.prescrizioni,
-                    rendiVoce: vocePrescrizione
-                })
-            }),
-            tastoRiunito({
-                simbolo: 'imagesmode',
-                etichetta: 'Referti',
-                disabilitato: dossier.referti.length === 0,
-                onClick: () => apriLivello({
-                    titolo: 'Archivio diagnostico',
-                    sottotitolo: dossier.paziente.nominativo,
-                    voci: dossier.referti,
-                    rendiVoce: voceReferto
-                })
-            }),
-            tastoRiunito({ simbolo: 'refresh', etichetta: 'Aggiorna', onClick: onAggiorna }),
-            tastoRiunito({
-                simbolo: 'logout',
-                etichetta: 'Chiudi seduta',
-                tono: 'pericolo',
-                onClick: onChiudi
-            }),
-            el('span', { class: 'ds-riunito__stato' }, [
-                el('span', { class: 'ds-riunito__spia', dataset: { collegato: collegato ? 'true' : 'false' } }),
-                collegato ? 'Collegato alla segreteria' : 'Canale interrotto: gli atti restano in coda'
-            ])
-        ]));
-}
-
-const DENSITA_PREDEFINITA = {
-    id: 'standard',
-    zone: ['identita', 'allerte', 'odontogramma', 'storia', 'seduta', 'azioni'],
-    limiti: { trattamenti: 8, prescrizioni: 3, referti: 5, rilevazioni: 12, allerte: 6 }
-};
-
-export function schermoScheda({ istantanea, collegato, onChiudi, onAggiorna }) {
+export function schermoScheda({ istantanea, collegato, onChiudi, onAggiorna, onCambiaPaziente, onEsci, onCambiaPostazione }) {
     const dossier = istantanea.dossier;
-    const densita = dossier.densita || DENSITA_PREDEFINITA;
-    const attiva = zonaId => densita.zone.includes(zonaId);
 
-    const apriDente = dente => apriReperto({
-        dente,
-        dossier,
-        onRegistrato: onAggiorna
-    });
+    const apriDente = dente => apriReperto({ dente, dossier, onRegistrato: onAggiorna });
 
     const approfondimenti = {
         onApriTrattamenti: () => apriLivello({
@@ -146,26 +133,29 @@ export function schermoScheda({ istantanea, collegato, onChiudi, onAggiorna }) {
         })
     };
 
-    const secondarie = [
-        attiva('storia') ? zonaStoria(dossier, {
-            ...approfondimenti,
-            quanti: densita.limiti.trattamenti,
-            soloTrattamenti: attiva('prescrizioni')
-        }) : null,
-        attiva('prescrizioni') ? zonaPrescrizioni(dossier, densita.limiti.prescrizioni) : null,
-        attiva('galleria') ? zonaGalleria(dossier, densita.limiti.referti) : null,
-        attiva('rilevazioni') ? zonaRilevazioni(dossier, densita.limiti.rilevazioni) : null,
-        attiva('seduta') ? zonaSeduta(dossier) : null
-    ].filter(Boolean);
+    const colonnaSinistra = el('div', { class: 'ds-mn__colonna ds-mn__colonna--sinistra' }, [
+        pannelloRilevazioni(dossier)
+    ]);
 
-    return el('div', {
-        class: 'ds-riunito',
-        dataset: { paziente: dossier.paziente.id, densita: densita.id, zone: String(secondarie.length) }
+    const colonnaDestra = el('div', { class: 'ds-mn__colonna ds-mn__colonna--destra' }, [
+        pannelloStoria(dossier, { onApriTutto: approfondimenti.onApriTrattamenti }),
+        pannelloPrescrizioni(dossier, { onApriTutto: approfondimenti.onApriPrescrizioni }),
+        pannelloReferti(dossier, { onApriTutto: approfondimenti.onApriReferti })
+    ]);
+
+    const radice = el('div', {
+        class: 'ds-root ds-mn',
+        dataset: { accent: 'pazienti', paziente: dossier.paziente.id }
     }, [
-        zonaIdentita(dossier, orologioDiSeduta(istantanea.ricevuto_il)),
-        attiva('allerte') ? zonaAllerte(dossier, densita.limiti.allerte) : null,
-        zonaOdontogramma(dossier, apriDente),
-        el('div', { class: 'ds-riunito__colonna' }, secondarie),
-        zonaAzioni({ dossier, collegato, onChiudi, onAggiorna })
-    ].filter(Boolean));
+        intestazionePaziente({ dossier, ricevutoIl: istantanea.ricevuto_il }),
+        el('div', { class: 'ds-mn__scena' }, [
+            colonnaSinistra,
+            pannelloOdontogramma(dossier, apriDente),
+            colonnaDestra
+        ]),
+        barraAzioni({ dossier, collegato, onChiudi, onAggiorna, onCambiaPaziente, onEsci, onCambiaPostazione, approfondimenti })
+    ]);
+
+    adattaAlTelaio(radice);
+    return radice;
 }

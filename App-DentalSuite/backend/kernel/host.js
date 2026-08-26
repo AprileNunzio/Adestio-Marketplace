@@ -36,6 +36,19 @@ async function saveDb(domain) {
     return true;
 }
 
+function replicaSupportata() {
+    return Boolean(bridge && typeof bridge.replica === 'function');
+}
+
+function replica(eventType, tabella, recordId, payload) {
+    try {
+        if (!replicaSupportata()) return false;
+        return bridge.replica(eventType, tabella, recordId, payload);
+    } catch (e) {
+        return false;
+    }
+}
+
 function readConfig() {
     if (!bridge || typeof bridge.readConfig !== 'function') return {};
     return bridge.readConfig() || {};
@@ -50,4 +63,4 @@ function appPath() {
     }
 }
 
-module.exports = { configure, isConfigured, getDb, tryGetDb, saveDb, readConfig, appPath };
+module.exports = { configure, isConfigured, getDb, tryGetDb, saveDb, readConfig, appPath, replica, replicaSupportata };

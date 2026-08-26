@@ -2,6 +2,7 @@ import { el, rimpiazza } from '../../components/dom.js';
 import { apriModale } from '../../components/modale.js';
 import { call } from '../../kernel/transport.js';
 import { elenco, pagina } from './vista.js';
+import { assicuraFoglio } from '../../kernel/stili.js';
 
 const MASSIMO_RISULTATI = 40;
 const ATTESA_DIGITAZIONE = 220;
@@ -15,6 +16,7 @@ async function cerca(termine) {
 }
 
 export async function selettorePaziente() {
+    assicuraFoglio('selettore');
     const stato = { selezionato: null };
     const risultati = el('div', { class: 'ds-table-wrap' });
     let attesa = null;
@@ -27,22 +29,35 @@ export async function selettorePaziente() {
             return;
         }
 
-        rimpiazza(risultati, el('div', {}, visibili.map(riga => el('label', { class: 'ds-check' }, [
-            el('input', {
-                type: 'radio',
-                name: 'selettore-paziente',
-                checked: stato.selezionato === riga.id,
-                onChange: () => {
+        const contenitore = el('div', { class: 'ds-sp__elenco' }, visibili.map(riga => {
+            const voce = el('button', {
+                class: 'ds-sp__voce',
+                type: 'button',
+                dataset: { scelto: stato.selezionato === riga.id ? 'true' : 'false' },
+                onClick: () => {
                     stato.selezionato = riga.id;
+                    contenitore.querySelectorAll('.ds-sp__voce').forEach(altro => {
+                        altro.dataset.scelto = 'false';
+                    });
+                    voce.dataset.scelto = 'true';
+                },
+                onDblClick: () => {
+                    stato.selezionato = riga.id;
+                    stato.conferma = true;
+                    if (typeof stato.chiudi === 'function') stato.chiudi();
                 }
-            }),
-            el('span', {}, riga.nominativo),
-            el('span', { class: 'ds-muted' }, riga.codice_fiscale || riga.telefono || '')
-        ]))));
+            }, [
+                el('span', { class: 'ds-sp__nome' }, riga.nominativo),
+                el('span', { class: 'ds-sp__meta' }, riga.codice_fiscale || riga.telefono || '')
+            ]);
+            return voce;
+        }));
+
+        rimpiazza(risultati, contenitore);
     };
 
     const ricerca = el('input', {
-        class: 'ds-input',
+        class: 'ds-input ds-sp__ricerca',
         type: 'search',
         placeholder: 'Cerca per cognome, codice fiscale o telefono…',
         onInput: evento => {
@@ -56,7 +71,7 @@ export async function selettorePaziente() {
 
     const conferma = await apriModale({
         titolo: 'Seleziona il paziente',
-        corpo: el('div', { class: 'ds-root' }, [ricerca, risultati]),
+        corpo: el('div', { class: 'ds-root ds-sp' }, [ricerca, risultati]),
         azioni: [
             { etichetta: 'Annulla', variante: 'ghost', esito: null },
             { etichetta: 'Conferma', simbolo: 'check', esito: true }

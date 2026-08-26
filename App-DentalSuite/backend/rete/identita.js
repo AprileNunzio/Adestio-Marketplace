@@ -1,8 +1,9 @@
 'use strict';
 
 const os = require('os');
+const crypto = require('crypto');
 const { postazione } = require('../repositories/rete');
-const { tableExists } = require('../kernel/database');
+const { tableExists, columnExists } = require('../kernel/database');
 const cifratura = require('./cifratura');
 const protocollo = require('./protocollo');
 
@@ -10,10 +11,40 @@ function disponibile() {
     return tableExists('rete_postazione');
 }
 
+let _marchio = null;
+
+function marchioNodo() {
+    if (_marchio) return _marchio;
+    try {
+        const interfacce = os.networkInterfaces();
+        const macs = [];
+        for (const nome of Object.keys(interfacce)) {
+            for (const voce of interfacce[nome] || []) {
+                if (voce && voce.mac && voce.mac !== '00:00:00:00:00:00' && !voce.internal) {
+                    macs.push(voce.mac);
+                }
+            }
+        }
+        macs.sort();
+        const semi = `${os.hostname()}|${macs[0] || 'senza-mac'}`;
+        _marchio = crypto.createHash('sha256').update(semi).digest('hex').slice(0, 32);
+    } catch (e) {
+        _marchio = crypto.createHash('sha256').update(String(Date.now())).digest('hex').slice(0, 32);
+    }
+    return _marchio;
+}
+
+function identitaPerNodo() {
+    return columnExists('rete_postazione', 'nodo');
+}
+
 function riga() {
     if (!disponibile()) return null;
     const righe = postazione.findAll({ includeArchived: true });
-    return righe.length > 0 ? righe[0] : null;
+    if (righe.length === 0) return null;
+    if (!identitaPerNodo()) return righe[0];
+    const mio = marchioNodo();
+    return righe.find(voce => voce.nodo === mio) || null;
 }
 
 function nomePredefinito() {
@@ -24,11 +55,32 @@ function nomePredefinito() {
     }
 }
 
+async function rimuoviOrfane() {
+    if (!disponibile() || !identitaPerNodo()) return 0;
+    const mio = marchioNodo();
+    const righe = postazione.findAll({ includeArchived: true });
+    if (righe.length < 2) return 0;
+
+    let rimosse = 0;
+    for (const voce of righe) {
+        if (voce.nodo === mio) continue;
+        try {
+            await postazione.hardRemove(voce.id);
+            rimosse += 1;
+            console.log(`[DentalSuite] Rimossa identita di postazione orfana "${voce.nome || voce.id}".`);
+        } catch (e) {}
+    }
+    return rimosse;
+}
+
 async function assicura() {
     const esistente = riga();
-    if (esistente) return esistente;
+    if (esistente) {
+        await rimuoviOrfane();
+        return esistente;
+    }
     const identita = cifratura.generaIdentita();
-    await postazione.insert({
+    const nuova = {
         nome: nomePredefinito(),
         ruolo: protocollo.RUOLO_ARCHIVIO,
         porta: protocollo.PORTA_SERVIZIO,
@@ -37,7 +89,10 @@ async function assicura() {
         impronta: identita.impronta,
         attiva: 1,
         indirizzo_archivio: ''
-    });
+    };
+    if (identitaPerNodo()) nuova.nodo = marchioNodo();
+    await postazione.insert(nuova);
+    await rimuoviOrfane();
     return riga();
 }
 
@@ -81,6 +136,7 @@ function scheda(corrente) {
         attiva: Number(voce.attiva) === 1,
         indirizzo_archivio: voce.indirizzo_archivio || '',
         indirizzi: indirizziLocali(),
+        nodo: voce.nodo || '',
         versione_protocollo: protocollo.VERSIONE
     };
 }
@@ -90,4 +146,4 @@ function segreto() {
     return voce ? voce.chiave_privata : '';
 }
 
-module.exports = { disponibile, riga, assicura, aggiorna, scheda, segreto, indirizziLocali };
+module.exports = { disponibile, riga, assicura, aggiorna, scheda, segreto, indirizziLocali, marchioNodo, identitaPerNodo, rimuoviOrfane };

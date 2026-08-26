@@ -4,6 +4,7 @@ const INATTIVITA_MS = 20 * 60 * 1000;
 const ATTESA_MASSIMA_MS = 20000;
 
 let stato = { versione: 0, dossier: null, ricevutoIl: 0, trasmissioneId: '', origine: '' };
+let sorgente = null;
 let scadenza = null;
 const inAscolto = new Set();
 
@@ -25,7 +26,7 @@ function programmaScadenza() {
     if (typeof scadenza.unref === 'function') scadenza.unref();
 }
 
-function riponi(dossier, dettagli = {}) {
+function riponi(dossier, dettagli = {}, mittenteNuovo) {
     stato = {
         versione: stato.versione + 1,
         dossier,
@@ -33,9 +34,49 @@ function riponi(dossier, dettagli = {}) {
         trasmissioneId: dettagli.trasmissione_id || '',
         origine: dettagli.origine || ''
     };
+    if (mittenteNuovo && mittenteNuovo.ip) {
+        sorgente = { ip: mittenteNuovo.ip, porta: Number(mittenteNuovo.porta) || 7345 };
+    }
+    verificataIl = Date.now();
+    contattoIl = Date.now();
     programmaScadenza();
     notifica();
     return stato.versione;
+}
+
+let verificataIl = 0;
+let contattoIl = 0;
+
+function mittente() {
+    return sorgente ? { ...sorgente } : null;
+}
+
+function daVerificare(intervalloMs) {
+    if (!stato.dossier || !sorgente || !stato.trasmissioneId) return false;
+    return Date.now() - verificataIl >= intervalloMs;
+}
+
+function segnaContatto() {
+    contattoIl = Date.now();
+    return contattoIl;
+}
+
+function silenzioDa() {
+    if (!stato.dossier || !contattoIl) return 0;
+    return Date.now() - contattoIl;
+}
+
+function presente() {
+    return Boolean(stato.dossier);
+}
+
+function segnaVerificata() {
+    verificataIl = Date.now();
+    return verificataIl;
+}
+
+function estrai() {
+    return istantanea();
 }
 
 function svuota(motivo) {
@@ -50,6 +91,9 @@ function svuota(motivo) {
         trasmissioneId: '',
         origine: motivo || ''
     };
+    sorgente = null;
+    verificataIl = 0;
+    contattoIl = 0;
     notifica();
     return stato.versione;
 }
@@ -86,4 +130,4 @@ function attendi(versioneNota) {
     });
 }
 
-module.exports = { riponi, svuota, tocca, istantanea, attendi, INATTIVITA_MS };
+module.exports = { riponi, svuota, tocca, istantanea, estrai, attendi, mittente, daVerificare, segnaVerificata, segnaContatto, silenzioDa, presente, INATTIVITA_MS };

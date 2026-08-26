@@ -9,6 +9,9 @@ import { schermoScheda } from './trasmissione/scheda.js';
 import { consoleTrasmissione } from './trasmissione/console.js';
 import { schermoAvvio } from './trasmissione/avvio.js';
 import { hubSceltaModalita } from './trasmissione/hub_scelta.js';
+import { selettorePaziente } from './shared/selettore_paziente.js';
+import { adattaAlTelaio } from '../kernel/telaio.js';
+import { esito } from '../components/notifica.js';
 import { selettorePostazioneModalita } from './trasmissione/selettore_postazione.js';
 
 const RUOLO_RIUNITO = 'riunito';
@@ -28,13 +31,21 @@ function misuraSchermo() {
     };
 }
 
-function schermoDisplay({ indietro, onCambiaPostazione }) {
+function schermoDisplay({ indietro, onCambiaPostazione, puoCambiarePaziente }) {
     const contenitore = el('div', { class: 'ds-monitor-display-wrap' });
     let versioneNota = -1;
     let attivo = true;
+    let generazione = 0;
+    let attesaInCorso = false;
     let ultimoMotivo = '';
     let densitaNota = '';
     let attesaMisura = null;
+
+    const abbandona = azione => () => {
+        attivo = false;
+        window.removeEventListener('resize', allaRidimensione);
+        azione();
+    };
 
     const disegna = (istantanea, rete) => {
         const collegato = Boolean(rete && rete.cliente && rete.cliente.collegato);
@@ -43,7 +54,10 @@ function schermoDisplay({ indietro, onCambiaPostazione }) {
                 istantanea,
                 collegato,
                 onChiudi: chiudiSeduta,
-                onAggiorna: ciclo
+                onAggiorna: ciclo,
+                onCambiaPaziente: puoCambiarePaziente ? cambiaPaziente : null,
+                onEsci: abbandona(indietro),
+                onCambiaPostazione: onCambiaPostazione ? abbandona(onCambiaPostazione) : null
             }));
             return;
         }
@@ -51,6 +65,18 @@ function schermoDisplay({ indietro, onCambiaPostazione }) {
             postazione: rete ? rete.postazione : null,
             onCambiaPostazione
         }));
+    };
+
+    const cambiaPaziente = async () => {
+        try {
+            const scelto = await selettorePaziente();
+            if (!scelto) return;
+            const risposta = await call('trasmissioni.cambiaPaziente', { paziente_id: scelto });
+            if (!esito(risposta, 'Paziente cambiato sul monitor')) return;
+            await ciclo();
+        } catch (e) {
+            esito({ success: false, error: e.message || 'Cambio paziente non riuscito' }, '');
+        }
     };
 
     const chiudiSeduta = async () => {
@@ -80,17 +106,29 @@ function schermoDisplay({ indietro, onCambiaPostazione }) {
 
     const ciclo = async () => {
         if (!attivo) return;
+        const miaGenerazione = ++generazione;
         await dichiara();
         const rete = await statoRete();
         const istantanea = oggetto(await call('trasmissioni.attiva', {}), { presente: false, versione: 0 });
+        if (miaGenerazione !== generazione || !attivo) return;
         ultimoMotivo = istantanea.presente ? '' : (istantanea.origine || '');
         versioneNota = istantanea.versione;
         disegna(istantanea, rete);
+        avviaAttesa(rete);
+    };
+
+    const avviaAttesa = rete => {
+        if (attesaInCorso) return;
+        attesaInCorso = true;
         attendi(rete);
     };
 
     const attendi = async rete => {
-        if (!vivo()) return;
+        if (!vivo()) {
+            attesaInCorso = false;
+            return;
+        }
+        const miaGenerazione = generazione;
         try {
             await call('trasmissioni.heartbeatPostazione', {});
             const risposta = oggetto(
@@ -99,18 +137,31 @@ function schermoDisplay({ indietro, onCambiaPostazione }) {
             );
             if (!vivo()) {
                 attivo = false;
+                attesaInCorso = false;
+                return;
+            }
+            if (miaGenerazione !== generazione) {
+                attesaInCorso = false;
                 return;
             }
             if (risposta.versione !== versioneNota || (risposta.presente && versioneNota === 0)) {
                 versioneNota = risposta.versione;
                 ultimoMotivo = risposta.presente ? '' : (risposta.origine || '');
                 const aggiornata = await statoRete();
+                if (miaGenerazione !== generazione) {
+                    attesaInCorso = false;
+                    return;
+                }
                 disegna(risposta, aggiornata);
             }
         } catch (_) {}
 
         setTimeout(() => {
-            if (vivo()) attendi(rete);
+            if (!vivo() || miaGenerazione !== generazione) {
+                attesaInCorso = false;
+                return;
+            }
+            attendi(rete);
         }, 2000);
     };
 
@@ -118,42 +169,39 @@ function schermoDisplay({ indietro, onCambiaPostazione }) {
     window.addEventListener('resize', allaRidimensione);
     ciclo();
 
-    return el('div', { class: 'ds-monitor-full-view' }, [
-        el('div', { class: 'ds-riunito__barra-controllo' }, [
+    const telaio = el('div', { class: 'ds-monitor-full-view' }, [
+        el('div', { class: 'ds-riunito__barra-controllo', dataset: { attesa: 'true' } }, [
             el('button', {
                 class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
                 type: 'button',
-                onClick: () => {
-                    attivo = false;
-                    window.removeEventListener('resize', allaRidimensione);
-                    indietro();
-                }
+                onClick: abbandona(indietro)
             }, [icona('arrow_back'), 'Esci dal Monitor']),
             onCambiaPostazione
                 ? el('button', {
                     class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
                     type: 'button',
-                    onClick: () => {
-                        attivo = false;
-                        window.removeEventListener('resize', allaRidimensione);
-                        onCambiaPostazione();
-                    }
+                    onClick: abbandona(onCambiaPostazione)
                 }, [icona('tune'), 'Postazione'])
                 : null
         ].filter(Boolean)),
         contenitore
     ]);
+
+    adattaAlTelaio(telaio);
+    return telaio;
 }
 
 export default {
     rendi: async ({ parametri, naviga, indietro }) => {
         assicuraFoglio('riunito');
+        assicuraFoglio('livelli');
         assicuraFoglio('monitor');
         assicuraFoglio('attesa');
 
-        const [puoTrasmettere, puoRicevere] = await Promise.all([
+        const [puoTrasmettere, puoRicevere, puoCambiarePaziente] = await Promise.all([
             can('trasmissione_invia'),
-            can('trasmissione_ricevi')
+            can('trasmissione_ricevi'),
+            can('trasmissione_cambia_paziente')
         ]);
 
         const reteIniziale = await statoRete();
@@ -264,6 +312,7 @@ export default {
 
         const mostraLiveDisplay = () => {
             rimpiazza(contenitorePrincipale, schermoDisplay({
+                puoCambiarePaziente,
                 indietro: mostraScelta,
                 onCambiaPostazione: async () => {
                     const rete = await statoRete();

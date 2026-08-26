@@ -28,10 +28,7 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
                 pazienteSelezionatoDati = null;
                 return;
             }
-            const dati = await call('pazienti.read', { id });
-            if (dati && (dati.data || dati.id)) {
-                pazienteSelezionatoDati = dati.data || dati;
-            }
+            pazienteSelezionatoDati = oggetto(await call('pazienti.get', { id }), null);
         } catch (_) {
             pazienteSelezionatoDati = null;
         }
@@ -68,9 +65,16 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
                         ])
                     ]);
 
-                    const diag = await call('trasmissioni.diagnosticaRete', {});
-                    const locale = diag.postazione_locale || {};
-                    const monitors = diag.monitor_rilevati || [];
+                    const risposta = await call('trasmissioni.diagnosticaRete', {});
+                    const diag = oggetto(risposta, null);
+                    const guasto = diag ? '' : ((risposta && risposta.error) || 'Diagnostica non disponibile');
+                    const locale = (diag && diag.postazione_locale) || {};
+                    const stazioni = (diag && diag.stazioni_rilevate) || (diag && diag.monitor_rilevati) || [];
+                    const attese = stazioni.filter(v => v.ruolo === 'riunito');
+                    const altre = stazioni.filter(v => v.ruolo !== 'riunito');
+                    const sonoMonitor = locale.ruolo === 'riunito';
+                    const titoloElenco = 'Monitor a cui puoi trasmettere';
+                    const indirizzi = (locale.interfacce || []).map(i => i.ip).filter(Boolean);
 
                     rimpiazza(modal, [
                         el('div', { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;' }, [
@@ -84,28 +88,46 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
                                 onClick: () => overlay.remove()
                             }, icona('close'))
                         ]),
-                        el('div', { style: 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 18px;' }, [
-                            el('div', { style: 'font-weight: 700; color: #0f172a; font-size: 1rem; margin-bottom: 6px;' }, `Postazione Locale: ${locale.nome_pc || 'Questo Computer'}`),
-                            el('div', { style: 'font-size: 0.85rem; color: #475569; line-height: 1.5;' }, [
-                                el('div', {}, `Nome: ${locale.nome || 'Segreteria'} · Ruolo: ${locale.ruolo === 'riunito' ? 'Monitor Medico (Poltrona)' : 'Segreteria'} · Porta HTTP: ${locale.porta || 7345}`),
-                                el('div', {}, `Indirizzi IP Locali: ${(locale.interfacce || []).map(i => i.ip).join(', ') || '127.0.0.1'}`)
+                        guasto
+                            ? el('div', { style: 'padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; color: #991b1b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px;' }, [
+                                el('div', { style: 'font-weight: 700; margin-bottom: 4px;' }, 'Diagnostica non riuscita su questo computer'),
+                                el('div', {}, guasto),
+                                el('div', { style: 'margin-top: 6px;' }, 'I dati qui sotto non sono attendibili: il problema e su questo computer, non sulla rete.')
                             ])
-                        ]),
+                            : el('div', { style: 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 18px;' }, [
+                                el('div', { style: 'font-weight: 700; color: #0f172a; font-size: 1rem; margin-bottom: 6px;' }, `Postazione Locale: ${locale.nome_pc || 'Questo Computer'}`),
+                                el('div', { style: 'font-size: 0.85rem; color: #475569; line-height: 1.5;' }, [
+                                    el('div', {}, `Nome: ${locale.nome || '(senza nome)'} · Ruolo: ${locale.ruolo === 'riunito' ? 'Monitor Medico (Poltrona)' : 'Segreteria'} · Porta HTTP: ${locale.porta || 'non impostata'}`),
+                                    indirizzi.length > 0
+                                        ? el('div', {}, `Indirizzi IP Locali: ${indirizzi.join(', ')}`)
+                                        : el('div', { style: 'color: #b45309; font-weight: 600;' }, 'Nessuna scheda di rete attiva rilevata: questo computer vede solo se stesso, quindi non puo raggiungere ne essere raggiunto dagli altri.')
+                                ])
+                            ]),
                         el('div', { style: 'font-weight: 700; color: #0f172a; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;' }, [
-                            el('span', {}, `Monitor Rilevati sulla Rete LAN (${monitors.length}):`),
-                            el('span', { style: 'font-size: 0.8rem; color: #64748b; font-weight: 400;' }, 'Auto-Discovery P2P attivo')
+                            el('span', {}, `${titoloElenco} (${attese.length}):`),
+                            sonoMonitor
+                                ? el('span', { style: 'font-size: 0.75rem; color: #b45309; font-weight: 600;' }, 'Questo computer e impostato come monitor')
+                                : null,
+                            el('span', {
+                                style: `font-size: 0.8rem; font-weight: 400; color: ${(locale.scoperta || {}).attivo ? '#15803d' : '#b45309'};`
+                            }, (locale.scoperta || {}).attivo
+                                ? `Auto-Discovery P2P attivo · ${(locale.scoperta || {}).vicini || 0} annunci ricevuti`
+                                : `Auto-Discovery P2P non attivo${(locale.scoperta || {}).ultimo_errore ? ': ' + locale.scoperta.ultimo_errore : ' (porta UDP 7346)'}`)
                         ]),
-                        monitors.length === 0
+                        attese.length === 0
                             ? el('div', { style: 'padding: 20px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; color: #92400e; font-size: 0.9rem; line-height: 1.5;' }, [
                                 el('div', { style: 'font-weight: 600; margin-bottom: 4px;' }, 'Nessun monitor attivo rilevato sulla subnet.'),
-                                el('div', {}, 'Apri DentalSuite sull\'altro computer dello studio e seleziona "Ricevi" per renderlo immediatamente disponibile.')
-                            ])
-                            : el('div', { style: 'display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; margin-bottom: 18px;' }, monitors.map(m => el('div', {
+                                el('div', {}, 'Apri DentalSuite sull\'altro computer dello studio e seleziona "Ricevi" per renderlo immediatamente disponibile.'),
+                                altre.length > 0
+                                    ? el('div', { style: 'margin-top: 8px; font-weight: 600;' }, `Altre postazioni in rete, non impostate come monitor: ${altre.map(v => `${v.nome || v.ip} (${v.etichetta_ruolo || v.ruolo})`).join(', ')}.`)
+                                    : null
+                            ].filter(Boolean))
+                            : el('div', { style: 'display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; margin-bottom: 18px;' }, attese.map(m => el('div', {
                                 style: 'display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;'
                             }, [
                                 el('div', {}, [
-                                    el('div', { style: 'font-weight: 700; color: #166534; font-size: 0.95rem;' }, m.nome || 'Monitor Studio'),
-                                    el('div', { style: 'font-size: 0.8rem; color: #15803d; margin-top: 2px;' }, `IP: ${m.ip}:${m.porta} · Latenza: ${m.latenza_ms}ms · ${m.in_seduta ? 'In seduta' : 'Pronto a ricevere'}`)
+                                    el('div', { style: 'font-weight: 700; color: #166534; font-size: 0.95rem;' }, m.nome || m.etichetta_ruolo || 'Postazione'),
+                                    el('div', { style: 'font-size: 0.8rem; color: #15803d; margin-top: 2px;' }, `${m.etichetta_ruolo || m.ruolo} · IP: ${m.ip}:${m.porta} · Latenza: ${m.latenza_ms}ms · ${m.in_seduta ? 'In seduta' : 'Pronto a ricevere'}`)
                                 ]),
                                 el('span', { style: 'display: inline-block; padding: 5px 12px; background: #16a34a; color: #ffffff; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;' }, 'ONLINE')
                             ]))),
@@ -173,7 +195,17 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
 
             const chiudi = async riga => {
                 try {
-                    if (!esito(await call('trasmissioni.chiudi', { id: riga.id }), 'Scheda chiusa sul monitor')) return;
+                    const rispostaChiusura = await call('trasmissioni.chiudi', { id: riga.id });
+                    if (!esito(rispostaChiusura, '')) return;
+                    const datiChiusura = oggetto(rispostaChiusura, {});
+                    if (datiChiusura.monitor_avvisato === false) {
+                        esito({
+                            success: false,
+                            error: `Seduta chiusa qui, ma il monitor non e stato raggiunto: ${datiChiusura.avviso_motivo || 'nessuna risposta'}. Sullo schermo del medico la scheda potrebbe restare finche non torna in rete.`
+                        }, '');
+                    } else {
+                        esito({ success: true }, 'Scheda chiusa sul monitor');
+                    }
                     await disegna();
                 } catch (e) {
                     errore(e.message || 'Errore nella chiusura della scheda');

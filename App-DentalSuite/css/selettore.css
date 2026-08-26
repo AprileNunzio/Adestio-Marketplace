@@ -1,0 +1,26 @@
+.ds-sp { display: flex; flex-direction: column; gap: .6rem; min-width: min(560px, 84vw); }
+.ds-sp__ricerca { width: 100%; }
+.ds-sp__elenco { display: flex; flex-direction: column; gap: 2px; max-height: min(52vh, 460px); overflow-y: auto; overscroll-behavior: contain; }
+.ds-sp__voce {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .8rem;
+    width: 100%;
+    min-height: 44px;
+    padding: .5rem .7rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.ds-sp__voce:nth-child(odd) { background: var(--ds-bg-alt, #f8fafc); }
+.ds-sp__voce:hover { border-color: var(--ds-accent, #0d9488); }
+.ds-sp__voce:focus-visible { outline: 2px solid var(--ds-accent, #0d9488); outline-offset: 1px; }
+.ds-sp__voce[data-scelto="true"] { background: rgba(13, 148, 136, .12); border-color: var(--ds-accent, #0d9488); }
+.ds-sp__nome { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-sp__meta { font-size: .82em; color: var(--ds-muted, #64748b); white-space: nowrap; }

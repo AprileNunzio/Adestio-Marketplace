@@ -148,6 +148,30 @@ async function riallinea() {
     return trasporto.riallinea();
 }
 
+function poltroneDisponibili() {
+    const { sedi, sale, poltrone } = require('../repositories/facility');
+    const elencoSedi = sedi.findAll({});
+    const elencoSale = sale.findAll({});
+    const nomeSede = new Map(elencoSedi.map(voce => [voce.id, voce.nome]));
+    const nomeSala = new Map(elencoSale.map(voce => [voce.id, voce.nome]));
+
+    const unita = poltrone.findAll({}).filter(voce => String(voce.stato || 'attiva') !== 'dismessa');
+
+    return {
+        poltrone: unita.map(voce => ({
+            id: voce.id,
+            nome: voce.nome,
+            sede_id: voce.sede_id,
+            sede: nomeSede.get(voce.sede_id) || '',
+            sala_id: voce.sala_id || '',
+            sala: voce.sala_id ? (nomeSala.get(voce.sala_id) || '') : '',
+            colore: voce.colore_agenda || '',
+            stato: voce.stato || 'attiva'
+        })),
+        sedi_configurate: elencoSedi.length
+    };
+}
+
 async function diagnosticaRete() {
     try {
         const scopertaMesh = require('../rete/scoperta_mesh');
@@ -158,6 +182,7 @@ async function diagnosticaRete() {
 }
 
 module.exports = {
+    poltroneDisponibili,
     profilo,
     situazione,
     configura,

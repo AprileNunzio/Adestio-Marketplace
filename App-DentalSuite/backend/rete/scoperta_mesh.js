@@ -4,10 +4,13 @@ const http = require('http');
 const os = require('os');
 const protocollo = require('./protocollo');
 const identita = require('./identita');
+const annuncio = require('./annuncio');
 
-let _cacheMonitors = [];
+let _cacheStazioni = [];
 let _ultimoScan = 0;
 const CACHE_TTL_MS = 2500;
+const CACHE_VUOTO_TTL_MS = 15000;
+const SONDE_PARALLELE = 128;
 
 function ottieniSubnetLocali() {
     try {
@@ -72,85 +75,146 @@ function sondaHttp(ip, porta, timeoutMs = 800) {
     });
 }
 
-async function scansionaMonitors(forza = false) {
+async function _inLotti(compiti, ampiezza) {
+    const risultati = [];
+    for (let indice = 0; indice < compiti.length; indice += ampiezza) {
+        const lotto = compiti.slice(indice, indice + ampiezza);
+        const esiti = await Promise.all(lotto.map(compito => compito()));
+        for (const esito of esiti) {
+            if (esito) risultati.push(esito);
+        }
+    }
+    return risultati;
+}
+
+function _bersagliDaVicini() {
+    try {
+        return annuncio.vicini().map(voce => ({
+            ip: voce.indirizzo,
+            porta: Number(voce.porta) || protocollo.PORTA_SERVIZIO
+        }));
+    } catch (_) {
+        return [];
+    }
+}
+
+function _bersagliDaSubnet(subnets, porta) {
+    const bersagli = [{ ip: '127.0.0.1', porta }];
+    for (const sub of subnets) {
+        for (let host = 1; host <= 254; host += 1) {
+            if (host === sub.mioHost) continue;
+            bersagli.push({ ip: `${sub.prefisso}.${host}`, porta });
+        }
+    }
+    return bersagli;
+}
+
+function _seStesso(scheda, marchioLocale, ipsLocali) {
+    if (marchioLocale && scheda.nodo) return scheda.nodo === marchioLocale;
+    if (scheda.ip === '127.0.0.1') return true;
+    return ipsLocali.indexOf(scheda.ip) !== -1;
+}
+
+function _accettabile(scheda, marchioLocale, ipsLocali) {
+    if (!scheda || scheda.applicazione !== 'adestio_dental_suite') return false;
+    return !_seStesso(scheda, marchioLocale, ipsLocali);
+}
+
+async function scansionaStazioni(forza = false) {
     const adesso = Date.now();
-    if (!forza && adesso - _ultimoScan < CACHE_TTL_MS && _cacheMonitors.length > 0) {
-        return _cacheMonitors;
+    const validita = _cacheStazioni.length > 0 ? CACHE_TTL_MS : CACHE_VUOTO_TTL_MS;
+    if (!forza && _ultimoScan > 0 && adesso - _ultimoScan < validita) {
+        return _cacheStazioni;
     }
 
     try {
-        const subnets = ottieniSubnetLocali();
-        const localiIps = identita.indirizziLocali();
-        const schedeTrovate = [];
-
-        const candidati = new Set();
-        candidati.add('127.0.0.1');
-
-        for (const sub of subnets) {
-            for (let host = 1; host <= 254; host++) {
-                if (host !== sub.mioHost) {
-                    candidati.add(`${sub.prefisso}.${host}`);
-                }
-            }
-        }
-
-        const promesse = [];
+        const marchioLocale = typeof identita.marchioNodo === 'function' ? identita.marchioNodo() : null;
+        const ipsLocali = identita.indirizziLocali();
         const porte = [protocollo.PORTA_SERVIZIO, protocollo.PORTA_SERVIZIO + 1, protocollo.PORTA_SERVIZIO + 2];
+        const trovati = new Map();
 
-        for (const ip of candidati) {
-            for (const porta of porte) {
-                promesse.push(
-                    sondaHttp(ip, porta, 800).then(res => {
-                        if (res && res.applicazione === 'adestio_dental_suite') {
-                            if (!localiIps.includes(res.ip) || res.ip === '127.0.0.1') {
-                                if (res.ruolo === protocollo.RUOLO_RIUNITO || res.in_ascolto || res.attiva) {
-                                    schedeTrovate.push(res);
-                                }
-                            }
-                        }
-                    })
-                );
+        const registra = scheda => {
+            if (!_accettabile(scheda, marchioLocale, ipsLocali)) return;
+            const chiave = scheda.id || scheda.indirizzo;
+            const precedente = trovati.get(chiave);
+            if (!precedente || scheda.latenza_ms < precedente.latenza_ms) {
+                trovati.set(chiave, scheda);
             }
+        };
+
+        const vicini = _bersagliDaVicini();
+        if (vicini.length > 0) {
+            const esiti = await _inLotti(
+                vicini.map(b => () => sondaHttp(b.ip, b.porta, 900)),
+                SONDE_PARALLELE
+            );
+            esiti.forEach(registra);
         }
 
-        await Promise.all(promesse);
-        _cacheMonitors = schedeTrovate;
+        if (trovati.size === 0 || forza) {
+            const subnets = ottieniSubnetLocali();
+            const bersagli = porte.reduce(
+                (tutti, porta) => tutti.concat(_bersagliDaSubnet(subnets, porta)),
+                []
+            );
+            const esiti = await _inLotti(
+                bersagli.map(b => () => sondaHttp(b.ip, b.porta, 800)),
+                SONDE_PARALLELE
+            );
+            esiti.forEach(registra);
+        }
+
+        _cacheStazioni = [...trovati.values()];
         _ultimoScan = adesso;
-        return schedeTrovate;
+        return _cacheStazioni;
     } catch (_) {
-        return _cacheMonitors;
+        return _cacheStazioni;
     }
+}
+
+async function scansionaMonitors(forza = false) {
+    const stazioni = await scansionaStazioni(forza);
+    return stazioni.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
+}
+
+function _voceStazione(m) {
+    return {
+        id: m.id,
+        nome: m.nome,
+        indirizzo: m.indirizzo,
+        ip: m.ip,
+        porta: m.porta,
+        ruolo: m.ruolo,
+        etichetta_ruolo: protocollo.etichettaRuolo(m.ruolo),
+        in_seduta: Boolean(m.in_seduta),
+        latenza_ms: m.latenza_ms,
+        raggiungibile: true
+    };
 }
 
 async function diagnosticaCompleta() {
     try {
         const locale = identita.scheda();
         const subnets = ottieniSubnetLocali();
-        const monitorScansionati = await scansionaMonitors(true);
+        const stazioni = await scansionaStazioni(true);
+        const monitorScansionati = stazioni.filter(v => v.ruolo === protocollo.RUOLO_RIUNITO);
 
         return {
             postazione_locale: {
                 ...locale,
                 nome_pc: os.hostname(),
-                interfacce: subnets
+                interfacce: subnets,
+                scoperta: annuncio.stato()
             },
-            monitor_rilevati: monitorScansionati.map(m => ({
-                id: m.id,
-                nome: m.nome,
-                indirizzo: m.indirizzo,
-                ip: m.ip,
-                porta: m.porta,
-                ruolo: m.ruolo,
-                in_seduta: Boolean(m.in_seduta),
-                latenza_ms: m.latenza_ms,
-                raggiungibile: true
-            })),
+            monitor_rilevati: monitorScansionati.map(_voceStazione),
+            stazioni_rilevate: stazioni.map(_voceStazione),
             timestamp: Date.now()
         };
     } catch (e) {
         return {
             postazione_locale: null,
             monitor_rilevati: [],
+            stazioni_rilevate: [],
             errore: e.message,
             timestamp: Date.now()
         };
@@ -159,6 +223,7 @@ async function diagnosticaCompleta() {
 
 module.exports = {
     scansionaMonitors,
+    scansionaStazioni,
     diagnosticaCompleta,
     sondaHttp
 };

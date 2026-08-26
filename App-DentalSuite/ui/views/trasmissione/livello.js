@@ -1,4 +1,5 @@
 import { el, icona, rimpiazza } from '../../components/dom.js';
+import { adattaAlTelaio } from '../../kernel/telaio.js';
 
 const VOCI_PER_PAGINA = 9;
 
@@ -60,7 +61,7 @@ export function apriLivello({ titolo, sottotitolo, voci = [], rendiVoce, contenu
         onClick: () => vai(pagina + 1)
     });
 
-    const livello = el('div', { class: 'ds-livello', role: 'dialog', 'aria-modal': 'true' }, [
+    const livello = el('div', { class: 'ds-root ds-livello', dataset: { accent: 'pazienti' }, role: 'dialog', 'aria-modal': 'true' }, [
         el('header', { class: 'ds-livello__testa' }, [
             el('div', {}, [
                 el('h2', { class: 'ds-livello__titolo' }, titolo),
@@ -72,6 +73,7 @@ export function apriLivello({ titolo, sottotitolo, voci = [], rendiVoce, contenu
         el('footer', { class: 'ds-livello__piede' }, contenuto ? [] : [precedente, indicatore, successiva])
     ]);
 
+    adattaAlTelaio(livello);
     document.body.appendChild(livello);
     document.addEventListener('keydown', allaTastiera);
     vai(1);

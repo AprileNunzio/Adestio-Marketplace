@@ -69,6 +69,7 @@ function scheda() {
         nome: voce.nome,
         ruolo: voce.ruolo,
         impronta: voce.impronta,
+        nodo: voce.nodo || '',
         porta: portaAttiva || voce.porta,
         attiva: true,
         in_seduta: inSeduta
@@ -221,8 +222,38 @@ async function gestisciTrasmettiDiretto(richiesta, risposta) {
     const versione = seduta.riponi(corpo.dossier, {
         trasmissione_id: corpo.trasmissione_id || `tx-${Date.now()}`,
         origine: corpo.origine || indirizzoDi(richiesta)
+    }, {
+        ip: indirizzoDi(richiesta),
+        porta: Number(corpo.origine_porta) || protocollo.PORTA_SERVIZIO
     });
     return rispondi(risposta, 200, { successo: true, versione });
+}
+
+async function gestisciChiudiDiretto(richiesta, risposta) {
+    const corpo = await leggiCorpo(richiesta);
+    const trasmissioni = require('../handlers/trasmissioni');
+    const esito = await trasmissioni.chiudiPerRete(corpo || {});
+    return rispondi(risposta, 200, { successo: true, ...esito });
+}
+
+async function gestisciStatoSeduta(richiesta, risposta) {
+    const corpo = await leggiCorpo(richiesta);
+    const trasmissioni = require('../handlers/trasmissioni');
+    return rispondi(risposta, 200, trasmissioni.statoSeduta(corpo || {}));
+}
+
+async function gestisciSedutaChiusa(richiesta, risposta) {
+    const corpo = await leggiCorpo(richiesta);
+    const trasmissioni = require('../handlers/trasmissioni');
+    const esito = await trasmissioni.segnalaChiusuraRemota(corpo || {});
+    return rispondi(risposta, 200, { successo: true, ...esito });
+}
+
+async function gestisciPazienteCambiato(richiesta, risposta) {
+    const corpo = await leggiCorpo(richiesta);
+    const trasmissioni = require('../handlers/trasmissioni');
+    const esito = await trasmissioni.segnalaCambioPaziente(corpo || {});
+    return rispondi(risposta, 200, { successo: true, ...esito });
 }
 
 async function instrada(richiesta, risposta) {
@@ -232,6 +263,18 @@ async function instrada(richiesta, risposta) {
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === '/trasmetti-diretto') {
         return gestisciTrasmettiDiretto(richiesta, risposta);
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/chiudi-diretto') {
+        return gestisciChiudiDiretto(richiesta, risposta);
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/seduta-stato') {
+        return gestisciStatoSeduta(richiesta, risposta);
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/seduta-chiusa') {
+        return gestisciSedutaChiusa(richiesta, risposta);
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/paziente-cambiato') {
+        return gestisciPazienteCambiato(richiesta, risposta);
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === protocollo.ROTTE.accoppia) {
         return gestisciAccoppiamento(richiesta, risposta);
