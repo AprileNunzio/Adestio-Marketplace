@@ -25,11 +25,9 @@ export function rendiHub({ moduli, avvisoAccessi, onApri, versione }) {
                 iconImg.replaceWith(fallback);
             }, { once: true });
         }
-        if (allowed) {
-            card.addEventListener('click', () => {
-                onApri(modulo.id);
-            });
-        }
+        card.addEventListener('click', () => {
+            onApri(modulo.id);
+        });
         return card;
     });
 
