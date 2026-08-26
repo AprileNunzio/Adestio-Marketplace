@@ -1,0 +1,326 @@
+{
+  "id": "adestio_dental_suite",
+  "name": "Adestio DentalSuite",
+  "version": "2.0.0",
+  "minCoreVersion": "1.0.0",
+  "api_version": "1.0",
+  "published_at": "2026-08-20T10:00:00Z",
+  "updated_at": "2026-08-21T06:51:08Z",
+  "author": "NunzioTech",
+  "description": "Gestionale completo per studi dentistici: cartelle cliniche, odontogramma interattivo, agenda con turni e disponibilita dei collaboratori, trasmissione della scheda al monitor del medico, compensi staff e cruscotto economico.",
+  "long_description": "Adestio DentalSuite e l applicazione all-in-one per la gestione professionale dello studio odontoiatrico. Include anagrafica pazienti con anamnesi approfondita, odontogramma grafico interattivo per dentizione permanente e decidua FDI, diario clinico, prescrizioni farmacologiche, archivio diagnostico (TAC CBCT, RMN, OPT, Rx), agenda poltrone e medici con ricerca degli appuntamenti, gestione degli orari di lavoro dei collaboratori con ferie, permessi e controllo automatico delle disponibilita, catalogo prestazioni con ripartizione automatica compensi, contabilita con cruscotto di entrate e uscite, preventivi, incassi, piani rateali e prima nota passiva, e il Monitor del Medico: la segreteria invia la scheda del paziente alla postazione del medico su un canale di rete locale cifrato, e il medico vede tutto il paziente su un solo schermo touch senza scorrimento.",
+  "category": "medical",
+  "icon": "dentistry",
+  "color": "#0d9488",
+  "folder": "adestio_dental_suite",
+  "main": "app.js",
+  "backend": "backend.js",
+  "db": {
+    "namespace": "dental_suite",
+    "migrations": "./migrations.js"
+  },
+  "ipc": {
+    "namespace": "dentalSuite"
+  },
+  "permissions": [
+    "dentalSuite:*",
+    "anagrafica:*"
+  ],
+  "rbacPermissions": [
+    {
+      "id": "app_access",
+      "label": "Applicazione: accesso a DentalSuite (card e voce di menu)",
+      "default": true
+    },
+    {
+      "id": "pazienti_view",
+      "label": "Pazienti: consultazione anagrafica e ricerca",
+      "default": true
+    },
+    {
+      "id": "pazienti_edit",
+      "label": "Pazienti: creazione e modifica anagrafica",
+      "default": false
+    },
+    {
+      "id": "pazienti_delete",
+      "label": "Pazienti: archiviazione e ripristino cartelle",
+      "default": false
+    },
+    {
+      "id": "anamnesi_view",
+      "label": "Anamnesi: consultazione dati sanitari sensibili",
+      "default": false
+    },
+    {
+      "id": "anamnesi_edit",
+      "label": "Anamnesi: compilazione e aggiornamento",
+      "default": false
+    },
+    {
+      "id": "cartella_view",
+      "label": "Cartella clinica: odontogramma e diario trattamenti",
+      "default": false
+    },
+    {
+      "id": "cartella_edit",
+      "label": "Cartella clinica: registrazione atti clinici",
+      "default": false
+    },
+    {
+      "id": "prescrizioni_view",
+      "label": "Prescrizioni: consultazione terapie farmacologiche",
+      "default": false
+    },
+    {
+      "id": "prescrizioni_edit",
+      "label": "Prescrizioni: emissione e revoca (atto medico)",
+      "default": false
+    },
+    {
+      "id": "allegati_view",
+      "label": "Archivio diagnostico: consultazione referti TAC/RMN/OPT/Rx",
+      "default": false
+    },
+    {
+      "id": "allegati_upload",
+      "label": "Archivio diagnostico: acquisizione nuovi referti",
+      "default": false
+    },
+    {
+      "id": "allegati_delete",
+      "label": "Archivio diagnostico: eliminazione referti",
+      "default": false
+    },
+    {
+      "id": "agenda_view",
+      "label": "Agenda: consultazione planning poltrone e visite",
+      "default": true
+    },
+    {
+      "id": "agenda_edit",
+      "label": "Agenda: creazione e spostamento appuntamenti",
+      "default": false
+    },
+    {
+      "id": "agenda_delete",
+      "label": "Agenda: cancellazione appuntamenti",
+      "default": false
+    },
+    {
+      "id": "struttura_view",
+      "label": "Struttura: consultazione sedi, sale e poltrone",
+      "default": true
+    },
+    {
+      "id": "struttura_edit",
+      "label": "Struttura: configurazione sedi, sale e riuniti",
+      "default": false
+    },
+    {
+      "id": "prestazioni_view",
+      "label": "Listino: consultazione nomenclatore e tariffe",
+      "default": true
+    },
+    {
+      "id": "prestazioni_edit",
+      "label": "Listino: creazione e modifica prestazioni",
+      "default": false
+    },
+    {
+      "id": "prestazioni_delete",
+      "label": "Listino: eliminazione prestazioni",
+      "default": false
+    },
+    {
+      "id": "staff_view",
+      "label": "Staff: consultazione collaboratori clinici",
+      "default": true
+    },
+    {
+      "id": "staff_edit",
+      "label": "Staff: creazione e modifica collaboratori",
+      "default": false
+    },
+    {
+      "id": "staff_delete",
+      "label": "Staff: disattivazione collaboratori",
+      "default": false
+    },
+    {
+      "id": "compensi_view",
+      "label": "Compensi: consultazione ripartizioni e liquidazioni",
+      "default": false
+    },
+    {
+      "id": "compensi_settle",
+      "label": "Compensi: calcolo e liquidazione collaboratori",
+      "default": false
+    },
+    {
+      "id": "preventivi_view",
+      "label": "Preventivi: consultazione piani di cura economici",
+      "default": false
+    },
+    {
+      "id": "preventivi_edit",
+      "label": "Preventivi: emissione e modifica",
+      "default": false
+    },
+    {
+      "id": "preventivi_delete",
+      "label": "Preventivi: annullamento",
+      "default": false
+    },
+    {
+      "id": "incassi_view",
+      "label": "Incassi: consultazione pagamenti ricevuti",
+      "default": false
+    },
+    {
+      "id": "incassi_edit",
+      "label": "Incassi: registrazione e storno pagamenti",
+      "default": false
+    },
+    {
+      "id": "spese_view",
+      "label": "Spese: consultazione prima nota passiva",
+      "default": false
+    },
+    {
+      "id": "spese_edit",
+      "label": "Spese: registrazione e storno costi",
+      "default": false
+    },
+    {
+      "id": "rate_view",
+      "label": "Piani rateali: consultazione scadenziario",
+      "default": false
+    },
+    {
+      "id": "rate_edit",
+      "label": "Piani rateali: creazione piani e saldo rate",
+      "default": false
+    },
+    {
+      "id": "notifiche_send",
+      "label": "Notifiche: invio promemoria a pazienti",
+      "default": false
+    },
+    {
+      "id": "statistiche_view",
+      "label": "Statistiche: indicatori di produzione dello studio",
+      "default": false
+    },
+    {
+      "id": "direzione_economics",
+      "label": "Direzione Sanitaria: margini, redditivita e forecast di cassa",
+      "default": false
+    },
+    {
+      "id": "consensi_view",
+      "label": "Consensi: consultazione stato, versioni e scoperture",
+      "default": true
+    },
+    {
+      "id": "consensi_manage",
+      "label": "Consensi: raccolta, revoca e gestione dei modelli",
+      "default": false
+    },
+    {
+      "id": "audit_view",
+      "label": "Registro accessi: consultazione tracciabilita sanitaria (Titolare del trattamento)",
+      "default": false
+    },
+    {
+      "id": "firme_view",
+      "label": "Firme: consultazione documenti firmati e verifica integrita",
+      "default": true
+    },
+    {
+      "id": "firme_sign",
+      "label": "Firme: acquisizione firma grafometrica su documenti clinici",
+      "default": false
+    },
+    {
+      "id": "privacy_export",
+      "label": "Privacy: esportazione dei dati del paziente (portabilita GDPR)",
+      "default": false
+    },
+    {
+      "id": "privacy_erase",
+      "label": "Privacy: anonimizzazione su richiesta di cancellazione (diritto all oblio)",
+      "default": false
+    },
+    {
+      "id": "accordi_manage",
+      "label": "Compensi: definizione degli accordi economici con i collaboratori",
+      "default": false
+    },
+    {
+      "id": "rete_view",
+      "label": "Rete di studio: consultazione stato delle postazioni e diagnosi",
+      "default": false
+    },
+    {
+      "id": "rete_manage",
+      "label": "Rete di studio: configurazione postazione, accoppiamento e avvio del servizio",
+      "default": false
+    },
+    {
+      "id": "trasmissione_invia",
+      "label": "Monitor del Medico: invio della scheda paziente ai monitor collegati",
+      "default": false
+    },
+    {
+      "id": "trasmissione_ricevi",
+      "label": "Monitor del Medico: ricezione live della scheda su monitor touch e registrazione atti",
+      "default": false
+    },
+    {
+      "id": "turni_view",
+      "label": "Turni: consultazione degli orari di lavoro dei collaboratori",
+      "default": true
+    },
+    {
+      "id": "turni_edit",
+      "label": "Turni: definizione di orari settimanali e turni straordinari",
+      "default": false
+    },
+    {
+      "id": "assenze_view",
+      "label": "Assenze: consultazione di ferie, permessi e malattie",
+      "default": false
+    },
+    {
+      "id": "assenze_manage",
+      "label": "Assenze: registrazione, approvazione e rifiuto",
+      "default": false
+    }
+  ],
+  "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",
+  "links": [
+    {
+      "rel": "Sito Web",
+      "href": "https://github.com/AprileNunzio"
+    },
+    {
+      "rel": "Documentazione",
+      "href": "https://github.com/AprileNunzio/Adestio-Marketplace"
+    }
+  ],
+  "ui_injections": [
+    {
+      "target": "dashboard",
+      "type": "card",
+      "src": "index.html"
+    },
+    {
+      "target": "sidebar_menu",
+      "type": "menu_item",
+      "label": "DentalSuite",
+      "icon": "dentistry",
+      "src": "index.html"
+    }
+  ]
+}

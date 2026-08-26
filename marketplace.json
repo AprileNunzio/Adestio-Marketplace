@@ -1,0 +1,158 @@
+[
+  {
+    "id": "presa_di_servizio",
+    "name": "Presa di Servizio",
+    "version": "2.0.0",
+    "minCoreVersion": "1.0.0",
+    "api_version": "1.0",
+    "author": "NunzioTech",
+    "description": "Raccogli i dati del personale (modulo Excel offline o via email), importali e genera automaticamente la presa di servizio ATA o Docenti.",
+    "long_description": "Raccogli i dati del personale (modulo Excel offline o via email), importali e genera automaticamente la presa di servizio ATA o Docenti.",
+    "category": "school",
+    "icon": "assignment_turned_in",
+    "folder": "presa_di_servizio",
+    "main": "app.js",
+    "backend": "backend.js",
+    "downloadUrl": "https://nunziotech.it/software/adestio/presa_di_servizio_v2.0.0.zip",
+    "ipc": {
+      "namespace": "presa_di_servizio",
+      "handlers": [
+        "exportTemplate",
+        "importXlsx"
+      ]
+    },
+    "permissions": [
+      "anagrafica:*",
+      "datiAzienda:*",
+      "presaServizio:*"
+    ],
+    "legal_info": "",
+    "links": [
+      {
+        "rel": "help",
+        "href": "https://adestio.nunziotech.com/docs/presa_di_servizio"
+      }
+    ],
+    "ui_injections": [
+      {
+        "target": "dashboard",
+        "type": "card",
+        "src": "index.html"
+      },
+      {
+        "target": "sidebar_menu",
+        "type": "menu_item",
+        "label": "Presa di Servizio",
+        "icon": "assignment",
+        "src": "index.html"
+      }
+    ],
+    "sha256": "c523070c4aa3f2e808c9296bee64262bf8d2c9c1fc742c223959f07436b45aab",
+    "color": "#3B82F6",
+    "published_at": "2026-08-26T07:27:07.144Z",
+    "updated_at": "2026-08-26T07:27:07.144Z"
+  },
+  {
+    "id": "adestio_business_suite",
+    "name": "Adestio Business Suite",
+    "version": "2.0.0",
+    "minCoreVersion": "1.0.0",
+    "api_version": "1.0",
+    "author": "NunzioTech",
+    "description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
+    "long_description": "Gestionale enterprise all-in-one per la simulazione preventivi, fatturazione elettronica XML SDI, anagrafiche, magazzino e punto vendita POS.",
+    "category": "erp",
+    "icon": "icon.png",
+    "folder": "adestio_business_suite",
+    "main": "app.js",
+    "backend": "backend.js",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_business_suite_v2.0.0.zip",
+    "ipc": {
+      "namespace": "businessSuite",
+      "handlers": [
+        "getStats",
+        "getQuotes",
+        "saveQuote",
+        "getInvoices",
+        "generateFatturaXML",
+        "getCustomers",
+        "saveCustomer",
+        "getInventory",
+        "saveProduct",
+        "processPOSSale"
+      ]
+    },
+    "permissions": [
+      "businessSuite:*",
+      "anagrafica:*",
+      "datiAzienda:*"
+    ],
+    "legal_info": "",
+    "links": [
+      {
+        "rel": "help",
+        "href": "https://adestio.nunziotech.com/docs/business_suite"
+      }
+    ],
+    "ui_injections": [
+      {
+        "target": "dashboard",
+        "type": "card",
+        "src": "index.html"
+      },
+      {
+        "target": "sidebar_menu",
+        "type": "menu_item",
+        "label": "Business Suite",
+        "icon": "business_center",
+        "src": "index.html"
+      }
+    ],
+    "sha256": "9a817ec36e24ac7a3598f6c224dbdd5583e791ba3eea92784419d0e7fe3aa555",
+    "color": "#6366F1",
+    "published_at": "2026-08-26T07:26:59.406Z",
+    "updated_at": "2026-08-26T07:26:59.406Z"
+  },
+  {
+    "id": "adestio_dental_suite",
+    "name": "Adestio DentalSuite",
+    "version": "2.0.0",
+    "minCoreVersion": "1.0.0",
+    "api_version": "1.0",
+    "description": "Gestionale completo per studi dentistici: cartelle cliniche, odontogramma interattivo, agenda con turni e disponibilita dei collaboratori, trasmissione della scheda al monitor del medico, compensi staff e cruscotto economico.",
+    "long_description": "Adestio DentalSuite e l applicazione all-in-one per la gestione professionale dello studio odontoiatrico. Include anagrafica pazienti con anamnesi approfondita, odontogramma grafico interattivo per dentizione permanente e decidua FDI, diario clinico, prescrizioni farmacologiche, archivio diagnostico (TAC CBCT, RMN, OPT, Rx), agenda poltrone e medici con ricerca degli appuntamenti, gestione degli orari di lavoro dei collaboratori con ferie, permessi e controllo automatico delle disponibilita, catalogo prestazioni con ripartizione automatica compensi, contabilita con cruscotto di entrate e uscite, preventivi, incassi, piani rateali e prima nota passiva, e il Monitor del Medico: la segreteria invia la scheda del paziente alla postazione del medico su un canale di rete locale cifrato, e il medico vede tutto il paziente su un solo schermo touch senza scorrimento.",
+    "category": "medical",
+    "author": "NunzioTech",
+    "icon": "dentistry",
+    "color": "#0d9488",
+    "published_at": "2026-08-20T10:00:00Z",
+    "updated_at": "2026-08-21T06:51:08Z",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v2.0.0.zip",
+    "sha256": "1150e913253eac3aa194cc39577f5fdcedd202705a45d9071845f935979ed79b",
+    "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",
+    "links": [
+      {
+        "rel": "Sito Web",
+        "href": "https://github.com/AprileNunzio"
+      },
+      {
+        "rel": "Documentazione",
+        "href": "https://github.com/AprileNunzio/Adestio-Marketplace"
+      }
+    ],
+    "ui_injections": [
+      {
+        "target": "dashboard",
+        "type": "card",
+        "src": "index.html"
+      },
+      {
+        "target": "sidebar_menu",
+        "type": "menu_item",
+        "label": "DentalSuite",
+        "icon": "dentistry",
+        "src": "index.html"
+      }
+    ]
+  }
+]

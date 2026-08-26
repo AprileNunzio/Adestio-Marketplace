@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Banco riunito</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>html,body{margin:0;height:100%;overflow:hidden;} body{font-family:system-ui,sans-serif;}</style>
+</head>
+<body>
+<div id="radice"></div>
+<script type="module">
+import { rimpiazza } from '/ui/components/dom.js';
+import { schermoScheda } from '/ui/views/trasmissione/scheda.js';
+import { assicuraFoglio } from '/ui/kernel/stili.js';
+
+assicuraFoglio('riunito');
+
+const LIVELLI = {
+  compatta: { id:'compatta', zone:['identita','allerte','odontogramma','galleria','azioni'], limiti:{trattamenti:5,prescrizioni:2,referti:3,rilevazioni:6,allerte:4} },
+  standard: { id:'standard', zone:['identita','allerte','odontogramma','storia','galleria','azioni'], limiti:{trattamenti:8,prescrizioni:3,referti:5,rilevazioni:12,allerte:6} },
+  ampia: { id:'ampia', zone:['identita','allerte','odontogramma','storia','prescrizioni','galleria','seduta','azioni'], limiti:{trattamenti:14,prescrizioni:6,referti:8,rilevazioni:20,allerte:8} },
+  massima: { id:'massima', zone:['identita','allerte','odontogramma','storia','prescrizioni','galleria','rilevazioni','seduta','azioni'], limiti:{trattamenti:22,prescrizioni:10,referti:12,rilevazioni:32,allerte:10} }
+};
+
+const denti = [];
+for (const q of [1,2,3,4]) for (let i=1;i<=8;i+=1) denti.push({
+  numero_dente:`${q}${i}`, tipo:'primo_molare', nome:'Molare',
+  arcata:(q===1||q===2)?'superiore':'inferiore', lato:(q===1||q===4)?'destra':'sinistra',
+  larghezza:26, altezza:30, stato:(i%3===0)?'cariato':'sano', superfici:'', materiale:'', mobilita:'', note:'',
+  data_rilevazione:'2026-05-04', registrato:i%3===0
+});
+
+const serie = (n, f) => Array.from({length:n}, (u,i) => f(i));
+
+function dossier(livello) {
+  return {
+    versione:1, generato_il:Date.now(), origine:'Segreteria',
+    densita: LIVELLI[livello],
+    paziente:{ id:'p1', nominativo:'Sarna Angelika', eta:32, minore:false, sesso:'F', data_nascita:'1994-08-21',
+      codice_fiscale:'SRNNLK94M61Z127K', telefono:'3401234567', medico_curante:'Dott. Bianchi',
+      contatto_emergenza:'Marco Sarna · 3391112223', gruppo_sanguigno:'0+', esenzioni:'E01' },
+    anamnesi:{ compilata:true, data_compilazione:'2026-03-02', allerte:[
+      {etichetta:'Allergie farmacologiche: Penicillina', livello:'critica'},
+      {etichetta:'Terapia anticoagulante in corso', livello:'critica'},
+      {etichetta:'Portatore di pacemaker', livello:'critica'},
+      {etichetta:'Paziente diabetico', livello:'attenzione'},
+      {etichetta:'Ipertensione', livello:'attenzione'},
+      {etichetta:'Fumatore', livello:'nota'}
+    ], terapie_in_corso:'Cardioaspirina', altre_patologie:'', note:'' },
+    odontogramma:{ dentizione:'permanente', denti, stati:[{id:'sano',label:'Sano',colore:'#e2e8f0'},{id:'cariato',label:'Carie',colore:'#dc2626'}], superfici:['M','D','V','L','O'], con_reperto:10 },
+    rilevazioni: serie(32, i => ({ id:'r'+i, numero_dente:'2'+((i%8)+1), stato:'cariato', superfici:'O', materiale:'composito', data_rilevazione:'2026-0'+((i%8)+1)+'-04', note:'' })),
+    trattamenti: serie(22, i => ({ id:'t'+i, data:'2026-0'+((i%8)+1)+'-04', descrizione:'Otturazione elemento '+(26+i%3), categoria:'conservativa', dente:'2'+((i%8)+1), superfici:'O', stato:'eseguito', importo:120, medico:'Dott. Bianchi', note:'' })),
+    prescrizioni: serie(10, i => ({ id:'f'+i, farmaco:'Amoxicillina', dosaggio:'1g', posologia:'1 cp ogni 12 ore', durata_giorni:6, data:'2026-0'+((i%8)+1)+'-04', medico:'Dott. Bianchi' })),
+    referti: serie(12, i => ({ id:'a'+i, tipo:'opt', titolo:'Ortopantomografia '+(i+1), data:'2026-0'+((i%8)+1)+'-04', mime_type:'application/pdf', dimensione:120000 })),
+    consensi:{ vigenti:[], scoperture:[], bloccanti:[{titolo:'Informativa privacy'}] },
+    seduta:{ id:'s1', inizio:Date.now(), durata_minuti:45, stato:'in_sala', motivo:'Controllo', medico:'Dott. Bianchi', prestazione:'Igiene', note:'' }
+  };
+}
+
+window.__rendi = livello => {
+  rimpiazza(document.getElementById('radice'), schermoScheda({
+    istantanea:{ presente:true, versione:1, ricevuto_il:Date.now()-600000, dossier: dossier(livello) },
+    collegato:true, onChiudi:()=>{}, onAggiorna:()=>{}
+  }));
+  return true;
+};
+
+window.__rendi('standard');
+window.__prontoRiunito = true;
+</script>
+</body>
+</html>

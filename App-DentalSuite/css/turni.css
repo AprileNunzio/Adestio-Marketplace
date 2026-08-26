@@ -1,0 +1,111 @@
+.ds-fascia { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+
+.ds-fascia__pista {
+    position: relative;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--ds-line);
+    background: repeating-linear-gradient(90deg, var(--ds-surface-raised) 0 6px, transparent 6px 12px);
+    overflow: hidden;
+}
+
+.ds-fascia--compatta .ds-fascia__pista { height: 14px; border-radius: 5px; }
+
+.ds-fascia__segmento { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.ds-fascia__segmento[data-genere="lavoro"] { background: var(--ds-accent-soft); border: 1px solid var(--ds-accent-line); }
+.ds-fascia__segmento[data-genere="occupato"] { background: var(--ds-accent); opacity: .85; top: 4px; bottom: 4px; }
+.ds-fascia--compatta .ds-fascia__segmento[data-genere="occupato"] { top: 2px; bottom: 2px; }
+.ds-fascia__segmento[data-genere="assenza"] {
+    background: repeating-linear-gradient(45deg,
+        color-mix(in srgb, var(--ds-danger) 26%, transparent) 0 5px,
+        color-mix(in srgb, var(--ds-danger) 10%, transparent) 5px 10px);
+    border: 1px solid color-mix(in srgb, var(--ds-danger) 40%, transparent);
+}
+
+.ds-fascia__scala { position: relative; height: 1rem; }
+.ds-fascia__tacca {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: .66rem;
+    color: var(--ds-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.ds-fascia__legenda { display: flex; flex-wrap: wrap; gap: .35rem .9rem; font-size: .75rem; color: var(--ds-muted); }
+.ds-fascia__voce { display: inline-flex; align-items: center; gap: .35rem; }
+.ds-fascia__pastiglia { width: 14px; height: 10px; border-radius: 3px; display: inline-block; }
+.ds-fascia__pastiglia[data-genere="lavoro"] { background: var(--ds-accent-soft); border: 1px solid var(--ds-accent-line); }
+.ds-fascia__pastiglia[data-genere="occupato"] { background: var(--ds-accent); }
+.ds-fascia__pastiglia[data-genere="assenza"] { background: color-mix(in srgb, var(--ds-danger) 30%, transparent); border: 1px solid color-mix(in srgb, var(--ds-danger) 45%, transparent); }
+
+.ds-slot-liberi { display: flex; flex-wrap: wrap; gap: .35rem; }
+
+.ds-slot-liberi__voce {
+    border: 1px solid var(--ds-line);
+    background: var(--ds-surface);
+    color: var(--ds-text);
+    border-radius: 8px;
+    padding: .3rem .6rem;
+    font: inherit;
+    font-size: .82rem;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.ds-slot-liberi__voce:hover { border-color: var(--ds-accent-line); background: var(--ds-accent-soft); color: var(--ds-accent); }
+.ds-slot-liberi__voce[aria-pressed="true"] { background: var(--ds-accent); border-color: var(--ds-accent); color: #fff; }
+
+.ds-settimana { display: grid; grid-template-columns: 7.5rem 1fr auto; gap: .4rem .8rem; align-items: center; }
+.ds-settimana__giorno { font-weight: 600; font-size: .86rem; }
+.ds-settimana__fasce { display: flex; flex-wrap: wrap; gap: .3rem; }
+.ds-settimana__vuoto { color: var(--ds-muted); font-size: .82rem; }
+
+.ds-settimana__turno { display: inline-flex; align-items: center; gap: .15rem; }
+.ds-settimana__turno .ds-btn--icon.ds-btn--sm { width: 1.6rem; height: 1.6rem; }
+
+.ds-panoramica { display: flex; flex-direction: column; gap: .5rem; }
+
+.ds-panoramica__riga {
+    display: grid;
+    grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr) auto;
+    gap: .75rem;
+    align-items: center;
+}
+
+.ds-panoramica__nome {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .1rem;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: var(--ds-text);
+    text-align: left;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.ds-panoramica__nome:hover span:first-child { color: var(--ds-accent); }
+.ds-panoramica__nome .ds-muted { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.ds-panoramica__cifre { display: flex; gap: .3rem; flex-wrap: wrap; justify-content: flex-end; }
+
+.ds-check--forzatura {
+    margin-top: .75rem;
+    padding: .55rem .8rem;
+    border-radius: var(--ds-radius-sm);
+    border: 1px solid color-mix(in srgb, var(--ds-danger) 40%, transparent);
+    background: color-mix(in srgb, var(--ds-danger) 8%, transparent);
+    color: var(--ds-danger);
+    font-weight: 600;
+}
+
+@media (max-width: 720px) {
+    .ds-panoramica__riga { grid-template-columns: 1fr; }
+}
+
+.ds-diagnosi { display: flex; flex-direction: column; gap: .55rem; margin-top: .4rem; }
+.ds-diagnosi__voce { display: flex; flex-direction: column; gap: .15rem; }
+.ds-diagnosi__causa { font-weight: 600; }
+.ds-diagnosi__rimedio { font-size: .85rem; opacity: .85; }

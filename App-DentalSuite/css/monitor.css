@@ -1,0 +1,447 @@
+.ds-monitor-medico-main {
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.ds-hub-scelta {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem 0 3rem;
+}
+
+.ds-hub-scelta__griglia {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 960px;
+}
+
+.ds-hub-card {
+    background: var(--ds-surface, #ffffff);
+    border: 2px solid var(--ds-line, #e2e8f0);
+    border-radius: 20px;
+    padding: 2.2rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    min-height: 280px;
+    position: relative;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.ds-hub-card--attiva:hover {
+    transform: translateY(-4px);
+    border-color: var(--ds-primary, #0ea5e9);
+    box-shadow: 0 12px 28px rgba(14, 165, 233, 0.14);
+}
+
+.ds-hub-card--attiva:active {
+    transform: scale(0.98);
+}
+
+.ds-hub-card--disabilitata {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: var(--ds-bg-alt, #f8fafc);
+}
+
+.ds-hub-card__icona {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 1.4rem;
+}
+
+.ds-hub-card__icona--trasmetti {
+    background: rgba(14, 165, 233, 0.12);
+    color: var(--ds-primary, #0ea5e9);
+}
+
+.ds-hub-card__icona--ricevi {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+
+.ds-hub-card__titolo {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--ds-text, #0f172a);
+    margin-bottom: 0.6rem;
+}
+
+.ds-hub-card__descrizione {
+    font-size: 0.95rem;
+    color: var(--ds-muted, #64748b);
+    line-height: 1.5;
+    flex-grow: 1;
+    margin-bottom: 1.5rem;
+}
+
+.ds-hub-card__piede {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--ds-line, #e2e8f0);
+}
+
+.ds-hub-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+}
+
+.ds-hub-card__badge--online {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.ds-hub-card__badge--offline {
+    background: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
+
+.ds-hub-card__badge--postazione {
+    background: rgba(14, 165, 233, 0.1);
+    color: #0284c7;
+}
+
+.ds-hub-card__punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.ds-hub-card__avviso-permesso {
+    font-size: 0.78rem;
+    color: #e11d48;
+    font-weight: 600;
+}
+
+.ds-schermi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.ds-schermo-card {
+    background: var(--ds-surface, #ffffff);
+    border: 2px solid var(--ds-line, #e2e8f0);
+    border-radius: 14px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.ds-schermo-card:hover {
+    border-color: var(--ds-primary, #0ea5e9);
+}
+
+.ds-schermo-card--selezionato {
+    border-color: var(--ds-primary, #0ea5e9);
+    background: rgba(14, 165, 233, 0.04);
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.25);
+}
+
+.ds-schermo-card--in-seduta {
+    border-left: 4px solid #3b82f6;
+}
+
+.ds-schermo-card__testa {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+}
+
+.ds-schermo-card__icona {
+    font-size: 24px;
+    color: var(--ds-primary, #0ea5e9);
+}
+
+.ds-schermo-card__check {
+    font-size: 22px;
+    color: var(--ds-primary, #0ea5e9);
+}
+
+.ds-schermo-card__titolo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ds-text, #0f172a);
+    margin-bottom: 0.25rem;
+}
+
+.ds-schermo-card__indirizzo {
+    font-size: 0.82rem;
+    color: var(--ds-muted, #64748b);
+    font-family: monospace;
+    margin-bottom: 0.75rem;
+}
+
+.ds-schermo-card__stato {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.ds-schermo-card__spia {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.ds-schermo-card__spia--online {
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.ds-schermo-card__spia--seduta {
+    background: #3b82f6;
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+}
+
+.ds-trasmetti-paziente-wrap {
+    width: 100%;
+}
+
+.ds-paziente-selezionato-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.2rem;
+    background: rgba(14, 165, 233, 0.05);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border-radius: 12px;
+}
+
+.ds-paziente-selezionato-card__info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ds-paziente-selezionato-card__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--ds-primary, #0ea5e9);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+}
+
+.ds-paziente-selezionato-card__nome {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ds-text, #0f172a);
+}
+
+.ds-paziente-selezionato-card__meta {
+    font-size: 0.85rem;
+    color: var(--ds-muted, #64748b);
+}
+
+.ds-paziente-non-selezionato {
+    padding: 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ds-trasmetti-invio-barra {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.ds-trasmetti-btn-invia {
+    font-size: 1.15rem;
+    padding: 1rem 2.2rem;
+    border-radius: 12px;
+    min-height: 54px;
+}
+
+.ds-selettore-postazione {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem 0;
+    width: 100%;
+}
+
+.ds-selettore-postazione__foglio {
+    width: 100%;
+    max-width: 680px;
+    background: var(--ds-surface, #ffffff);
+    border: 1px solid var(--ds-line, #e2e8f0);
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.ds-selettore-postazione__testa {
+    text-align: center;
+}
+
+.ds-selettore-postazione__icona {
+    font-size: 44px;
+    color: var(--ds-primary, #0ea5e9);
+    margin-bottom: 0.5rem;
+}
+
+.ds-selettore-postazione__titolo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ds-text, #0f172a);
+    margin-bottom: 0.4rem;
+}
+
+.ds-selettore-postazione__sottotitolo {
+    font-size: 0.92rem;
+    color: var(--ds-muted, #64748b);
+}
+
+.ds-selettore-postazione__griglia {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.8rem;
+}
+
+.ds-selettore-postazione__preset {
+    background: var(--ds-bg-alt, #f8fafc);
+    border: 2px solid var(--ds-line, #e2e8f0);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    touch-action: manipulation;
+    min-height: 80px;
+    justify-content: center;
+}
+
+.ds-selettore-postazione__preset:hover,
+.ds-selettore-postazione__preset--attivo {
+    border-color: var(--ds-primary, #0ea5e9);
+    background: rgba(14, 165, 233, 0.08);
+}
+
+.ds-selettore-postazione__preset-icona {
+    font-size: 24px;
+    color: var(--ds-primary, #0ea5e9);
+}
+
+.ds-selettore-postazione__preset-titolo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ds-text, #0f172a);
+}
+
+.ds-selettore-postazione__personalizzato {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.ds-selettore-postazione__label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ds-text, #0f172a);
+}
+
+.ds-selettore-postazione__input {
+    width: 100%;
+}
+
+.ds-selettore-postazione__azioni {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.ds-monitor-full-view {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--ds-surface, #ffffff);
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-riunito__barra-controllo {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 60;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ds-btn--tocco {
+    min-height: 48px;
+    padding-left: 1.2rem;
+    padding-right: 1.2rem;
+    font-size: 1rem;
+    touch-action: manipulation;
+}
+
+.ds-input--tocco {
+    min-height: 48px;
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+}
+
+.ds-attesa__pulsanti-touch {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}

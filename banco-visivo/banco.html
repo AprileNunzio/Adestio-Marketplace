@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Banco di prova DentalSuite</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f1f5f9; }
+  .md-surface { background: #fff; }
+  #radice { padding: 1rem; }
+  h2.banco { font: 600 .8rem system-ui; text-transform: uppercase; letter-spacing: .1em; color: #64748b; margin: 1.5rem 0 .5rem; }
+</style>
+</head>
+<body>
+<div id="radice" class="ds-root" data-accent="contabilita"></div>
+<script type="module">
+import { el } from '/ui/components/dom.js';
+import { pannello, griglia, statistica } from '/ui/components/layout.js';
+import { flussoMensile, distribuzione } from '/ui/components/grafici.js';
+import { paginatore } from '/ui/components/paginatore.js';
+import { fasciaGiornata, legendaFasce } from '/ui/components/fascia_giornata.js';
+import { tabella } from '/ui/components/tabella.js';
+
+const euro = v => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number(v) || 0);
+
+const flusso = [
+  { etichetta: '2026-01', entrate: 1200, uscite: 800, saldo: 400 },
+  { etichetta: '2026-02', entrate: 2400, uscite: 900, saldo: 1500 },
+  { etichetta: '2026-03', entrate: 1800, uscite: 2100, saldo: -300 },
+  { etichetta: '2026-04', entrate: 3200, uscite: 1400, saldo: 1800 },
+  { etichetta: '2026-05', entrate: 20, uscite: 0, saldo: 20 }
+];
+
+const categorie = [
+  { etichetta: 'Materiali di consumo', totale: 1200 },
+  { etichetta: 'Laboratorio', totale: 900 },
+  { etichetta: 'Affitto', totale: 700 },
+  { etichetta: 'Utenze', totale: 300 }
+];
+
+const quadro = {
+  fasce_lavoro: [{ inizio: 1020, fine: 1140, etichetta: '17:00–19:00' }],
+  assenze: [],
+  occupazioni: [{ inizio: 1050, fine: 1080, etichetta: '17:30–18:00', paziente: 'Rossi' }],
+  fasce_libere: [],
+  lavora: true
+};
+
+const statoPagina = { righe: [{}], totale: 1, pagina: 1, dimensione: 50, pagine: 1 };
+
+const radice = document.getElementById('radice');
+radice.appendChild(el('h2', { class: 'banco' }, 'griglia statistiche'));
+radice.appendChild(griglia('stats', [
+  statistica({ etichetta: 'Entrate del periodo', valore: euro(8620), nota: '5 incassi registrati', tono: 'positivo' }),
+  statistica({ etichetta: 'Uscite del periodo', valore: euro(5200), tono: 'negativo' }),
+  statistica({ etichetta: 'Saldo di cassa', valore: euro(3420) }),
+  statistica({ etichetta: 'Insoluto rateale', valore: euro(0) })
+]));
+
+radice.appendChild(el('h2', { class: 'banco' }, 'grafico entrate/uscite'));
+radice.appendChild(pannello({ titolo: 'Entrate e uscite mese per mese' }, flussoMensile({ voci: flusso, formatta: euro })));
+
+radice.appendChild(el('h2', { class: 'banco' }, 'ripartizione ad anello'));
+radice.appendChild(griglia('cards', [
+  pannello({ titolo: 'Uscite per categoria' }, distribuzione({ voci: categorie, formatta: euro })),
+  pannello({ titolo: 'Entrate per metodo' }, distribuzione({ voci: categorie.slice(0, 2), formatta: euro }))
+]));
+
+radice.appendChild(el('h2', { class: 'banco' }, 'fascia oraria'));
+radice.appendChild(pannello({ titolo: 'Chi lavora oggi' }, [fasciaGiornata({ quadro }), legendaFasce()]));
+
+radice.appendChild(el('h2', { class: 'banco' }, 'tabella con paginatore'));
+radice.appendChild(pannello({ titolo: 'Elenco', flush: true }, [
+  tabella({
+    colonne: [{ titolo: 'Paziente', rendi: () => 'Sarna Angelika' }, { titolo: 'Età', numerica: true, rendi: () => '32' }],
+    righe: [{}],
+    vuotoTitolo: 'vuoto'
+  }),
+  paginatore({ stato: statoPagina, onVai: () => {} })
+]));
+
+window.__prontoBanco = true;
+</script>
+</body>
+</html>

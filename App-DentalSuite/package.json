@@ -1,0 +1,8 @@
+{
+  "name": "adestio-app-dental-suite",
+  "version": "1.0.0",
+  "description": "Gestionale Studio Dentistico & Odontoiatria Professionale",
+  "main": "app.js",
+  "author": "NunzioTech",
+  "license": "UNLICENSED"
+}

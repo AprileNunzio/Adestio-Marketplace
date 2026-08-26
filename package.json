@@ -1,0 +1,26 @@
+{
+  "name": "adestio-marketplace",
+  "version": "1.0.0",
+  "description": "Questo è il repository centrale del Marketplace di Adestio.  Agisce come **Registry** per tutte le applicazioni di terze parti installabili sulla piattaforma Adestio.",
+  "main": "pack_and_deploy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AprileNunzio/Adestio-Marketplace.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AprileNunzio/Adestio-Marketplace/issues"
+  },
+  "homepage": "https://github.com/AprileNunzio/Adestio-Marketplace#readme",
+  "dependencies": {
+    "adm-zip": "^0.6.0",
+    "basic-ftp": "^6.0.1",
+    "dotenv": "^17.4.2"
+  }
+}
