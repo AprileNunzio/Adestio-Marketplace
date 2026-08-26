@@ -8,8 +8,12 @@ const annuncio = require('./annuncio');
 
 let _cacheStazioni = [];
 let _ultimoScan = 0;
-const CACHE_TTL_MS = 2000;
-const CACHE_VUOTO_TTL_MS = 2000;
+let _inAggiornamento = false;
+let _scansioneSubnetInCorso = false;
+let _ultimoScanSubnet = 0;
+let _timerBackground = null;
+
+const CACHE_TTL_MS = 4000;
 const SONDE_PARALLELE = 128;
 
 function ottieniSubnetLocali() {
@@ -36,7 +40,7 @@ function ottieniSubnetLocali() {
     }
 }
 
-function sondaHttp(ip, porta, timeoutMs = 400) {
+function sondaHttp(ip, porta, timeoutMs = 350) {
     return new Promise((resolve) => {
         const t0 = Date.now();
         try {
@@ -82,15 +86,19 @@ function sondaHttp(ip, porta, timeoutMs = 400) {
 }
 
 async function _inLotti(compiti, ampiezza) {
-    const risultati = [];
-    for (let indice = 0; indice < compiti.length; indice += ampiezza) {
-        const lotto = compiti.slice(indice, indice + ampiezza);
-        const esiti = await Promise.all(lotto.map(compito => compito()));
-        for (const esito of esiti) {
-            if (esito) risultati.push(esito);
+    try {
+        const risultati = [];
+        for (let indice = 0; indice < compiti.length; indice += ampiezza) {
+            const lotto = compiti.slice(indice, indice + ampiezza);
+            const esiti = await Promise.all(lotto.map(compito => compito()));
+            for (const esito of esiti) {
+                if (esito) risultati.push(esito);
+            }
         }
+        return risultati;
+    } catch (_) {
+        return [];
     }
-    return risultati;
 }
 
 function _bersagliDaVicini() {
@@ -105,30 +113,38 @@ function _bersagliDaVicini() {
 }
 
 function _bersagliDaSubnet(subnets, porta) {
-    const bersagli = [{ ip: '127.0.0.1', porta }];
-    for (const sub of subnets) {
-        for (let host = 1; host <= 254; host += 1) {
-            if (host === sub.mioHost) continue;
-            bersagli.push({ ip: `${sub.prefisso}.${host}`, porta });
+    try {
+        const bersagli = [{ ip: '127.0.0.1', porta }];
+        for (const sub of subnets) {
+            for (let host = 1; host <= 254; host += 1) {
+                if (host === sub.mioHost) continue;
+                bersagli.push({ ip: `${sub.prefisso}.${host}`, porta });
+            }
         }
+        return bersagli;
+    } catch (_) {
+        return [];
     }
-    return bersagli;
 }
 
 function _seStesso(scheda, marchioLocale, ipsLocali) {
-    if (marchioLocale && scheda.nodo) return scheda.nodo === marchioLocale;
-    if (scheda.ip === '127.0.0.1') return true;
-    return ipsLocali.indexOf(scheda.ip) !== -1;
+    try {
+        if (marchioLocale && scheda.nodo) return scheda.nodo === marchioLocale;
+        if (scheda.ip === '127.0.0.1') return true;
+        return ipsLocali.indexOf(scheda.ip) !== -1;
+    } catch (_) {
+        return false;
+    }
 }
 
 function _accettabile(scheda, marchioLocale, ipsLocali) {
-    if (!scheda || scheda.applicazione !== 'adestio_dental_suite') return false;
-    return !_seStesso(scheda, marchioLocale, ipsLocali);
+    try {
+        if (!scheda || scheda.applicazione !== 'adestio_dental_suite') return false;
+        return !_seStesso(scheda, marchioLocale, ipsLocali);
+    } catch (_) {
+        return false;
+    }
 }
-
-let _inAggiornamento = false;
-let _scansioneSubnetInCorso = false;
-let _ultimoScanSubnet = 0;
 
 async function _eseguiSonda(forza = false) {
     if (_inAggiornamento) return _cacheStazioni;
@@ -141,18 +157,20 @@ async function _eseguiSonda(forza = false) {
         const trovati = new Map();
 
         const registra = scheda => {
-            if (!_accettabile(scheda, marchioLocale, ipsLocali)) return;
-            const chiave = scheda.id || scheda.indirizzo;
-            const precedente = trovati.get(chiave);
-            if (!precedente || scheda.latenza_ms < precedente.latenza_ms) {
-                trovati.set(chiave, scheda);
-            }
+            try {
+                if (!_accettabile(scheda, marchioLocale, ipsLocali)) return;
+                const chiave = scheda.id || scheda.indirizzo;
+                const precedente = trovati.get(chiave);
+                if (!precedente || scheda.latenza_ms < precedente.latenza_ms) {
+                    trovati.set(chiave, scheda);
+                }
+            } catch (_) {}
         };
 
         const vicini = _bersagliDaVicini();
         if (vicini.length > 0) {
             const esiti = await _inLotti(
-                vicini.map(b => () => sondaHttp(b.ip, b.porta, 400)),
+                vicini.map(b => () => sondaHttp(b.ip, b.porta, 350)),
                 SONDE_PARALLELE
             );
             esiti.forEach(registra);
@@ -169,7 +187,7 @@ async function _eseguiSonda(forza = false) {
                     []
                 );
                 const esiti = await _inLotti(
-                    bersagli.map(b => () => sondaHttp(b.ip, b.porta, 250)),
+                    bersagli.map(b => () => sondaHttp(b.ip, b.porta, 200)),
                     SONDE_PARALLELE
                 );
                 esiti.forEach(registra);
@@ -182,6 +200,7 @@ async function _eseguiSonda(forza = false) {
         _inAggiornamento = false;
         return _cacheStazioni;
     } catch (_) {
+        _ultimoScan = adesso;
         _inAggiornamento = false;
         _scansioneSubnetInCorso = false;
         return _cacheStazioni;
@@ -189,34 +208,46 @@ async function _eseguiSonda(forza = false) {
 }
 
 async function scansionaStazioni(forza = false) {
-    const adesso = Date.now();
-    if (!forza && _cacheStazioni.length > 0) {
+    try {
+        const adesso = Date.now();
+        if (forza) {
+            return await _eseguiSonda(true);
+        }
         if (adesso - _ultimoScan > CACHE_TTL_MS && !_inAggiornamento) {
             _eseguiSonda(false).catch(() => {});
         }
         return _cacheStazioni;
+    } catch (_) {
+        return _cacheStazioni;
     }
-    return _eseguiSonda(forza);
 }
 
 async function scansionaMonitors(forza = false) {
-    const stazioni = await scansionaStazioni(forza);
-    return stazioni.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
+    try {
+        const stazioni = await scansionaStazioni(forza);
+        return (stazioni || []).filter(voce => voce && voce.ruolo === protocollo.RUOLO_RIUNITO);
+    } catch (_) {
+        return [];
+    }
 }
 
 function _voceStazione(m) {
-    return {
-        id: m.id,
-        nome: m.nome,
-        indirizzo: m.indirizzo,
-        ip: m.ip,
-        porta: m.porta,
-        ruolo: m.ruolo,
-        etichetta_ruolo: protocollo.etichettaRuolo(m.ruolo),
-        in_seduta: Boolean(m.in_seduta),
-        latenza_ms: m.latenza_ms,
-        raggiungibile: true
-    };
+    try {
+        return {
+            id: m.id,
+            nome: m.nome,
+            indirizzo: m.indirizzo,
+            ip: m.ip,
+            porta: m.porta,
+            ruolo: m.ruolo,
+            etichetta_ruolo: protocollo.etichettaRuolo(m.ruolo),
+            in_seduta: Boolean(m.in_seduta),
+            latenza_ms: m.latenza_ms,
+            raggiungibile: true
+        };
+    } catch (_) {
+        return null;
+    }
 }
 
 async function diagnosticaCompleta() {
@@ -224,7 +255,7 @@ async function diagnosticaCompleta() {
         const locale = identita.scheda();
         const subnets = ottieniSubnetLocali();
         const stazioni = await scansionaStazioni(true);
-        const monitorScansionati = stazioni.filter(v => v.ruolo === protocollo.RUOLO_RIUNITO);
+        const monitorScansionati = (stazioni || []).filter(v => v && v.ruolo === protocollo.RUOLO_RIUNITO);
 
         return {
             postazione_locale: {
@@ -233,8 +264,8 @@ async function diagnosticaCompleta() {
                 interfacce: subnets,
                 scoperta: annuncio.stato()
             },
-            monitor_rilevati: monitorScansionati.map(_voceStazione),
-            stazioni_rilevate: stazioni.map(_voceStazione),
+            monitor_rilevati: monitorScansionati.map(_voceStazione).filter(Boolean),
+            stazioni_rilevate: (stazioni || []).map(_voceStazione).filter(Boolean),
             timestamp: Date.now()
         };
     } catch (e) {
@@ -258,6 +289,23 @@ function impostaStato(ip, inSeduta) {
         }
     } catch (_) {}
 }
+
+function avviaDiscoveryBackground() {
+    try {
+        if (_timerBackground) return;
+        _timerBackground = setInterval(() => {
+            try {
+                _eseguiSonda(false).catch(() => {});
+            } catch (_) {}
+        }, 4000);
+        if (_timerBackground && typeof _timerBackground.unref === 'function') {
+            _timerBackground.unref();
+        }
+        _eseguiSonda(false).catch(() => {});
+    } catch (_) {}
+}
+
+avviaDiscoveryBackground();
 
 module.exports = {
     scansionaMonitors,
