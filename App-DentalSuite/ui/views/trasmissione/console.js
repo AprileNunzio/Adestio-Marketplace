@@ -272,22 +272,27 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
                 }));
             };
 
+            if (collegate.length === 1 && postazioniSelezionate.size === 0) {
+                postazioniSelezionate.add(collegate[0].sessione_id);
+            }
+
             const pannelloSelezionePaziente = () => {
-                if (postazioniSelezionate.size === 0) {
-                    return el('div', { class: 'ds-trasmetti-paziente-wrap' }, [
-                        el('div', {
-                            style: 'padding: 22px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 14px; color: #64748b; font-size: 0.95rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px;'
-                        }, [
-                            icona('lock'),
-                            el('span', {}, 'Seleziona prima uno o più monitor attivi sopra per abilitare la scelta del paziente.')
-                        ])
-                    ]);
-                }
+                const apriScelta = async () => {
+                    try {
+                        const scelto = await selettorePaziente();
+                        if (scelto) {
+                            pazienteSelezionatoId = scelto;
+                            await caricaPaziente(scelto);
+                            disegna();
+                        }
+                    } catch (_) {}
+                };
 
                 return el('div', { class: 'ds-trasmetti-paziente-wrap' }, [
                     pazienteSelezionatoDati
                         ? el('div', {
-                            style: 'display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; background: #f0fdfa; border: 2px solid #0d9488; border-radius: 16px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.12);'
+                            style: 'display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; background: #f0fdfa; border: 2px solid #0d9488; border-radius: 16px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.12); cursor: pointer;',
+                            onClick: apriScelta
                         }, [
                             el('div', { style: 'display: flex; align-items: center; gap: 16px;' }, [
                                 el('div', {
@@ -306,7 +311,8 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
                             el('button', {
                                 class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
                                 type: 'button',
-                                onClick: () => {
+                                onClick: (e) => {
+                                    e.stopPropagation();
                                     pazienteSelezionatoId = null;
                                     pazienteSelezionatoDati = null;
                                     disegna();
@@ -314,26 +320,17 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
                             }, [icona('swap_horiz'), 'Cambia Paziente'])
                         ])
                         : el('div', {
-                            style: 'padding: 28px; background: #ffffff; border: 2px dashed #0d9488; border-radius: 16px; text-align: center;'
+                            style: 'padding: 24px; background: #ffffff; border: 2px dashed #0d9488; border-radius: 16px; text-align: center; cursor: pointer; transition: all 0.2s ease;',
+                            onClick: apriScelta
                         }, [
-                            el('div', { style: 'margin-bottom: 12px; color: #0d9488; font-size: 32px;' }, icona('person_search')),
-                            el('div', { style: 'font-weight: 700; color: #0f172a; font-size: 1.05rem; margin-bottom: 4px;' }, 'Scegli la cartella clinica da inviare'),
-                            el('div', { style: 'color: #64748b; font-size: 0.88rem; margin-bottom: 16px;' }, 'Seleziona il paziente dalla rubrica per inviare l\'odontogramma e la storia clinica al monitor.'),
+                            el('div', { style: 'margin-bottom: 10px; color: #0d9488; font-size: 32px;' }, icona('person_search')),
+                            el('div', { style: 'font-weight: 700; color: #0f172a; font-size: 1.05rem; margin-bottom: 4px;' }, 'Clicca qui per selezionare il paziente'),
+                            el('div', { style: 'color: #64748b; font-size: 0.88rem; margin-bottom: 14px;' }, 'Puoi scegliere dai pazienti in agenda oggi oppure cercare in tutta la rubrica.'),
                             el('button', {
                                 class: 'ds-btn ds-btn--primary ds-btn--tocco',
-                                style: 'padding: 12px 24px; font-weight: 700; border-radius: 12px;',
-                                type: 'button',
-                                onClick: async () => {
-                                    try {
-                                        const scelto = await selettorePaziente();
-                                        if (scelto) {
-                                            pazienteSelezionatoId = scelto;
-                                            await caricaPaziente(scelto);
-                                            disegna();
-                                        }
-                                    } catch (_) {}
-                                }
-                            }, [icona('search'), 'Sfoglia Pazienti dalla Rubrica'])
+                                style: 'padding: 10px 22px; font-weight: 700; border-radius: 10px; pointer-events: none;',
+                                type: 'button'
+                            }, [icona('search'), 'Sfoglia Pazienti'])
                         ])
                 ]);
             };

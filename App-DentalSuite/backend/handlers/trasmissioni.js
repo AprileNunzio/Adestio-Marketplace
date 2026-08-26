@@ -57,7 +57,7 @@ async function destinazioni() {
             });
         }
 
-        const monitorLan = await scopertaMesh.scansionaMonitors(true);
+        const monitorLan = await scopertaMesh.scansionaMonitors(false);
         for (const m of monitorLan) {
             const idSessione = `lan-${m.ip}:${m.porta}`;
             const perImpronta = [...mappa.values()].find(voce => m.impronta && voce.impronta === m.impronta);

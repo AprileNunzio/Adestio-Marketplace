@@ -120,17 +120,18 @@ function _accettabile(scheda, marchioLocale, ipsLocali) {
     return !_seStesso(scheda, marchioLocale, ipsLocali);
 }
 
+let _scansioneSubnetInCorso = false;
+let _ultimoScanSubnet = 0;
+
 async function scansionaStazioni(forza = false) {
     const adesso = Date.now();
-    const validita = _cacheStazioni.length > 0 ? CACHE_TTL_MS : CACHE_VUOTO_TTL_MS;
-    if (!forza && _ultimoScan > 0 && adesso - _ultimoScan < validita) {
+    if (!forza && _ultimoScan > 0 && adesso - _ultimoScan < CACHE_TTL_MS) {
         return _cacheStazioni;
     }
 
     try {
         const marchioLocale = typeof identita.marchioNodo === 'function' ? identita.marchioNodo() : null;
         const ipsLocali = identita.indirizziLocali();
-        const porte = [protocollo.PORTA_SERVIZIO, protocollo.PORTA_SERVIZIO + 1, protocollo.PORTA_SERVIZIO + 2];
         const trovati = new Map();
 
         const registra = scheda => {
@@ -145,29 +146,36 @@ async function scansionaStazioni(forza = false) {
         const vicini = _bersagliDaVicini();
         if (vicini.length > 0) {
             const esiti = await _inLotti(
-                vicini.map(b => () => sondaHttp(b.ip, b.porta, 900)),
+                vicini.map(b => () => sondaHttp(b.ip, b.porta, 600)),
                 SONDE_PARALLELE
             );
             esiti.forEach(registra);
         }
 
-        if (trovati.size === 0 || forza) {
-            const subnets = ottieniSubnetLocali();
-            const bersagli = porte.reduce(
-                (tutti, porta) => tutti.concat(_bersagliDaSubnet(subnets, porta)),
-                []
-            );
-            const esiti = await _inLotti(
-                bersagli.map(b => () => sondaHttp(b.ip, b.porta, 800)),
-                SONDE_PARALLELE
-            );
-            esiti.forEach(registra);
+        if (trovati.size === 0 && (forza || adesso - _ultimoScanSubnet > 20000)) {
+            if (!_scansioneSubnetInCorso) {
+                _scansioneSubnetInCorso = true;
+                _ultimoScanSubnet = adesso;
+                const subnets = ottieniSubnetLocali();
+                const porte = [protocollo.PORTA_SERVIZIO, protocollo.PORTA_SERVIZIO + 1];
+                const bersagli = porte.reduce(
+                    (tutti, porta) => tutti.concat(_bersagliDaSubnet(subnets, porta)),
+                    []
+                );
+                const esiti = await _inLotti(
+                    bersagli.map(b => () => sondaHttp(b.ip, b.porta, 350)),
+                    SONDE_PARALLELE
+                );
+                esiti.forEach(registra);
+                _scansioneSubnetInCorso = false;
+            }
         }
 
         _cacheStazioni = [...trovati.values()];
         _ultimoScan = adesso;
         return _cacheStazioni;
     } catch (_) {
+        _scansioneSubnetInCorso = false;
         return _cacheStazioni;
     }
 }
