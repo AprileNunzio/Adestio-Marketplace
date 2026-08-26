@@ -7,7 +7,7 @@ const identita = require('./identita');
 
 let _cacheMonitors = [];
 let _ultimoScan = 0;
-const CACHE_TTL_MS = 3000;
+const CACHE_TTL_MS = 2500;
 
 function ottieniSubnetLocali() {
     try {
@@ -33,7 +33,7 @@ function ottieniSubnetLocali() {
     }
 }
 
-function sondaHttp(ip, porta, timeoutMs = 1200) {
+function sondaHttp(ip, porta, timeoutMs = 800) {
     return new Promise((resolve) => {
         const t0 = Date.now();
         try {
@@ -95,15 +95,17 @@ async function scansionaMonitors(forza = false) {
         }
 
         const promesse = [];
-        const porte = [protocollo.PORTA_SERVIZIO, protocollo.PORTA_SERVIZIO + 1];
+        const porte = [protocollo.PORTA_SERVIZIO, protocollo.PORTA_SERVIZIO + 1, protocollo.PORTA_SERVIZIO + 2];
 
         for (const ip of candidati) {
             for (const porta of porte) {
                 promesse.push(
-                    sondaHttp(ip, porta, 1000).then(res => {
-                        if (res && res.ruolo === protocollo.RUOLO_RIUNITO) {
-                            if (!localiIps.includes(res.ip)) {
-                                schedeTrovate.push(res);
+                    sondaHttp(ip, porta, 800).then(res => {
+                        if (res && res.applicazione === 'adestio_dental_suite') {
+                            if (!localiIps.includes(res.ip) || res.ip === '127.0.0.1') {
+                                if (res.ruolo === protocollo.RUOLO_RIUNITO || res.in_ascolto || res.attiva) {
+                                    schedeTrovate.push(res);
+                                }
                             }
                         }
                     })

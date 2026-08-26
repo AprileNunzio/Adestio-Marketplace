@@ -24,33 +24,7 @@ function ascolta(gestore) {
     return Boolean(ascoltatore);
 }
 
-async function avviaArchivio(locale) {
-    await servitore.avvia({
-        porta: locale.porta,
-        alMessaggio: messaggio => inoltra({
-            origine: protocollo.RUOLO_RIUNITO,
-            tipo: messaggio.tipo,
-            contenuto: messaggio.contenuto,
-            sessione: messaggio.sessione,
-            indirizzo: messaggio.indirizzo
-        })
-    });
-}
-
-function collegaRiunito(indirizzo) {
-    return cliente.collega(indirizzo, contenuto => inoltra({
-        origine: protocollo.RUOLO_ARCHIVIO,
-        tipo: contenuto.tipo,
-        contenuto: contenuto.contenuto
-    }));
-}
-
-async function avviaRiunito(locale) {
-    if (!locale.indirizzo_archivio) return;
-    await collegaRiunito(locale.indirizzo_archivio);
-}
-
-async function avvia() {
+async function avvia(portaPersonalizzata) {
     const locale = await identita.assicura();
     if (Number(locale.attiva) !== 1) {
         avviato = false;
@@ -58,22 +32,33 @@ async function avvia() {
         return { avviato: false, causa: 'disattivata', motivo: 'Rete di studio disattivata su questa postazione' };
     }
 
-    await annuncio.avvia();
-
     try {
-        if (locale.ruolo === protocollo.RUOLO_ARCHIVIO) await avviaArchivio(locale);
-        else await avviaRiunito(locale);
+        const portaDaUsare = portaPersonalizzata || locale.porta || protocollo.PORTA_SERVIZIO;
+        await servitore.avvia({
+            porta: portaDaUsare,
+            alMessaggio: messaggio => inoltra({
+                origine: locale.ruolo === protocollo.RUOLO_ARCHIVIO ? protocollo.RUOLO_RIUNITO : protocollo.RUOLO_ARCHIVIO,
+                tipo: messaggio.tipo,
+                contenuto: messaggio.contenuto,
+                sessione: messaggio.sessione,
+                indirizzo: messaggio.indirizzo
+            })
+        });
+
+        if (locale.indirizzo_archivio) {
+            collegaRiunito(locale.indirizzo_archivio).catch(() => {});
+        }
+
         avviato = true;
         ultimoErrore = '';
         ultimoMotivo = '';
+        return { avviato: true, ruolo: locale.ruolo, porta: portaDaUsare };
     } catch (errore) {
         avviato = false;
         ultimoErrore = errore.message;
         ultimoMotivo = 'errore';
         return { avviato: false, causa: 'errore', motivo: errore.message };
     }
-
-    return { avviato: true, ruolo: locale.ruolo };
 }
 
 async function ferma() {

@@ -248,31 +248,66 @@ async function instrada(richiesta, risposta) {
     return rispondi(risposta, 404, { errore: 'Rotta non prevista' });
 }
 
+function provaAscolto(istanza, portaPartenza, tentativi = 4) {
+    return new Promise((risolvi, rifiuta) => {
+        let portaCorrente = portaPartenza;
+        let tentativiRimasti = tentativi;
+
+        const tenta = () => {
+            const onError = (errore) => {
+                istanza.removeListener('listening', onListening);
+                if (errore.code === 'EADDRINUSE' && tentativiRimasti > 1) {
+                    tentativiRimasti--;
+                    portaCorrente++;
+                    try {
+                        istanza.close(() => {
+                            istanza.once('error', onError);
+                            istanza.once('listening', onListening);
+                            istanza.listen(portaCorrente);
+                        });
+                    } catch (_) {
+                        istanza.once('error', onError);
+                        istanza.once('listening', onListening);
+                        istanza.listen(portaCorrente);
+                    }
+                } else {
+                    ultimoErrore = errore.message;
+                    servitore = null;
+                    portaAttiva = 0;
+                    rifiuta(errore);
+                }
+            };
+
+            const onListening = () => {
+                istanza.removeListener('error', onError);
+                servitore = istanza;
+                portaAttiva = portaCorrente;
+                ultimoErrore = '';
+                risolvi({ porta: portaCorrente });
+            };
+
+            istanza.once('error', onError);
+            istanza.once('listening', onListening);
+            istanza.listen(portaCorrente);
+        };
+
+        tenta();
+    });
+}
+
 function avvia(opzioni = {}) {
     if (servitore) return Promise.resolve({ porta: portaAttiva });
     alMessaggio = typeof opzioni.alMessaggio === 'function' ? opzioni.alMessaggio : null;
     const porta = Number(opzioni.porta) || protocollo.PORTA_SERVIZIO;
 
-    return new Promise((risolvi, rifiuta) => {
-        const istanza = http.createServer((richiesta, risposta) => {
-            instrada(richiesta, risposta).catch(errore => {
-                ultimoErrore = errore.message;
-                rispondi(risposta, 500, { errore: errore.message });
-            });
-        });
-        istanza.on('error', errore => {
+    const istanza = http.createServer((richiesta, risposta) => {
+        instrada(richiesta, risposta).catch(errore => {
             ultimoErrore = errore.message;
-            servitore = null;
-            portaAttiva = 0;
-            rifiuta(errore);
-        });
-        istanza.listen(porta, () => {
-            servitore = istanza;
-            portaAttiva = porta;
-            ultimoErrore = '';
-            risolvi({ porta });
+            rispondi(risposta, 500, { errore: errore.message });
         });
     });
+
+    return provaAscolto(istanza, porta);
 }
 
 function ferma() {
