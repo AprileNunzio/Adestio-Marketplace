@@ -92,7 +92,20 @@ function versoTuttiIRiuniti(tipo, contenuto) {
 
 async function versoArchivio(tipo, contenuto, destinatarioId) {
     try {
-        return await cliente.invia(tipo, contenuto);
+        if (cliente.stato().collegato) {
+            return await cliente.invia(tipo, contenuto);
+        }
+        const seduta = require('../repositories/seduta_volatile');
+        const mittente = seduta.mittente();
+        if (mittente && mittente.ip && mittente.porta) {
+            const consegna = require('./consegna');
+            const esito = await consegna.conRitentativo(mittente.ip, mittente.porta, '/ricevi-atto', {
+                tipo,
+                atto: contenuto
+            });
+            if (esito.consegnato) return esito.dati || { accettato: true };
+        }
+        throw new Error('Nessun canale attivo verso la segreteria');
     } catch (errore) {
         await coda.accoda(destinatarioId || '', tipo, contenuto);
         throw errore;

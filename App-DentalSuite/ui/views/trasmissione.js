@@ -48,7 +48,10 @@ function schermoDisplay({ indietro, onCambiaPostazione, puoCambiarePaziente }) {
     };
 
     const disegna = (istantanea, rete) => {
-        const collegato = Boolean(rete && rete.cliente && rete.cliente.collegato);
+        const collegato = Boolean(
+            (rete && rete.cliente && rete.cliente.collegato)
+            || (istantanea && istantanea.presente)
+        );
         if (istantanea.presente && istantanea.dossier) {
             rimpiazza(contenitore, schermoScheda({
                 istantanea,

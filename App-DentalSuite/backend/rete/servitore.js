@@ -256,6 +256,20 @@ async function gestisciPazienteCambiato(richiesta, risposta) {
     return rispondi(risposta, 200, { successo: true, ...esito });
 }
 
+async function gestisciRiceviAtto(richiesta, risposta) {
+    try {
+        const corpo = await leggiCorpo(richiesta);
+        const atti = require('../handlers/atti');
+        const esito = await atti.accogli({
+            tipo: protocollo.MESSAGGI.atto,
+            contenuto: (corpo && corpo.atto) ? corpo.atto : corpo
+        });
+        return rispondi(risposta, 200, { successo: true, ...esito });
+    } catch (e) {
+        return rispondi(risposta, 500, { errore: e.message });
+    }
+}
+
 async function instrada(richiesta, risposta) {
     const indirizzo = new URL(richiesta.url, 'http://postazione.local');
     if (richiesta.method === 'GET' && indirizzo.pathname === protocollo.ROTTE.stato) {
@@ -266,6 +280,9 @@ async function instrada(richiesta, risposta) {
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === '/chiudi-diretto') {
         return gestisciChiudiDiretto(richiesta, risposta);
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/ricevi-atto') {
+        return gestisciRiceviAtto(richiesta, risposta);
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === '/seduta-stato') {
         return gestisciStatoSeduta(richiesta, risposta);

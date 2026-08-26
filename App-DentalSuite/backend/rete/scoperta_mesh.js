@@ -8,8 +8,8 @@ const annuncio = require('./annuncio');
 
 let _cacheStazioni = [];
 let _ultimoScan = 0;
-const CACHE_TTL_MS = 2500;
-const CACHE_VUOTO_TTL_MS = 15000;
+const CACHE_TTL_MS = 2000;
+const CACHE_VUOTO_TTL_MS = 2000;
 const SONDE_PARALLELE = 128;
 
 function ottieniSubnetLocali() {

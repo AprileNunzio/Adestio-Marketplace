@@ -186,6 +186,8 @@ export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIn
                     });
 
                     if (esito(risposta, 'Cartella clinica trasmessa con successo al monitor')) {
+                        pazienteSelezionatoId = null;
+                        pazienteSelezionatoDati = null;
                         await disegna();
                     }
                 } catch (e) {

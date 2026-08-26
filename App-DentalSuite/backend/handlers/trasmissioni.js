@@ -57,7 +57,7 @@ async function destinazioni() {
             });
         }
 
-        const monitorLan = await scopertaMesh.scansionaMonitors();
+        const monitorLan = await scopertaMesh.scansionaMonitors(true);
         for (const m of monitorLan) {
             const idSessione = `lan-${m.ip}:${m.porta}`;
             const perImpronta = [...mappa.values()].find(voce => m.impronta && voce.impronta === m.impronta);
@@ -161,7 +161,11 @@ async function invia(payload = {}) {
     const falliti = [];
 
     for (const sessioneId of sessioni) {
-        const bersaglio = dest.find(voce => voce.sessione_id === sessioneId);
+        const bersaglio = dest.find(voce =>
+            voce.sessione_id === sessioneId
+            || (voce.impronta && (voce.impronta === sessioneId || String(sessioneId).includes(voce.impronta)))
+            || (voce.ip && (String(sessioneId).includes(voce.ip) || (voce.sessione_id && voce.sessione_id.includes(voce.ip))))
+        );
         if (!bersaglio) {
             falliti.push({ sessione_id: sessioneId, postazione: sessioneId, motivo: 'monitor non piu raggiungibile' });
             continue;
