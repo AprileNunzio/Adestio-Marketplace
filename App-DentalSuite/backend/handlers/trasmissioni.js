@@ -223,6 +223,10 @@ async function invia(payload = {}) {
             indirizzo_consegna: bersaglio.ip ? `${bersaglio.ip}:${bersaglio.porta}` : ''
         }, actor.stamp());
 
+        if (bersaglio.ip) {
+            scopertaMesh.impostaStato(bersaglio.ip, true);
+        }
+
         riusciti.push({
             id: trasmissioneId,
             paziente: dossier.paziente.nominativo,

@@ -42,8 +42,9 @@ async function controlla() {
             ultimoEsito = { verificataIl: Date.now(), raggiunta: true, motivo: '' };
 
             if (risposta.dati && risposta.dati.conosciuta && risposta.dati.aperta === false) {
-                seduta.svuota(risposta.dati.motivo || 'seduta chiusa dalla segreteria');
-                console.log('[DentalSuite] Scheda rimossa dal monitor: la segreteria ha chiuso la seduta.');
+                if (Date.now() - (istantanea.ricevuto_il || 0) >= 30000) {
+                    seduta.svuota(risposta.dati.motivo || 'seduta chiusa dalla segreteria');
+                }
             }
             return;
         }

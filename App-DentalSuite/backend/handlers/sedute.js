@@ -28,6 +28,8 @@ async function riconcilia(aperte, dest) {
     const orfane = [];
 
     for (const riga of aperte) {
+        if (Date.now() - (riga.aperta_il || 0) < 25000) continue;
+
         const bersaglio = dest.find(voce =>
             voce.sessione_id === riga.sessione_id
             || (riga.impronta_postazione && voce.impronta === riga.impronta_postazione)

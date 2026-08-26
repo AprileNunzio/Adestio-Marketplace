@@ -248,9 +248,21 @@ async function diagnosticaCompleta() {
     }
 }
 
+function impostaStato(ip, inSeduta) {
+    try {
+        if (!ip) return;
+        const trovato = _cacheStazioni.find(s => s.ip === ip || (s.indirizzo && s.indirizzo.includes(ip)));
+        if (trovato) {
+            trovato.in_seduta = Boolean(inSeduta);
+            _ultimoScan = Date.now();
+        }
+    } catch (_) {}
+}
+
 module.exports = {
     scansionaMonitors,
     scansionaStazioni,
     diagnosticaCompleta,
-    sondaHttp
+    sondaHttp,
+    impostaStato
 };

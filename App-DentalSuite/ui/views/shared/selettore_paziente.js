@@ -64,8 +64,7 @@ export async function selettorePaziente() {
                 class: 'ds-sp__agenda-item',
                 type: 'button',
                 dataset: { id: app.paziente_id, scelto: 'false' },
-                onClick: () => seleziona(app.paziente_id, false),
-                onDblClick: () => seleziona(app.paziente_id, true)
+                onClick: () => seleziona(app.paziente_id, true)
             }, [
                 el('div', { class: 'ds-sp__agenda-ora' }, oraStr),
                 el('div', { class: 'ds-sp__agenda-corpo' }, [
@@ -99,8 +98,7 @@ export async function selettorePaziente() {
             class: 'ds-sp__voce',
             type: 'button',
             dataset: { id: riga.id, scelto: String(sceltoId === riga.id) },
-            onClick: () => seleziona(riga.id, false),
-            onDblClick: () => seleziona(riga.id, true)
+            onClick: () => seleziona(riga.id, true)
         }, [
             el('div', { class: 'ds-sp__voce-icon' }, icona('person')),
             el('div', { class: 'ds-sp__voce-info' }, [
