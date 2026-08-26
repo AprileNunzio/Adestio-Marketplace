@@ -32,11 +32,25 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
             return false;
         }
 
-        const dest = await call('trasmissioni.postazioni', {});
-        const postazioniDati = oggetto(dest, { collegate: [] });
-        const collegate = postazioniDati.collegate || [];
+        let postazioni = [];
+        let modalControllerTermina = null;
+        const nodoElenco = el('div', { style: 'display: flex; flex-direction: column; gap: 10px; max-height: 340px; overflow-y: auto;' });
 
-        if (collegate.length === 0) {
+        const caricaPostazioni = async () => {
+            try {
+                const dest = await call('trasmissioni.postazioni', {});
+                const postazioniDati = oggetto(dest, { collegate: [] });
+                postazioni = postazioniDati.collegate || [];
+                return postazioni;
+            } catch (_) {
+                postazioni = [];
+                return [];
+            }
+        };
+
+        await caricaPostazioni();
+
+        if (postazioni.length === 0) {
             const corpoVuoto = el('div', { style: 'padding: 16px 8px; text-align: center;' }, [
                 el('div', {
                     style: 'width: 56px; height: 56px; border-radius: 50%; background: #fef3c7; color: #d97706; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;'
@@ -73,8 +87,6 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
             return false;
         }
 
-        let modalControllerTermina = null;
-
         const inviaASessioni = async (sessioneIds) => {
             try {
                 const res = await call('trasmissioni.invia', {
@@ -94,48 +106,91 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
             }
         };
 
-        const monitorOrdinati = [...collegate].sort((a, b) => {
-            const matchA = corrispondePoltrona(a, poltronaId, poltronaNome) ? 1 : 0;
-            const matchB = corrispondePoltrona(b, poltronaId, poltronaNome) ? 1 : 0;
-            return matchB - matchA;
-        });
+        const chiudiMonitor = async (voce) => {
+            try {
+                const risposta = await call('trasmissioni.chiudi', {
+                    id: voce.trasmissione_id || null,
+                    sessione_id: voce.sessione_id
+                });
+                if (esito(risposta, `Scheda chiusa su ${voce.nome || 'Monitor'}`)) {
+                    await caricaPostazioni();
+                    renderLista();
+                }
+            } catch (e) {
+                errore(e.message || 'Errore durante la chiusura della scheda');
+            }
+        };
 
-        const monitorPredefinito = monitorOrdinati.find(m => corrispondePoltrona(m, poltronaId, poltronaNome));
+        const renderLista = () => {
+            try {
+                const monitorOrdinati = [...postazioni].sort((a, b) => {
+                    const matchA = corrispondePoltrona(a, poltronaId, poltronaNome) ? 1 : 0;
+                    const matchB = corrispondePoltrona(b, poltronaId, poltronaNome) ? 1 : 0;
+                    return matchB - matchA;
+                });
 
-        const listaMonitor = monitorOrdinati.map(voce => {
-            const inSeduta = Boolean(voce.in_seduta);
-            const isDefault = monitorPredefinito && (voce.sessione_id === monitorPredefinito.sessione_id);
+                const monitorPredefinito = monitorOrdinati.find(m => corrispondePoltrona(m, poltronaId, poltronaNome));
 
-            return el('div', {
-                style: `display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: ${isDefault ? '#f0fdfa' : '#ffffff'}; border: 2px solid ${isDefault ? '#0d9488' : '#e2e8f0'}; border-radius: 14px; transition: all 0.15s ease; gap: 14px; box-shadow: ${isDefault ? '0 4px 12px rgba(13, 148, 136, 0.12)' : 'none'};`
-            }, [
-                el('div', { style: 'display: flex; align-items: center; gap: 12px;' }, [
-                    el('div', {
-                        style: `width: 42px; height: 42px; border-radius: 10px; background: ${isDefault ? '#ccfbf1' : '#f0fdf4'}; color: ${isDefault ? '#0f766e' : '#16a34a'}; display: flex; align-items: center; justify-content: center; font-size: 20px;`
-                    }, icona(isDefault ? 'star' : 'desktop_windows')),
-                    el('div', {}, [
-                        el('div', { style: 'display: flex; align-items: center; gap: 8px;' }, [
-                            el('span', { style: 'font-weight: 700; font-size: 1rem; color: #0f172a;' }, voce.nome || 'Monitor Studio'),
-                            isDefault ? el('span', {
-                                style: 'font-size: 0.72rem; font-weight: 800; background: #0d9488; color: #ffffff; padding: 2px 8px; border-radius: 6px;'
-                            }, 'Poltrona Prenotata') : null
-                        ].filter(Boolean)),
-                        el('div', { style: 'font-size: 0.8rem; color: #64748b; font-family: monospace; margin-top: 1px;' }, voce.indirizzo || 'Rete LAN'),
-                        el('div', { style: 'margin-top: 4px; display: flex; align-items: center; gap: 6px; font-size: 0.78rem;' }, [
-                            el('span', { style: `width: 8px; height: 8px; border-radius: 50%; background: ${inSeduta ? '#0284c7' : '#16a34a'};` }),
-                            el('span', { style: `font-weight: 600; color: ${inSeduta ? '#0369a1' : '#15803d'};` },
-                                inSeduta ? `In seduta: ${voce.paziente_nome || 'Paziente'}` : 'Pronto a ricevere'
-                            )
+                const carte = monitorOrdinati.map(voce => {
+                    const inSeduta = Boolean(voce.in_seduta);
+                    const isDefault = monitorPredefinito && (voce.sessione_id === monitorPredefinito.sessione_id);
+
+                    const badgeStato = inSeduta
+                        ? el('span', {
+                            style: 'display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: #e0f2fe; color: #0369a1; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;'
+                        }, [
+                            el('span', { style: 'width: 7px; height: 7px; border-radius: 50%; background: #0284c7;' }),
+                            `Inviato: ${voce.paziente_nome || 'In Seduta'}`
                         ])
-                    ])
-                ]),
-                el('button', {
-                    class: `ds-btn ${isDefault ? 'ds-btn--primary' : 'ds-btn--secondary'} ds-btn--piccolo`,
-                    type: 'button',
-                    onClick: () => inviaASessioni([voce.sessione_id])
-                }, [icona('send'), isDefault ? 'Invia a questa Poltrona' : 'Invia a questo Monitor'])
-            ]);
-        });
+                        : el('span', {
+                            style: 'display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: #dcfce7; color: #15803d; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;'
+                        }, [
+                            el('span', { style: 'width: 7px; height: 7px; border-radius: 50%; background: #16a34a;' }),
+                            'Libero'
+                        ]);
+
+                    return el('div', {
+                        style: `display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: ${isDefault ? '#f0fdfa' : '#ffffff'}; border: 2px solid ${isDefault ? '#0d9488' : '#e2e8f0'}; border-radius: 14px; gap: 12px; box-shadow: ${isDefault ? '0 4px 12px rgba(13, 148, 136, 0.12)' : 'none'};`
+                    }, [
+                        el('div', { style: 'display: flex; align-items: center; gap: 12px;' }, [
+                            el('div', {
+                                style: `width: 42px; height: 42px; border-radius: 10px; background: ${isDefault ? '#ccfbf1' : '#f0fdf4'}; color: ${isDefault ? '#0f766e' : '#16a34a'}; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;`
+                            }, icona(isDefault ? 'star' : 'desktop_windows')),
+                            el('div', {}, [
+                                el('div', { style: 'display: flex; align-items: center; gap: 8px; flex-wrap: wrap;' }, [
+                                    el('span', { style: 'font-weight: 700; font-size: 1rem; color: #0f172a;' }, voce.nome || 'Monitor Studio'),
+                                    isDefault ? el('span', {
+                                        style: 'font-size: 0.72rem; font-weight: 800; background: #0d9488; color: #ffffff; padding: 2px 8px; border-radius: 6px;'
+                                    }, 'Poltrona Prenotata') : null
+                                ].filter(Boolean)),
+                                el('div', { style: 'margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;' }, [
+                                    badgeStato,
+                                    el('span', { style: 'font-size: 0.78rem; color: #64748b; font-family: monospace;' }, voce.indirizzo || 'LAN')
+                                ])
+                            ])
+                        ]),
+                        el('div', { style: 'display: flex; align-items: center; gap: 8px; flex-shrink: 0;' }, [
+                            inSeduta ? el('button', {
+                                class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                                style: 'color: #e11d48;',
+                                type: 'button',
+                                title: 'Chiudi la scheda attualmente aperta su questo monitor',
+                                onClick: () => chiudiMonitor(voce)
+                            }, [icona('logout'), 'Chiudi']) : null,
+                            el('button', {
+                                class: `ds-btn ${isDefault ? 'ds-btn--primary' : 'ds-btn--secondary'} ds-btn--piccolo`,
+                                type: 'button',
+                                onClick: () => inviaASessioni([voce.sessione_id])
+                            }, [icona('send'), isDefault ? 'Invia' : 'Invia'])
+                        ].filter(Boolean))
+                    ]);
+                });
+
+                rimpiazza(nodoElenco, carte);
+            } catch (_) {}
+        };
+
+        renderLista();
 
         const corpo = el('div', { style: 'display: flex; flex-direction: column; gap: 14px;' }, [
             el('div', { style: 'padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;' }, [
@@ -146,10 +201,10 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
                 ].filter(Boolean)),
                 el('span', {
                     style: 'display: inline-block; padding: 4px 10px; background: #dcfce7; color: #15803d; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;'
-                }, `${collegate.length} Monitor Online`)
+                }, `${postazioni.length} Monitor Online`)
             ]),
-            el('div', { style: 'font-size: 0.9rem; font-weight: 600; color: #334155;' }, 'Seleziona il monitor a cui inviare la cartella clinica in tempo reale:'),
-            el('div', { style: 'display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;' }, listaMonitor)
+            el('div', { style: 'font-size: 0.9rem; font-weight: 600; color: #334155;' }, 'Seleziona la postazione di destinazione:'),
+            nodoElenco
         ]);
 
         const azioni = [
@@ -164,14 +219,14 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
             }
         ];
 
-        if (collegate.length > 1) {
+        if (postazioni.length > 1) {
             azioni.push({
-                etichetta: `Trasmetti a tutti (${collegate.length} Monitor)`,
+                etichetta: `Trasmetti a tutti (${postazioni.length} Monitor)`,
                 variante: 'secondary',
                 simbolo: 'cast_connected',
                 onAzione: async (termina) => {
                     modalControllerTermina = termina;
-                    await inviaASessioni(collegate.map(m => m.sessione_id));
+                    await inviaASessioni(postazioni.map(m => m.sessione_id));
                 }
             });
         }
@@ -180,7 +235,8 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
             titolo: 'Trasmetti Scheda Clinica al Monitor',
             corpo,
             ampia: true,
-            azioni
+            azioni,
+            suChiusura: () => {}
         });
     } catch (_) {
         return false;

@@ -154,20 +154,38 @@ async function postazioniDisponibili() {
 
 async function chiudi(payload = {}) {
     try {
-        const riga = trasmissioni.requireById(payload.id, { includeArchived: true });
+        let riga = null;
+        if (payload.id) {
+            riga = trasmissioni.findById(payload.id, { includeArchived: true });
+        }
+        if (!riga && payload.sessione_id) {
+            const aperte = trasmissioni.findAll({ stato: 'aperta' });
+            riga = aperte.find(r => r.sessione_id === payload.sessione_id || (payload.impronta && r.impronta_postazione === payload.impronta));
+        }
+        if (!riga) {
+            if (payload.sessione_id) {
+                const dest = await destinazioni();
+                const bersaglio = dest.find(v => v.sessione_id === payload.sessione_id);
+                if (bersaglio) {
+                    await sedute.chiudiPrecedenti(bersaglio, '');
+                    return { id: payload.sessione_id, stato: 'chiusa', monitor_avvisato: true };
+                }
+            }
+            return { stato: 'chiusa' };
+        }
         if (riga.stato !== 'aperta') return { id: riga.id, stato: riga.stato };
 
         const motivo = payload.motivo || 'seduta chiusa dalla segreteria';
         const esito = await invio.avvisaChiusura(riga, motivo, destinazioni);
 
-        await trasmissioni.update(payload.id, {
+        await trasmissioni.update(riga.id, {
             stato: 'chiusa',
             chiusa_il: Date.now(),
             motivo_chiusura: motivo
         }, actor.stamp());
 
         return {
-            id: payload.id,
+            id: riga.id,
             stato: 'chiusa',
             monitor_avvisato: esito.consegnato,
             avviso_motivo: esito.motivo
