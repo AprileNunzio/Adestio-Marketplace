@@ -6,6 +6,7 @@ import { call } from '../../kernel/transport.js';
 import * as fmt from '../../kernel/format.js';
 import { elenco, pagina } from '../shared/vista.js';
 import { pannelloDisponibilita, selettoreForzatura } from './disponibilita_medico.js';
+import { selezionaMonitorETrasmetti } from '../trasmissione/selettore_monitor_modale.js';
 
 const STATI = [
     { valore: 'programmato', etichetta: 'Programmato' },
@@ -129,23 +130,17 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
             simbolo: 'cast_connected',
             onAzione: async () => {
                 try {
-                    const dest = await call('trasmissioni.postazioni', {});
-                    const collegate = (dest && dest.data && dest.data.collegate) || (dest && dest.collegate) || [];
-                    const monitor = collegate.find(m => m.sessione_id === stato.poltrona_id) || collegate[0];
-                    if (!monitor && collegate.length === 0) {
-                        esito({ error: 'Nessun monitor rilevato nello studio' });
-                        return false;
-                    }
-                    const res = await call('trasmissioni.invia', {
-                        paziente_id: stato.paziente_id,
-                        sessione_id: monitor ? monitor.sessione_id : null
+                    const pazienteTrovato = pazienti.find(p => p.id === stato.paziente_id);
+                    const pazienteNome = pazienteTrovato ? `${pazienteTrovato.cognome} ${pazienteTrovato.nome}`.trim() : (appuntamento.paziente_nome || '');
+                    const poltronaTrovata = (poltrone || []).find(p => p.id === stato.poltrona_id);
+                    const poltronaNome = poltronaTrovata ? poltronaTrovata.nome : (appuntamento.poltrona_nome || '');
+                    await selezionaMonitorETrasmetti({
+                        pazienteId: stato.paziente_id,
+                        pazienteNome,
+                        poltronaId: stato.poltrona_id,
+                        poltronaNome
                     });
-                    esito(res, 'Cartella clinica trasmessa al monitor dello studio');
-                    return true;
-                } catch (e) {
-                    esito({ error: e.message || 'Impossibile trasmettere al monitor' });
-                    return false;
-                }
+                } catch (_) {}
             }
         });
     }
