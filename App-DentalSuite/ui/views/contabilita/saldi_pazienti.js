@@ -173,15 +173,15 @@ export default {
                     distintivo(`${dati.righe.length} visualizzati`, 'info')
                 ]);
 
-                const tabellaContenuto = dati.righe.length === 0
-                    ? vuoto({
-                        titolo: filtri.stato === 'debito' ? 'Nessun paziente a debito' : 'Nessun risultato trovato',
-                        testo: filtri.stato === 'debito'
-                            ? 'Ottimo! Tutti i trattamenti eseguiti risultano interamente incassati.'
-                            : 'Nessun paziente corrisponde ai filtri di ricerca selezionati.',
-                        simbolo: 'savings'
-                    })
-                    : tabella(colonne, dati.righe);
+                const tabellaContenuto = tabella({
+                    colonne,
+                    righe: dati.righe,
+                    vuotoTitolo: filtri.stato === 'debito' ? 'Nessun paziente a debito' : 'Nessun risultato trovato',
+                    vuotoTesto: filtri.stato === 'debito'
+                        ? 'Ottimo! Tutti i trattamenti eseguiti risultano interamente incassati.'
+                        : 'Nessun paziente corrisponde ai filtri di ricerca selezionati.',
+                    vuotoSimbolo: 'savings'
+                });
 
                 return [
                     griglia('stats', [
