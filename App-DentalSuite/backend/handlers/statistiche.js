@@ -7,6 +7,7 @@ const { incassi, spese, rate } = require('../repositories/financial');
 const kpi = require('../domain/kpi');
 const money = require('../domain/money');
 const { oggiIso } = require('../domain/rateizzazione');
+const economiaHandler = require('./economia');
 
 function intervallo(payload = {}) {
     return { dal: payload.dal || '', al: payload.al || '' };
@@ -23,6 +24,25 @@ function trattamentiDelPeriodo(finestra) {
     return trattamenti.findAll({ filtri: filtriPeriodo('data_trattamento', finestra) });
 }
 
+function creditiPazientiTotali() {
+    try {
+        const saldi = economiaHandler.saldiPazienti({ stato: 'tutti' });
+        return {
+            crediti_da_riscuotere: saldi.totale_da_riscuotere,
+            pazienti_a_debito: saldi.pazienti_a_debito,
+            anticipi_pazienti: saldi.totale_crediti,
+            pazienti_a_credito: saldi.pazienti_a_credito
+        };
+    } catch (_) {
+        return {
+            crediti_da_riscuotere: 0,
+            pazienti_a_debito: 0,
+            anticipi_pazienti: 0,
+            pazienti_a_credito: 0
+        };
+    }
+}
+
 function produzione(payload = {}) {
     const finestra = intervallo(payload);
     const base = kpi.produzione(trattamentiDelPeriodo(finestra), finestra);
@@ -34,6 +54,7 @@ function produzione(payload = {}) {
 
     const totaliAgenda = Number(agenda.totali) || 0;
     const mancati = Number(agenda.mancati) || 0;
+    const crediti = creditiPazientiTotali();
 
     return {
         ...base,
@@ -43,7 +64,8 @@ function produzione(payload = {}) {
         tasso_assenza: totaliAgenda > 0 ? money.round((mancati / totaliAgenda) * 100) : 0,
         valore_medio_trattamento: base.trattamenti_eseguiti > 0
             ? money.round(base.valore_eseguito / base.trattamenti_eseguiti)
-            : 0
+            : 0,
+        ...crediti
     };
 }
 
@@ -75,6 +97,7 @@ function cassa(payload = {}) {
         rate.findAll({ filtri: [{ colonna: 'stato', operatore: 'ne', valore: 'pagata' }] }),
         payload.oggi || oggiIso()
     );
+    const crediti = creditiPazientiTotali();
 
     return {
         totale_incassi: analisi.totale_incassi,
@@ -87,7 +110,8 @@ function cassa(payload = {}) {
         spese_per_mese: analisi.spese_per_mese,
         spese_per_categoria: analisi.spese_per_categoria,
         incassi_per_metodo: analisi.incassi_per_metodo,
-        ...esposizione
+        ...esposizione,
+        ...crediti
     };
 }
 
@@ -103,6 +127,8 @@ function economia(payload = {}) {
         rate.findAll({ filtri: [{ colonna: 'stato', operatore: 'ne', valore: 'pagata' }] }),
         payload.oggi || oggiIso()
     );
+    const crediti = creditiPazientiTotali();
+
     const marginalita = analisi.totale_incassi > 0
         ? money.round((analisi.margine_netto / analisi.totale_incassi) * 100)
         : 0;
@@ -110,6 +136,7 @@ function economia(payload = {}) {
     return {
         ...analisi,
         ...esposizione,
+        ...crediti,
         marginalita_percentuale: marginalita,
         flusso_mensile: kpi.flussoMensile(analisi),
         compensi_per_collaboratore: kpi.quotePerCollaboratore(

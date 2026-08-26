@@ -5,6 +5,7 @@ import { versione } from '../kernel/moduli.js';
 
 const SCHEDE = [
     { id: 'cruscotto', titolo: 'Cruscotto', simbolo: 'dashboard', permesso: 'incassi_view', modulo: () => import(`./contabilita/cruscotto.js${versione()}`) },
+    { id: 'saldi', titolo: 'Saldi Pazienti & Debiti', simbolo: 'account_balance', permesso: 'incassi_view', modulo: () => import(`./contabilita/saldi_pazienti.js${versione()}`) },
     { id: 'preventivi', titolo: 'Preventivi', simbolo: 'receipt_long', permesso: 'preventivi_view', modulo: () => import(`./contabilita/preventivi.js${versione()}`) },
     { id: 'incassi', titolo: 'Incassi', simbolo: 'payments', permesso: 'incassi_view', modulo: () => import(`./contabilita/incassi.js${versione()}`) },
     { id: 'spese', titolo: 'Prima nota passiva', simbolo: 'shopping_cart', permesso: 'spese_view', modulo: () => import(`./contabilita/spese.js${versione()}`) },

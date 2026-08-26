@@ -35,6 +35,12 @@ function indicatoriDiCassa(cassa) {
             tono: tono(cassa.saldo_cassa)
         }),
         statistica({
+            etichetta: 'Crediti da incassare',
+            valore: fmt.euro(cassa.crediti_da_riscuotere || 0),
+            nota: `${cassa.pazienti_a_debito || 0} pazienti con saldo a debito`,
+            tono: (cassa.crediti_da_riscuotere || 0) > 0 ? 'negativo' : 'positivo'
+        }),
+        statistica({
             etichetta: 'Insoluto rateale',
             valore: fmt.euro(cassa.importo_aperto),
             nota: `${cassa.rate_scadute} rate scadute su ${cassa.rate_aperte} aperte`,

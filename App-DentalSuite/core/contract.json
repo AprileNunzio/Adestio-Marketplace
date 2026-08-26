@@ -832,6 +832,12 @@
       "permission": "preventivi_view",
       "mutates": false
     },
+    "economia.saldiPazienti": {
+      "handler": "economia",
+      "method": "saldiPazienti",
+      "permission": "incassi_view",
+      "mutates": false
+    },
     "trasmissioni.dichiaraSchermo": {
       "handler": "trasmissioni",
       "method": "dichiaraSchermo",

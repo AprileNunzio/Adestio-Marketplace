@@ -116,7 +116,7 @@
   {
     "id": "adestio_dental_suite",
     "name": "Adestio DentalSuite",
-    "version": "2.0.38",
+    "version": "2.0.39",
     "minCoreVersion": "1.0.0",
     "api_version": "1.0",
     "description": "Gestionale completo per studi dentistici: cartelle cliniche, odontogramma interattivo, agenda con turni e disponibilita dei collaboratori, trasmissione della scheda al monitor del medico, compensi staff e cruscotto economico.",
@@ -127,8 +127,8 @@
     "color": "#0d9488",
     "published_at": "2026-08-20T10:00:00Z",
     "updated_at": "2026-08-26T16:07:00Z",
-    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v2.0.38.zip",
-    "sha256": "c1aeb111f9c5dbd626406c12d1fa3f228cd7f00dc512845a628578ca5acb629e",
+    "downloadUrl": "https://nunziotech.it/software/adestio/adestio_dental_suite_v2.0.39.zip",
+    "sha256": "2dbd7d68912fb12f1d8f5aef7c6dc843ac81ec5fcb131b7419deaabd5ef23327",
     "legal_info": "Conforme alle normative GDPR sul trattamento e la conservazione dei dati sanitari e dei referti radiografici odontoiatrici.",
     "links": [
       {

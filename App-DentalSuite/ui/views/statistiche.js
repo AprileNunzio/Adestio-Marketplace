@@ -70,6 +70,12 @@ export default {
                             valore: fmt.euro(produzione.valore_pianificato - produzione.valore_eseguito)
                         }),
                         statistica({
+                            etichetta: 'Crediti da incassare',
+                            valore: fmt.euro(produzione.crediti_da_riscuotere || 0),
+                            nota: `${produzione.pazienti_a_debito || 0} pazienti a debito`,
+                            tono: (produzione.crediti_da_riscuotere || 0) > 0 ? 'negativo' : 'positivo'
+                        }),
+                        statistica({
                             etichetta: 'Tasso di assenza',
                             valore: fmt.percentuale(produzione.tasso_assenza),
                             nota: `${produzione.appuntamenti_conclusi} visite concluse`,
@@ -120,12 +126,24 @@ export default {
                         ]),
                         griglia('stats', [
                             statistica({
-                                etichetta: 'Credito rateale aperto',
-                                valore: fmt.euro(economia.importo_aperto),
-                                nota: `${economia.rate_aperte} rate`
+                                etichetta: 'Crediti verso Pazienti (Da incassare)',
+                                valore: fmt.euro(economia.crediti_da_riscuotere || 0),
+                                nota: `${economia.pazienti_a_debito || 0} pazienti a debito`,
+                                tono: (economia.crediti_da_riscuotere || 0) > 0 ? 'negativo' : 'positivo'
                             }),
                             statistica({
-                                etichetta: 'Credito scaduto',
+                                etichetta: 'Anticipi (Credito Pazienti)',
+                                valore: fmt.euro(economia.anticipi_pazienti || 0),
+                                nota: `${economia.pazienti_a_credito || 0} pazienti a credito`,
+                                tono: 'positivo'
+                            }),
+                            statistica({
+                                etichetta: 'Credito rateale aperto',
+                                valore: fmt.euro(economia.importo_aperto),
+                                nota: `${economia.rate_aperte} rate aperte`
+                            }),
+                            statistica({
+                                etichetta: 'Rate scadute',
                                 valore: fmt.euro(economia.importo_scaduto),
                                 nota: `${economia.rate_scadute} rate insolute`,
                                 tono: Number(economia.importo_scaduto) > 0 ? 'negativo' : undefined

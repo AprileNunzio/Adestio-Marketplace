@@ -27,12 +27,12 @@ const CAMPI = [
     { campo: 'note', etichetta: 'Note', genere: 'area', ampio: true }
 ];
 
-export function apriIncasso({ pazienteId, preventivoId, titolo }) {
+export function apriIncasso({ pazienteId, preventivoId, importoPredefinito, titolo }) {
     return apriForm({
         titolo: titolo || 'Registra incasso',
         sezioni: [{ titolo: null, campi: CAMPI }],
         valori: {
-            importo: 0,
+            importo: Number(importoPredefinito) || 0,
             data_pagamento: fmt.oggiIso(),
             metodo_pagamento: 'contanti',
             tipo_documento: 'ricevuta'
