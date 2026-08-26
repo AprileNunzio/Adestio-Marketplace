@@ -122,6 +122,34 @@ export async function apriAppuntamento({ appuntamento, poltrone, giorno, permess
 
     const azioni = [{ etichetta: 'Chiudi', variante: 'ghost', esito: null }];
 
+    if (appuntamento && stato.paziente_id) {
+        azioni.push({
+            etichetta: 'Invia a Monitor',
+            variante: 'secondary',
+            simbolo: 'cast_connected',
+            onAzione: async () => {
+                try {
+                    const dest = await call('trasmissioni.postazioni', {});
+                    const collegate = (dest && dest.data && dest.data.collegate) || (dest && dest.collegate) || [];
+                    const monitor = collegate.find(m => m.sessione_id === stato.poltrona_id) || collegate[0];
+                    if (!monitor && collegate.length === 0) {
+                        esito({ error: 'Nessun monitor rilevato nello studio' });
+                        return false;
+                    }
+                    const res = await call('trasmissioni.invia', {
+                        paziente_id: stato.paziente_id,
+                        sessione_id: monitor ? monitor.sessione_id : null
+                    });
+                    esito(res, 'Cartella clinica trasmessa al monitor dello studio');
+                    return true;
+                } catch (e) {
+                    esito({ error: e.message || 'Impossibile trasmettere al monitor' });
+                    return false;
+                }
+            }
+        });
+    }
+
     if (appuntamento && permessi.elimina) {
         azioni.push({
             etichetta: 'Elimina',

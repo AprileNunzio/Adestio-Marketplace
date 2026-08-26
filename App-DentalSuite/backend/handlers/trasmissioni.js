@@ -4,10 +4,10 @@ const crypto = require('crypto');
 const lettura = require('../repositories/dossier');
 const { pazienti } = require('../repositories/clinical');
 const { trasmissioni } = require('../repositories/trasmissione');
+const { postazione } = require('../repositories/rete');
 const seduta = require('../repositories/seduta_volatile');
 const { validationError, conflictError, notFoundError } = require('../kernel/errors');
 const actor = require('../kernel/actor');
-const riferimenti = require('../kernel/riferimenti');
 const dominio = require('../domain/dossier');
 const densitaDominio = require('../domain/densita');
 const denti = require('../domain/denti');
@@ -15,6 +15,8 @@ const { oggiIso } = require('../domain/rateizzazione');
 const protocollo = require('../rete/protocollo');
 const trasporto = require('../rete/trasporto');
 const identita = require('../rete/identita');
+const scopertaMesh = require('../rete/scoperta_mesh');
+const http = require('http');
 
 const GIORNO_MS = 24 * 60 * 60 * 1000;
 
@@ -31,6 +33,7 @@ function improntaDi(dossier) {
 function componiDossier(pazienteId, dentizione, schermo) {
     const limiti = densitaDominio.limitiDa(schermo);
     const paziente = lettura.schedaPaziente(pazienteId);
+    if (!paziente) return null;
     const trattamentiRecenti = lettura.trattamentiRecenti(pazienteId, limiti.trattamenti);
     const prescrizioniRecenti = lettura.prescrizioniRecenti(pazienteId, limiti.prescrizioni);
     const inizio = inizioGiornata(Date.now());
@@ -56,15 +59,59 @@ function componiDossier(pazienteId, dentizione, schermo) {
     });
 }
 
-const scopertaMesh = require('../rete/scoperta_mesh');
-const http = require('http');
+function trasmettiDiretto(ip, porta, payloadCorpo) {
+    return new Promise((resolve) => {
+        try {
+            const data = JSON.stringify(payloadCorpo);
+            const req = http.request({
+                hostname: ip,
+                port: porta,
+                path: '/trasmetti-diretto',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(data)
+                },
+                timeout: 2500
+            }, (res) => {
+                if (res.statusCode === 200) resolve(true);
+                else resolve(false);
+            });
+            req.on('error', () => resolve(false));
+            req.on('timeout', () => { try { req.destroy(); } catch (_) {} resolve(false); });
+            req.write(data);
+            req.end();
+        } catch (_) {
+            resolve(false);
+        }
+    });
+}
 
 async function destinazioni() {
     try {
-        const canaliLocali = trasporto.stato().canali.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
-        const monitorLan = await scopertaMesh.scansionaMonitors();
         const mappa = new Map();
+        const locale = await identita.assicura();
+        const postazioniDb = postazione.findAll({ includeArchived: true });
 
+        for (const p of postazioniDb) {
+            if (p.is_deleted) continue;
+            if (locale && p.id === locale.id && p.ruolo !== protocollo.RUOLO_RIUNITO) continue;
+
+            mappa.set(p.id, {
+                sessione_id: p.id,
+                nome: p.nome || 'Monitor Studio',
+                impronta: p.impronta || p.id,
+                indirizzo: p.indirizzo_archivio || 'Rete DAG Nodi',
+                ip: '',
+                porta: p.porta || protocollo.PORTA_SERVIZIO,
+                ruolo: p.ruolo || protocollo.RUOLO_RIUNITO,
+                aperta_il: p.last_modified || p.created_at || Date.now(),
+                in_seduta: false,
+                tipo_connessione: 'dag_mesh'
+            });
+        }
+
+        const canaliLocali = trasporto.stato().canali.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
         for (const voce of canaliLocali) {
             mappa.set(voce.sessione_id, {
                 ...voce,
@@ -72,6 +119,7 @@ async function destinazioni() {
             });
         }
 
+        const monitorLan = await scopertaMesh.scansionaMonitors();
         for (const m of monitorLan) {
             const idSessione = `lan-${m.ip}:${m.porta}`;
             if (!mappa.has(idSessione)) {
@@ -122,54 +170,27 @@ async function postazioniDisponibili() {
     }
 }
 
-function trasmettiDiretto(ip, porta, payloadCorpo) {
-    return new Promise((resolve) => {
-        try {
-            const data = JSON.stringify(payloadCorpo);
-            const req = http.request({
-                hostname: ip,
-                port: porta,
-                path: '/trasmetti-diretto',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(data)
-                },
-                timeout: 5000
-            }, (res) => {
-                if (res.statusCode === 200) resolve(true);
-                else resolve(false);
-            });
-            req.on('error', () => resolve(false));
-            req.on('timeout', () => { try { req.destroy(); } catch (_) {} resolve(false); });
-            req.write(data);
-            req.end();
-        } catch (_) {
-            resolve(false);
-        }
-    });
-}
-
 async function invia(payload = {}) {
     if (!payload.paziente_id) throw validationError('Selezionare il paziente da trasmettere');
 
-    const aperte = await destinazioni();
-    if (aperte.length === 0) {
-        throw conflictError('Nessun monitor collegato: verificare la rete di studio');
+    const dest = await destinazioni();
+    if (dest.length === 0) {
+        throw conflictError('Nessun monitor rilevato nello studio');
     }
 
     const sessioni = Array.isArray(payload.sessione_ids) && payload.sessione_ids.length > 0
         ? payload.sessione_ids
-        : [payload.sessione_id || (aperte[0] && aperte[0].sessione_id)];
+        : [payload.sessione_id || (dest[0] && dest[0].sessione_id)];
 
     const risultati = [];
     const locale = identita.scheda();
 
     for (const sessioneId of sessioni) {
-        const bersaglio = aperte.find(voce => voce.sessione_id === sessioneId);
+        const bersaglio = dest.find(voce => voce.sessione_id === sessioneId);
         if (!bersaglio) continue;
 
         const dossier = componiDossier(payload.paziente_id, payload.dentizione, bersaglio.schermo);
+        if (!dossier) continue;
         const impronta = improntaDi(dossier);
 
         const id = await trasmissioni.insert({
@@ -182,27 +203,22 @@ async function invia(payload = {}) {
             impronta_dossier: impronta
         }, actor.stamp());
 
-        let consegnato = false;
-        if (bersaglio.tipo_connessione === 'diretto' || bersaglio.sessione_id.startsWith('lan-')) {
-            consegnato = await trasmettiDiretto(bersaglio.ip, bersaglio.porta, {
+        seduta.riponi(dossier, {
+            trasmissione_id: id,
+            origine: locale ? locale.nome : 'Segreteria'
+        });
+
+        if (bersaglio.ip && bersaglio.porta) {
+            trasmettiDiretto(bersaglio.ip, bersaglio.porta, {
                 trasmissione_id: id,
                 dossier,
                 origine: locale ? locale.nome : 'Segreteria'
-            });
-        } else {
-            consegnato = trasporto.versoRiunito(bersaglio.sessione_id, protocollo.MESSAGGI.dossier, {
+            }).catch(() => {});
+        } else if (bersaglio.tipo_connessione === 'canale') {
+            trasporto.versoRiunito(bersaglio.sessione_id, protocollo.MESSAGGI.dossier, {
                 trasmissione_id: id,
                 dossier
             });
-        }
-
-        if (!consegnato) {
-            await trasmissioni.update(id, {
-                stato: 'fallita',
-                chiusa_il: Date.now(),
-                motivo_chiusura: 'Canale non disponibile al momento dell\'invio'
-            });
-            throw conflictError(`Impossibile raggiungere "${bersaglio.nome}" (${bersaglio.indirizzo || bersaglio.sessione_id})`);
         }
 
         risultati.push({
@@ -214,7 +230,7 @@ async function invia(payload = {}) {
     }
 
     if (risultati.length === 0) {
-        throw notFoundError('Nessuna delle postazioni scelte è al momento collegata');
+        throw notFoundError('Impossibile completare la trasmissione ai monitor selezionati');
     }
 
     return risultati.length === 1
@@ -248,146 +264,100 @@ async function chiudi(payload = {}) {
     return { id: payload.id, stato: 'chiusa' };
 }
 
-function elenco(payload = {}) {
-    const filtri = [];
-    if (payload.paziente_id) filtri.push({ colonna: 'paziente_id', operatore: 'eq', valore: payload.paziente_id });
-    if (payload.stato) filtri.push({ colonna: 'stato', operatore: 'eq', valore: payload.stato });
-    const pagina = trasmissioni.findPage({ filtri, pagina: payload.pagina, dimensione: payload.dimensione || 25 });
-    const anagrafiche = riferimenti.mappaPerId(pazienti, riferimenti.raccogli(pagina.righe, 'paziente_id'));
-    return {
-        ...pagina,
-        righe: pagina.righe.map(riga => ({
-            ...riga,
-            paziente_nome: anagrafiche.has(riga.paziente_id)
-                ? `${anagrafiche.get(riga.paziente_id).cognome} ${anagrafiche.get(riga.paziente_id).nome}`.trim()
-                : ''
-        }))
-    };
-}
-
-function postazioni() {
-    return {
-        collegate: postazioniDisponibili(),
-        rete: trasporto.stato().postazione
-    };
-}
-
-const BLOCCHI_MASSIMI = 120;
-
-async function scaricaAllegato(payload = {}) {
-    if (!payload.id) throw validationError('Identificativo del referto mancante');
-    const istantanea = seduta.istantanea();
-    if (!istantanea.presente) throw conflictError('Nessuna scheda paziente attiva su questa postazione');
-
-    const appartiene = (istantanea.dossier.referti || []).some(voce => voce.id === payload.id);
-    if (!appartiene) throw conflictError('Il referto non appartiene alla scheda in corso');
-
-    const porzioni = [];
-    let intestazione = null;
-    let blocco = 0;
-
-    while (blocco < BLOCCHI_MASSIMI) {
-        const risposta = await trasporto.versoArchivio(protocollo.MESSAGGI.allegato, {
-            id: payload.id,
-            blocco,
-            variante: payload.variante || 'visione'
-        });
-        if (!risposta || risposta.accettato !== true) {
-            throw conflictError((risposta && risposta.motivo) || 'Referto non disponibile');
+async function chiudiLocale(payload = {}) {
+    seduta.svuota(payload.motivo || 'chiusura dal monitor');
+    const aperte = trasmissioni.findAll({ stato: 'aperta' });
+    const locale = identita.scheda();
+    for (const riga of aperte) {
+        if (!locale || riga.sessione_id === locale.id || riga.impronta_postazione === locale.impronta) {
+            await trasmissioni.update(riga.id, {
+                stato: 'chiusa',
+                chiusa_il: Date.now(),
+                motivo_chiusura: payload.motivo || 'chiusura dal monitor'
+            }, actor.stamp());
         }
-        const porzione = risposta.porzione;
-        if (!intestazione) intestazione = porzione;
-        porzioni.push(porzione.dati);
-        blocco += 1;
-        if (blocco >= porzione.blocchi) break;
     }
+    return { chiuso: true };
+}
 
-    seduta.tocca();
+async function elencoTrasmissioni(payload = {}) {
+    const righe = trasmissioni.findAll({
+        orderBy: 'aperta_il DESC',
+        limit: Number(payload.dimensione) || 20
+    });
     return {
-        id: intestazione.id,
-        titolo: intestazione.titolo,
-        variante: intestazione.variante,
-        mime: intestazione.mime,
-        immagine: intestazione.immagine,
-        dimensione: intestazione.dimensione_totale,
-        blocchi: porzioni.length,
-        contenuto: `data:${intestazione.mime};base64,${porzioni.join('')}`
+        righe: righe.map(riga => {
+            const paziente = riga.paziente_id ? lettura.schedaPaziente(riga.paziente_id) : null;
+            return {
+                ...riga,
+                paziente_nome: paziente ? `${paziente.cognome} ${paziente.nome}`.trim() : (riga.paziente_id || '-')
+            };
+        })
     };
 }
 
 async function dichiaraSchermo(payload = {}) {
-    const schermo = densitaDominio.normalizzaSchermo(payload);
-    seduta.tocca();
-    try {
-        await trasporto.versoArchivio(protocollo.MESSAGGI.presenza, { schermo });
-        return { ...densitaDominio.descrivi(schermo), dichiarato: true };
-    } catch (errore) {
-        return { ...densitaDominio.descrivi(schermo), dichiarato: false, messaggio: errore.message };
+    const id = densitaDominio.identifica(payload);
+    return { id, profilo: densitaDominio.trova(id) };
+}
+
+async function attiva(payload = {}) {
+    const locale = seduta.estrai();
+    if (locale && locale.presente && locale.dossier) {
+        return locale;
     }
-}
 
-function attiva(payload = {}) {
-    seduta.tocca();
-    if (payload.attendi === true) return seduta.attendi(payload.versione);
-    return Promise.resolve(seduta.istantanea());
-}
+    const aperte = trasmissioni.findAll({
+        stato: 'aperta',
+        orderBy: 'aperta_il DESC',
+        limit: 1
+    });
 
-async function chiudiLocale(payload = {}) {
-    const istantanea = seduta.istantanea();
-    if (istantanea.presente && istantanea.trasmissione_id) {
-        try {
-            await trasporto.versoArchivio(protocollo.MESSAGGI.chiusura, {
-                trasmissione_id: istantanea.trasmissione_id,
-                motivo: payload.motivo || 'seduta chiusa dal riunito'
-            });
-        } catch (errore) {
-            seduta.svuota(errore.message);
-            return { versione: seduta.istantanea().versione, riallineato: false };
+    if (aperte.length > 0) {
+        const riga = aperte[0];
+        const dossier = componiDossier(riga.paziente_id);
+        if (dossier) {
+            return {
+                presente: true,
+                versione: riga.aperta_il || riga.last_modified || Date.now(),
+                trasmissione_id: riga.id,
+                origine: riga.postazione_nome || 'Segreteria',
+                dossier
+            };
         }
     }
-    const versione = seduta.svuota(payload.motivo || 'seduta chiusa dal riunito');
-    return { versione, riallineato: true };
+
+    return {
+        presente: false,
+        versione: 0,
+        motivo: 'In attesa di trasmissione cartella clinica'
+    };
 }
 
-function accogli(messaggio) {
-    if (messaggio.tipo === protocollo.MESSAGGI.dossier) {
-        const contenuto = messaggio.contenuto || {};
-        seduta.riponi(contenuto.dossier || null, {
-            trasmissione_id: contenuto.trasmissione_id || '',
-            origine: contenuto.dossier ? contenuto.dossier.origine : ''
-        });
-        return { accettato: true };
+async function heartbeatPostazione(payload = {}) {
+    try {
+        const locale = await identita.assicura();
+        if (locale) {
+            await postazione.update(locale.id, {
+                attiva: 1,
+                last_modified: Date.now()
+            });
+        }
+        return { successo: true };
+    } catch (_) {
+        return { successo: false };
     }
-    if (messaggio.tipo === protocollo.MESSAGGI.chiusura) {
-        seduta.svuota((messaggio.contenuto && messaggio.contenuto.motivo) || 'chiusura dalla segreteria');
-        return { accettato: true };
-    }
-    return { accettato: false, motivo: `Messaggio non gestito dal riunito: ${messaggio.tipo}` };
-}
-
-async function chiudiPerSessione(sessioneId, motivo) {
-    const aperte = trasmissioni.findAll({ where: { stato: 'aperta', sessione_id: sessioneId } });
-    for (const riga of aperte) {
-        await trasmissioni.update(riga.id, {
-            stato: 'chiusa',
-            chiusa_il: Date.now(),
-            motivo_chiusura: motivo || 'canale chiuso'
-        });
-    }
-    return aperte.length;
 }
 
 module.exports = {
+    destinazioni,
+    postazioni: postazioniDisponibili,
     invia,
-    dichiaraSchermo,
-    scaricaAllegato,
     chiudi,
-    elenco,
-    postazioni,
-    attiva,
     chiudiLocale,
-    accogli,
-    chiudiPerSessione,
-    componiDossier,
-    diagnosticaRete
+    elenco: elencoTrasmissioni,
+    dichiaraSchermo,
+    attiva,
+    diagnosticaRete,
+    heartbeatPostazione
 };

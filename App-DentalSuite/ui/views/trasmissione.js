@@ -91,23 +91,27 @@ function schermoDisplay({ indietro, onCambiaPostazione }) {
 
     const attendi = async rete => {
         if (!vivo()) return;
-        const risposta = oggetto(
-            await call('trasmissioni.attiva', { attendi: true, versione: versioneNota }),
-            { presente: false, versione: versioneNota }
-        );
-        if (!vivo()) {
-            attivo = false;
-            return;
-        }
-        if (risposta.versione !== versioneNota) {
-            versioneNota = risposta.versione;
-            ultimoMotivo = risposta.presente ? '' : (risposta.origine || '');
-            const aggiornata = await statoRete();
-            disegna(risposta, aggiornata);
-            attendi(aggiornata);
-            return;
-        }
-        attendi(rete);
+        try {
+            await call('trasmissioni.heartbeatPostazione', {});
+            const risposta = oggetto(
+                await call('trasmissioni.attiva', { attendi: true, versione: versioneNota }),
+                { presente: false, versione: versioneNota }
+            );
+            if (!vivo()) {
+                attivo = false;
+                return;
+            }
+            if (risposta.versione !== versioneNota || (risposta.presente && versioneNota === 0)) {
+                versioneNota = risposta.versione;
+                ultimoMotivo = risposta.presente ? '' : (risposta.origine || '');
+                const aggiornata = await statoRete();
+                disegna(risposta, aggiornata);
+            }
+        } catch (_) {}
+
+        setTimeout(() => {
+            if (vivo()) attendi(rete);
+        }, 2000);
     };
 
     rimpiazza(contenitore, radice('pazienti', scheletro(4)));
@@ -205,21 +209,12 @@ export default {
             const rete = await statoRete();
             const postazione = rete ? rete.postazione : null;
 
-            rimpiazza(contenitorePrincipale, [
-                intestazione({
-                    titolo: 'Trasmetti Scheda Clinica',
-                    sottotitolo: postazione
-                        ? `${postazione.nome} · Postazione di invio`
-                        : 'Seleziona i monitor e il paziente per inviare',
-                    simbolo: 'cast_connected',
-                    indietro: mostraScelta
-                }),
-                consoleTrasmissione({
-                    pazienteIniziale: parametri && parametri.paziente_id ? parametri.paziente_id : null,
-                    naviga,
-                    onIndietro: mostraScelta
-                })
-            ]);
+            rimpiazza(contenitorePrincipale, consoleTrasmissione({
+                pazienteIniziale: parametri && parametri.paziente_id ? parametri.paziente_id : null,
+                postazione,
+                naviga,
+                onIndietro: mostraScelta
+            }));
         };
 
         const apriRicevi = async () => {

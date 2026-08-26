@@ -1,10 +1,10 @@
 import { el, rimpiazza, icona } from '../../components/dom.js';
-import { pannello, bottone, distintivo, spaziatore, vuoto, avviso, statistica, griglia } from '../../components/layout.js';
+import { distintivo } from '../../components/layout.js';
 import { tabella, azioniRiga } from '../../components/tabella.js';
-import { esito, errore, successo } from '../../components/notifica.js';
+import { esito, errore } from '../../components/notifica.js';
 import { call } from '../../kernel/transport.js';
 import * as fmt from '../../kernel/format.js';
-import { oggetto, pagina, elenco } from '../shared/vista.js';
+import { oggetto, pagina } from '../shared/vista.js';
 import { selettorePaziente } from '../shared/selettore_paziente.js';
 
 const TONI_STATO = {
@@ -13,8 +13,8 @@ const TONI_STATO = {
     fallita: 'danger'
 };
 
-export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
-    const contenitore = el('div', { class: 'ds-trasmetti-console' });
+export function consoleTrasmissione({ pazienteIniziale, postazione, naviga, onIndietro }) {
+    const contenitore = el('div', { class: 'ds-tx-console-wrap' });
     let inviatoIniziale = false;
     let postazioniSelezionate = new Set();
     let pazienteSelezionatoId = pazienteIniziale || null;
@@ -87,7 +87,7 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                         el('div', { style: 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 18px;' }, [
                             el('div', { style: 'font-weight: 700; color: #0f172a; font-size: 1rem; margin-bottom: 6px;' }, `Postazione Locale: ${locale.nome_pc || 'Questo Computer'}`),
                             el('div', { style: 'font-size: 0.85rem; color: #475569; line-height: 1.5;' }, [
-                                el('div', {}, `Identificativo: ${locale.nome || 'Segreteria'} · Ruolo: ${locale.ruolo === 'riunito' ? 'Monitor Medico (Poltrona)' : 'Segreteria'} · Porta HTTP: ${locale.porta || 7345}`),
+                                el('div', {}, `Nome: ${locale.nome || 'Segreteria'} · Ruolo: ${locale.ruolo === 'riunito' ? 'Monitor Medico (Poltrona)' : 'Segreteria'} · Porta HTTP: ${locale.porta || 7345}`),
                                 el('div', {}, `Indirizzi IP Locali: ${(locale.interfacce || []).map(i => i.ip).join(', ') || '127.0.0.1'}`)
                             ])
                         ]),
@@ -98,7 +98,7 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                         monitors.length === 0
                             ? el('div', { style: 'padding: 20px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; color: #92400e; font-size: 0.9rem; line-height: 1.5;' }, [
                                 el('div', { style: 'font-weight: 600; margin-bottom: 4px;' }, 'Nessun monitor attivo rilevato sulla subnet.'),
-                                el('div', {}, 'Apri DentalSuite sull\'altro computer dello studio e seleziona "Ricevi" per renderlo immediatamente disponibile per la trasmissione live.')
+                                el('div', {}, 'Apri DentalSuite sull\'altro computer dello studio e seleziona "Ricevi" per renderlo immediatamente disponibile.')
                             ])
                             : el('div', { style: 'display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; margin-bottom: 18px;' }, monitors.map(m => el('div', {
                                 style: 'display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;'
@@ -183,11 +183,11 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
             const selettoreSchermi = () => {
                 if (collegate.length === 0) {
                     return el('div', {
-                        style: 'padding: 32px 20px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 14px; text-align: center;'
+                        style: 'padding: 32px 20px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1.5px dashed #cbd5e1; border-radius: 14px; text-align: center;'
                     }, [
-                        el('div', { style: 'width: 48px; height: 48px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;' }, icona('desktop_windows')),
-                        el('div', { style: 'font-weight: 700; font-size: 1.05rem; color: #1e293b; margin-bottom: 4px;' }, 'In attesa di monitor online...'),
-                        el('div', { style: 'color: #64748b; font-size: 0.9rem; max-width: 440px; margin: 0 auto 16px auto;' }, 'Apri DentalSuite sul computer dello studio e clicca su "Ricevi (Monitor del Medico)". La postazione apparirà qui automaticamente.'),
+                        el('div', { style: 'width: 52px; height: 52px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;' }, icona('desktop_windows')),
+                        el('div', { style: 'font-weight: 700; font-size: 1.05rem; color: #1e293b; margin-bottom: 4px;' }, 'In attesa di monitor online nello studio...'),
+                        el('div', { style: 'color: #64748b; font-size: 0.9rem; max-width: 480px; margin: 0 auto 16px auto; line-height: 1.5;' }, 'Apri DentalSuite sul PC del medico e clicca su "Ricevi (Monitor del Medico)". La postazione apparirà qui automaticamente.'),
                         el('div', { style: 'display: flex; justify-content: center; gap: 10px;' }, [
                             el('button', {
                                 class: 'ds-btn ds-btn--secondary ds-btn--piccolo',
@@ -199,21 +199,21 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                                     inScansione = false;
                                     disegna();
                                 }
-                            }, [icona('refresh'), inScansione ? 'Scansione...' : 'Rileva Monitor Ora']),
+                            }, [icona('refresh'), inScansione ? 'Scansione in corso...' : 'Rileva Monitor Ora']),
                             el('button', {
                                 class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
                                 type: 'button',
                                 onClick: apriDiagnosticaRete
-                            }, [icona('radar'), 'Diagnostica Rete'])
+                            }, [icona('radar'), 'Diagnostica Rete LAN'])
                         ])
                     ]);
                 }
 
-                return el('div', { class: 'ds-schermi-grid', style: 'display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;' }, collegate.map(voce => {
+                return el('div', { class: 'ds-schermi-grid', style: 'display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px;' }, collegate.map(voce => {
                     const selezionato = postazioniSelezionate.has(voce.sessione_id);
                     return el('button', {
                         class: `ds-schermo-card ${selezionato ? 'ds-schermo-card--selezionato' : ''}`,
-                        style: `display: flex; flex-direction: column; text-align: left; padding: 16px; border-radius: 14px; border: 2px solid ${selezionato ? '#0d9488' : '#e2e8f0'}; background: ${selezionato ? '#f0fdfa' : '#ffffff'}; cursor: pointer; transition: all 0.2s ease; box-shadow: ${selezionato ? '0 4px 12px rgba(13, 148, 136, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)'};`,
+                        style: `display: flex; flex-direction: column; text-align: left; padding: 16px; border-radius: 14px; border: 2px solid ${selezionato ? '#0d9488' : '#e2e8f0'}; background: ${selezionato ? '#f0fdfa' : '#ffffff'}; cursor: pointer; transition: all 0.2s ease; box-shadow: ${selezionato ? '0 4px 14px rgba(13, 148, 136, 0.18)' : '0 1px 3px rgba(0,0,0,0.04)'};`,
                         type: 'button',
                         onClick: () => {
                             if (postazioniSelezionate.has(voce.sessione_id)) {
@@ -225,13 +225,13 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                         }
                     }, [
                         el('div', { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;' }, [
-                            el('div', { style: `width: 38px; height: 38px; border-radius: 10px; background: ${selezionato ? '#ccfbf1' : '#f1f5f9'}; color: ${selezionato ? '#0f766e' : '#475569'}; display: flex; align-items: center; justify-content: center;` }, icona('monitor')),
-                            el('div', { style: `color: ${selezionato ? '#0d9488' : '#cbd5e1'};` }, icona(selezionato ? 'check_circle' : 'radio_button_unchecked'))
+                            el('div', { style: `width: 40px; height: 40px; border-radius: 10px; background: ${selezionato ? '#ccfbf1' : '#f1f5f9'}; color: ${selezionato ? '#0f766e' : '#475569'}; display: flex; align-items: center; justify-content: center;'` }, icona('monitor')),
+                            el('div', { style: `color: ${selezionato ? '#0d9488' : '#cbd5e1'}; font-size: 24px;` }, icona(selezionato ? 'check_circle' : 'radio_button_unchecked'))
                         ]),
-                        el('div', { style: 'font-weight: 700; font-size: 1rem; color: #0f172a; margin-bottom: 2px;' }, voce.nome || 'Monitor dello studio'),
-                        el('div', { style: 'font-size: 0.8rem; color: #64748b; margin-bottom: 10px;' }, voce.indirizzo || 'Rete locale LAN'),
-                        el('div', { style: 'margin-top: auto; display: flex; align-items: center; gap: 6px; font-size: 0.8rem;' }, [
-                            el('span', { style: `width: 8px; height: 8px; border-radius: 50%; background: ${voce.in_seduta ? '#0284c7' : '#16a34a'};` }),
+                        el('div', { style: 'font-weight: 700; font-size: 1.05rem; color: #0f172a; margin-bottom: 3px;' }, voce.nome || 'Monitor dello studio'),
+                        el('div', { style: 'font-size: 0.82rem; color: #64748b; font-family: monospace; margin-bottom: 12px;' }, voce.indirizzo || 'Rete locale LAN'),
+                        el('div', { style: 'margin-top: auto; display: flex; align-items: center; gap: 7px; font-size: 0.82rem;' }, [
+                            el('span', { style: `width: 9px; height: 9px; border-radius: 50%; background: ${voce.in_seduta ? '#0284c7' : '#16a34a'}; box-shadow: 0 0 6px ${voce.in_seduta ? 'rgba(2,132,199,0.5)' : 'rgba(22,163,74,0.5)'};` }),
                             el('span', { style: `font-weight: 600; color: ${voce.in_seduta ? '#0369a1' : '#15803d'};` }, voce.in_seduta ? `In seduta: ${voce.paziente_nome || 'Paziente'}` : 'Pronto a ricevere')
                         ])
                     ]);
@@ -242,10 +242,10 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                 if (postazioniSelezionate.size === 0) {
                     return el('div', { class: 'ds-trasmetti-paziente-wrap' }, [
                         el('div', {
-                            style: 'padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; color: #64748b; font-size: 0.9rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px;'
+                            style: 'padding: 22px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 14px; color: #64748b; font-size: 0.95rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px;'
                         }, [
                             icona('lock'),
-                            el('span', {}, 'Seleziona prima uno o più monitor sopra per abilitare la selezione del paziente.')
+                            el('span', {}, 'Seleziona prima uno o più monitor attivi sopra per abilitare la scelta del paziente.')
                         ])
                     ]);
                 }
@@ -253,20 +253,20 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                 return el('div', { class: 'ds-trasmetti-paziente-wrap' }, [
                     pazienteSelezionatoDati
                         ? el('div', {
-                            style: 'display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #f8fafc; border: 1.5px solid #0d9488; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'
+                            style: 'display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; background: #f0fdfa; border: 2px solid #0d9488; border-radius: 16px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.12);'
                         }, [
-                            el('div', { style: 'display: flex; align-items: center; gap: 14px;' }, [
+                            el('div', { style: 'display: flex; align-items: center; gap: 16px;' }, [
                                 el('div', {
-                                    style: 'width: 44px; height: 44px; border-radius: 50%; background: #0d9488; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem;'
+                                    style: 'width: 48px; height: 48px; border-radius: 50%; background: #0d9488; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3);'
                                 }, `${(pazienteSelezionatoDati.cognome || 'P')[0]}${(pazienteSelezionatoDati.nome || 'P')[0]}`),
                                 el('div', {}, [
-                                    el('div', { style: 'font-weight: 700; font-size: 1.05rem; color: #0f172a;' },
+                                    el('div', { style: 'font-weight: 800; font-size: 1.15rem; color: #0f172a;' },
                                         `${pazienteSelezionatoDati.cognome} ${pazienteSelezionatoDati.nome}`
                                     ),
-                                    el('div', { style: 'font-size: 0.82rem; color: #64748b; margin-top: 2px;' }, [
-                                        pazienteSelezionatoDati.codice_fiscale ? `CF: ${pazienteSelezionatoDati.codice_fiscale}` : '',
-                                        pazienteSelezionatoDati.data_nascita ? `Nascita: ${fmt.data(pazienteSelezionatoDati.data_nascita)}` : ''
-                                    ].filter(Boolean).join(' · '))
+                                    el('div', { style: 'font-size: 0.85rem; color: #475569; margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap;' }, [
+                                        pazienteSelezionatoDati.codice_fiscale ? el('span', { style: 'background: #e2e8f0; padding: 2px 8px; border-radius: 6px; font-weight: 600;' }, `CF: ${pazienteSelezionatoDati.codice_fiscale}`) : null,
+                                        pazienteSelezionatoDati.data_nascita ? el('span', { style: 'background: #e2e8f0; padding: 2px 8px; border-radius: 6px;' }, `Nascita: ${fmt.data(pazienteSelezionatoDati.data_nascita)}`) : null
+                                    ].filter(Boolean))
                                 ])
                             ]),
                             el('button', {
@@ -280,12 +280,14 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                             }, [icona('swap_horiz'), 'Cambia Paziente'])
                         ])
                         : el('div', {
-                            style: 'padding: 24px; background: #ffffff; border: 1.5px dashed #0d9488; border-radius: 14px; text-align: center;'
+                            style: 'padding: 28px; background: #ffffff; border: 2px dashed #0d9488; border-radius: 16px; text-align: center;'
                         }, [
-                            el('div', { style: 'margin-bottom: 12px; color: #0d9488;' }, icona('person_search')),
-                            el('div', { style: 'font-weight: 600; color: #1e293b; margin-bottom: 12px;' }, 'Nessun paziente ancora selezionato per questa trasmissione'),
+                            el('div', { style: 'margin-bottom: 12px; color: #0d9488; font-size: 32px;' }, icona('person_search')),
+                            el('div', { style: 'font-weight: 700; color: #0f172a; font-size: 1.05rem; margin-bottom: 4px;' }, 'Scegli la cartella clinica da inviare'),
+                            el('div', { style: 'color: #64748b; font-size: 0.88rem; margin-bottom: 16px;' }, 'Seleziona il paziente dalla rubrica per inviare l\'odontogramma e la storia clinica al monitor.'),
                             el('button', {
                                 class: 'ds-btn ds-btn--primary ds-btn--tocco',
+                                style: 'padding: 12px 24px; font-weight: 700; border-radius: 12px;',
                                 type: 'button',
                                 onClick: async () => {
                                     try {
@@ -297,96 +299,149 @@ export function consoleTrasmissione({ pazienteIniziale, naviga, onIndietro }) {
                                         }
                                     } catch (_) {}
                                 }
-                            }, [icona('search'), 'Scegli Paziente dalla Rubrica'])
+                            }, [icona('search'), 'Sfoglia Pazienti dalla Rubrica'])
                         ])
                 ]);
             };
 
             rimpiazza(contenitore, [
-                el('div', { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;' }, [
-                    onIndietro
-                        ? el('button', {
+                el('div', { class: 'ds-tx-hero-header' }, [
+                    el('div', { class: 'ds-tx-hero-left' }, [
+                        onIndietro
+                            ? el('button', {
+                                class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                                style: 'margin-right: 6px;',
+                                type: 'button',
+                                onClick: () => {
+                                    if (intervalloAggiornamento) clearInterval(intervalloAggiornamento);
+                                    onIndietro();
+                                }
+                            }, icona('arrow_back'))
+                            : null,
+                        el('div', { class: 'ds-tx-hero-icon' }, icona('cast_connected')),
+                        el('div', {}, [
+                            el('h2', { class: 'ds-tx-hero-title' }, 'Trasmetti Scheda Clinica'),
+                            el('div', { class: 'ds-tx-hero-sub' }, postazione ? `${postazione.nome} · Postazione di Invio Live` : 'Invio in tempo reale al Monitor dello Studio')
+                        ])
+                    ].filter(Boolean)),
+                    el('div', { style: 'display: flex; gap: 8px; align-items: center;' }, [
+                        el('button', {
+                            class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                            type: 'button',
+                            onClick: apriDiagnosticaRete
+                        }, [icona('radar'), 'Diagnostica LAN']),
+                        el('button', {
                             class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
                             type: 'button',
                             onClick: () => {
-                                if (intervalloAggiornamento) clearInterval(intervalloAggiornamento);
-                                onIndietro();
+                                inScansione = true;
+                                disegna();
                             }
-                        }, [icona('arrow_back'), 'Torna al Monitor del Medico'])
-                        : el('div', {}),
-                    el('div', { style: 'display: flex; gap: 8px;' }, [
-                        bottone({
-                            etichetta: 'Diagnostica Rete LAN',
-                            simbolo: 'radar',
-                            variante: 'ghost',
-                            onClick: apriDiagnosticaRete
-                        }),
-                        bottone({
-                            etichetta: 'Ricarica',
-                            simbolo: 'refresh',
-                            variante: 'ghost',
-                            onClick: disegna
-                        })
+                        }, [icona('refresh'), 'Ricarica'])
                     ])
                 ]),
 
-                griglia({ colonne: 3 }, [
-                    statistica({ etichetta: 'Monitor online rilevati', valore: String(collegate.length), tono: collegate.length > 0 ? 'positivo' : undefined }),
-                    statistica({ etichetta: 'Sedute live attive', valore: String(aperte.length), tono: aperte.length > 0 ? 'positivo' : undefined }),
-                    statistica({ etichetta: 'Monitor selezionati', valore: String(postazioniSelezionate.size) })
+                el('div', { class: 'ds-tx-stats-row' }, [
+                    el('div', { class: 'ds-tx-stat-pill' }, [
+                        el('div', { class: 'ds-tx-stat-pill__icon', style: 'background: #f0fdf4; color: #16a34a;' }, icona('desktop_windows')),
+                        el('div', {}, [
+                            el('div', { style: 'font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;' }, 'Monitor Online'),
+                            el('div', { style: 'font-size: 1.3rem; font-weight: 800; color: #0f172a;' }, String(collegate.length))
+                        ])
+                    ]),
+                    el('div', { class: 'ds-tx-stat-pill' }, [
+                        el('div', { class: 'ds-tx-stat-pill__icon', style: 'background: #f0f9ff; color: #0284c7;' }, icona('radio_button_checked')),
+                        el('div', {}, [
+                            el('div', { style: 'font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;' }, 'Monitor Selezionati'),
+                            el('div', { style: 'font-size: 1.3rem; font-weight: 800; color: #0f172a;' }, String(postazioniSelezionate.size))
+                        ])
+                    ]),
+                    el('div', { class: 'ds-tx-stat-pill' }, [
+                        el('div', { class: 'ds-tx-stat-pill__icon', style: 'background: #faf5ff; color: #9333ea;' }, icona('assignment_turned_in')),
+                        el('div', {}, [
+                            el('div', { style: 'font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;' }, 'Sedute Live Attive'),
+                            el('div', { style: 'font-size: 1.3rem; font-weight: 800; color: #0f172a;' }, String(aperte.length))
+                        ])
+                    ])
                 ]),
 
-                pannello({
-                    titolo: '1. Seleziona i Monitor Online di destinazione'
-                }, selettoreSchermi()),
+                el('div', { class: 'ds-tx-card-box' }, [
+                    el('div', { class: 'ds-tx-card-box__head' }, [
+                        el('div', { class: 'ds-tx-card-box__title' }, [
+                            icona('tune'),
+                            el('span', {}, '1. Seleziona i Monitor Online di destinazione'),
+                            el('span', { class: 'ds-tx-badge-count' }, `${collegate.length} Attivi`)
+                        ])
+                    ]),
+                    selettoreSchermi()
+                ]),
 
-                pannello({
-                    titolo: '2. Seleziona la cartella clinica del paziente'
-                }, pannelloSelezionePaziente()),
+                el('div', { class: 'ds-tx-card-box' }, [
+                    el('div', { class: 'ds-tx-card-box__head' }, [
+                        el('div', { class: 'ds-tx-card-box__title' }, [
+                            icona('person'),
+                            el('span', {}, '2. Seleziona la cartella clinica del paziente'),
+                            pazienteSelezionatoDati ? el('span', { class: 'ds-tx-badge-count', style: 'background: #dcfce7; color: #15803d;' }, 'Pronto') : null
+                        ].filter(Boolean))
+                    ]),
+                    pannelloSelezionePaziente()
+                ]),
 
-                el('div', { style: 'margin: 24px 0;' }, [
+                el('div', {}, [
                     el('button', {
-                        class: 'ds-btn ds-btn--primary ds-btn--tocco',
-                        style: 'width: 100%; padding: 16px; font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 14px; box-shadow: 0 10px 15px -3px rgba(13, 148, 136, 0.3);',
+                        class: 'ds-tx-send-btn',
                         type: 'button',
                         disabled: !pazienteSelezionatoId || postazioniSelezionate.size === 0,
                         onClick: eseguiInvio
                     }, [
                         icona('send'),
-                        postazioniSelezionate.size > 0
-                            ? `🚀 Invia Scheda Clinica a ${postazioniSelezionate.size} Monitor`
-                            : 'Seleziona un monitor e un paziente per trasmettere'
+                        postazioniSelezionate.size > 0 && pazienteSelezionatoDati
+                            ? `Trasmetti Scheda Clinica a ${postazioniSelezionate.size} Monitor`
+                            : 'Seleziona un monitor e un paziente per abilitare la trasmissione'
                     ])
                 ]),
 
-                pannello({ titolo: 'Sedute cliniche in corso nello studio', flush: true }, tabella({
-                    colonne: [
-                        { titolo: 'Orario', rendi: riga => fmt.dataOra(riga.aperta_il) },
-                        { titolo: 'Paziente', campo: 'paziente_nome' },
-                        { titolo: 'Monitor Destinazione', campo: 'postazione_nome' },
-                        {
-                            titolo: 'Stato',
-                            rendi: riga => distintivo(fmt.etichettaStato(riga.stato), TONI_STATO[riga.stato] || 'neutral')
-                        },
-                        {
-                            titolo: '',
-                            rendi: riga => azioniRiga([
-                                riga.paziente_id ? bottone({
-                                    simbolo: 'person', variante: 'ghost', piccolo: true, titolo: 'Apri cartella',
-                                    onClick: () => naviga('paziente', { id: riga.paziente_id })
-                                }) : null,
-                                riga.stato === 'aperta' ? bottone({
-                                    simbolo: 'logout', variante: 'ghost', piccolo: true, titolo: 'Chiudi la scheda sul monitor',
-                                    onClick: () => chiudi(riga)
-                                }) : null
-                            ])
-                        }
-                    ],
-                    righe: storico.righe,
-                    vuotoTitolo: 'Nessuna seduta clinica attiva al momento',
-                    vuotoTesto: 'Quando trasmetti una cartella a un monitor dello studio, la seduta attiva compare qui con stato in tempo reale.',
-                    vuotoSimbolo: 'cast'
-                }))
+                el('div', { class: 'ds-tx-card-box' }, [
+                    el('div', { class: 'ds-tx-card-box__head' }, [
+                        el('div', { class: 'ds-tx-card-box__title' }, [
+                            icona('history'),
+                            el('span', {}, 'Sedute cliniche in corso nello studio')
+                        ])
+                    ]),
+                    tabella({
+                        colonne: [
+                            { titolo: 'Orario', rendi: riga => fmt.dataOra(riga.aperta_il) },
+                            { titolo: 'Paziente', campo: 'paziente_nome' },
+                            { titolo: 'Monitor Destinazione', campo: 'postazione_nome' },
+                            {
+                                titolo: 'Stato',
+                                rendi: riga => distintivo(fmt.etichettaStato(riga.stato), TONI_STATO[riga.stato] || 'neutral')
+                            },
+                            {
+                                titolo: '',
+                                rendi: riga => azioniRiga([
+                                    riga.paziente_id ? el('button', {
+                                        class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                                        type: 'button',
+                                        title: 'Apri cartella',
+                                        onClick: () => naviga('paziente', { id: riga.paziente_id })
+                                    }, icona('person')) : null,
+                                    riga.stato === 'aperta' ? el('button', {
+                                        class: 'ds-btn ds-btn--ghost ds-btn--piccolo',
+                                        style: 'color: #e11d48;',
+                                        type: 'button',
+                                        title: 'Chiudi la scheda sul monitor',
+                                        onClick: () => chiudi(riga)
+                                    }, [icona('logout'), 'Chiudi']) : null
+                                ].filter(Boolean))
+                            }
+                        ],
+                        righe: storico.righe,
+                        vuotoTitolo: 'Nessuna seduta clinica attiva al momento',
+                        vuotoTesto: 'Quando trasmetti una cartella a un monitor dello studio, la seduta attiva compare qui in tempo reale.',
+                        vuotoSimbolo: 'cast'
+                    })
+                ])
             ]);
 
             if (pazienteIniziale && !inviatoIniziale && collegate.length > 0) {
