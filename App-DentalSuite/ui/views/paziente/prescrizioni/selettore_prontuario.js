@@ -3,12 +3,26 @@ import { bottone } from '../../../components/layout.js';
 import { apriModale } from '../../../components/modale.js';
 import { call } from '../../../kernel/transport.js';
 import { esito } from '../../../components/notifica.js';
+import { CATEGORIE_PRONTUARIO } from './catalogo_farmaci.js';
 
 export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, paziente = {} }) {
-    const datiProntuario = await call('prescrizioni.prontuario', {});
-    const predefiniti = (datiProntuario && datiProntuario.predefiniti) || [];
-    const personalizzati = (datiProntuario && datiProntuario.personalizzati) || [];
-    const categorie = (datiProntuario && datiProntuario.categorie) || [];
+    let predefiniti = [];
+    let personalizzati = [];
+    let categorie = CATEGORIE_PRONTUARIO;
+
+    try {
+        const res = await call('prescrizioni.prontuario', {});
+        const datiProntuario = (res && res.payload) ? res.payload : (res && res.predefiniti ? res : {});
+        if (datiProntuario.predefiniti && Array.isArray(datiProntuario.predefiniti)) {
+            predefiniti = datiProntuario.predefiniti;
+        }
+        if (datiProntuario.personalizzati && Array.isArray(datiProntuario.personalizzati)) {
+            personalizzati = datiProntuario.personalizzati;
+        }
+        if (datiProntuario.categorie && Array.isArray(datiProntuario.categorie) && datiProntuario.categorie.length > 0) {
+            categorie = datiProntuario.categorie;
+        }
+    } catch {}
 
     let filtroTesto = '';
     let categoriaSelezionata = 'tutti';
@@ -108,7 +122,8 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                 piccolo: true,
                 onClick: async () => {
                     await apriFormNuovoFarmaco(async () => {
-                        const ricaricato = await call('prescrizioni.prontuario', {});
+                        const ricaricatoRes = await call('prescrizioni.prontuario', {});
+                        const ricaricato = (ricaricatoRes && ricaricatoRes.payload) ? ricaricatoRes.payload : (ricaricatoRes || {});
                         if (ricaricato && ricaricato.personalizzati) {
                             personalizzati.length = 0;
                             personalizzati.push(...ricaricato.personalizzati);

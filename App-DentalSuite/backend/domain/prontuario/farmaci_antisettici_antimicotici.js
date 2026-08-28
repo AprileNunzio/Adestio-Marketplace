@@ -2,156 +2,6 @@
 
 module.exports = [
     {
-        id: 'aug_875',
-        farmaco: 'Augmentin',
-        principio_attivo: 'Amoxicillina + Acido Clavulanico',
-        categoria: 'antibiotici',
-        dosaggio: '875 mg + 125 mg cpr',
-        posologia: '1 compressa ogni 12 ore a stomaco pieno',
-        durata_giorni: 6,
-        note: 'Prima linea per ascessi odontogeni e profilassi chirurgica. Verificare assenza di allergia a penicilline.'
-    },
-    {
-        id: 'aug_bust',
-        farmaco: 'Augmentin Bustine',
-        principio_attivo: 'Amoxicillina + Acido Clavulanico',
-        categoria: 'antibiotici',
-        dosaggio: '875 mg + 125 mg polvere per sospensione',
-        posologia: '1 bustina ogni 12 ore sciolta in acqua ai pasti',
-        durata_giorni: 6,
-        note: 'Alternativa per pazienti con disfagia post-operatoria.'
-    },
-    {
-        id: 'clav_875',
-        farmaco: 'Clavulin',
-        principio_attivo: 'Amoxicillina + Acido Clavulanico',
-        categoria: 'antibiotici',
-        dosaggio: '875 mg + 125 mg cpr',
-        posologia: '1 compressa ogni 12 ore',
-        durata_giorni: 6,
-        note: 'Infezioni odontogene batteriche acute e peri-implantiti.'
-    },
-    {
-        id: 'zimox_1g',
-        farmaco: 'Zimox',
-        principio_attivo: 'Amoxicillina',
-        categoria: 'antibiotici',
-        dosaggio: '1 g compresse',
-        posologia: '1 compressa ogni 8-12 ore',
-        durata_giorni: 6,
-        note: 'Amoxicillina semplice per infezioni odontogene non resistenti e profilassi endocardite.'
-    },
-    {
-        id: 'velamox_1g',
-        farmaco: 'Velamox',
-        principio_attivo: 'Amoxicillina',
-        categoria: 'antibiotici',
-        dosaggio: '1 g compresse',
-        posologia: '1 compressa ogni 12 ore',
-        durata_giorni: 6,
-        note: 'Terapia antibiotica sistemica ad ampio spettro.'
-    },
-    {
-        id: 'klacid_500',
-        farmaco: 'Klacid',
-        principio_attivo: 'Claritromicina',
-        categoria: 'antibiotici',
-        dosaggio: '500 mg cpr rivestite',
-        posologia: '1 compressa ogni 12 ore durante i pasti',
-        durata_giorni: 6,
-        note: 'Macrolide di elezione per pazienti allergici alle penicilline/beta-lattamici.'
-    },
-    {
-        id: 'macladin_500',
-        farmaco: 'Macladin',
-        principio_attivo: 'Claritromicina',
-        categoria: 'antibiotici',
-        dosaggio: '500 mg cpr',
-        posologia: '1 compressa ogni 12 ore',
-        durata_giorni: 6,
-        note: 'Alternativa mirata in caso di allergia ad amoxicillina.'
-    },
-    {
-        id: 'veclam_500',
-        farmaco: 'Veclam',
-        principio_attivo: 'Claritromicina',
-        categoria: 'antibiotici',
-        dosaggio: '500 mg cpr',
-        posologia: '1 compressa ogni 12 ore',
-        durata_giorni: 6,
-        note: 'Trattamento infezioni odontostomatologiche in soggetti allergici.'
-    },
-    {
-        id: 'zitromax_500',
-        farmaco: 'Zitromax',
-        principio_attivo: 'Azitromicina',
-        categoria: 'antibiotici',
-        dosaggio: '500 mg cpr',
-        posologia: '1 compressa al giorno lontano dai pasti per 3 giorni consecutivi',
-        durata_giorni: 3,
-        note: 'Terapia breve a rilascio prolungato per ascessi parodontali e pazienti non compliant.'
-    },
-    {
-        id: 'dalacin_300',
-        farmaco: 'Dalacin C',
-        principio_attivo: 'Clindamicina',
-        categoria: 'antibiotici',
-        dosaggio: '300 mg capsule rigide',
-        posologia: '1 capsula ogni 6-8 ore con abbondante acqua',
-        durata_giorni: 6,
-        note: 'Ottima penetrazione ossea. Indicata per osteiti, peri-implantiti e allergici a penicillina.'
-    },
-    {
-        id: 'flagyl_250',
-        farmaco: 'Flagyl',
-        principio_attivo: 'Metronidazolo',
-        categoria: 'antibiotici',
-        dosaggio: '250 mg cpr',
-        posologia: '1 compressa ogni 8 ore ai pasti',
-        durata_giorni: 7,
-        note: 'Specifico per batteri anaerobi e parodontiti necrotizzanti (NUG/NUP). Divieto assoluto di alcol.'
-    },
-    {
-        id: 'cefixoral_400',
-        farmaco: 'Cefixoral',
-        principio_attivo: 'Cefixima',
-        categoria: 'antibiotici',
-        dosaggio: '400 mg cpr',
-        posologia: '1 compressa una volta al giorno',
-        durata_giorni: 5,
-        note: 'Cefalosporina orale di terza generazione.'
-    },
-    {
-        id: 'ciproxin_500',
-        farmaco: 'Ciproxin',
-        principio_attivo: 'Ciprofloxacina',
-        categoria: 'antibiotici',
-        dosaggio: '500 mg cpr',
-        posologia: '1 compressa ogni 12 ore',
-        durata_giorni: 6,
-        note: 'Chinolonico per infezioni complesse mascellari da Gram-negativi.'
-    },
-    {
-        id: 'bassado_100',
-        farmaco: 'Bassado',
-        principio_attivo: 'Doxiciclina',
-        categoria: 'antibiotici',
-        dosaggio: '100 mg cpr',
-        posologia: '2 cpr il 1° giorno, poi 1 cpr al dì per 7-10 giorni',
-        durata_giorni: 8,
-        note: 'Tetraciclina ad azione anticollagenasica per parodontiti aggressive. Non usare sotto 12 anni e in gravidanza.'
-    },
-    {
-        id: 'rocefin_1g',
-        farmaco: 'Rocefin',
-        principio_attivo: 'Ceftriaxone',
-        categoria: 'antibiotici',
-        dosaggio: '1 g polvere e solvente per soluzione iniettabile I.M.',
-        posologia: '1 fiala I.M. al giorno',
-        durata_giorni: 5,
-        note: 'Terapia antibiotica parenterale per infezioni gravi del massiccio facciale.'
-    },
-    {
         id: 'curasept_020',
         farmaco: 'Curasept ADS Trattamento Intensivo',
         principio_attivo: 'Clorexidina digluconato 0.20%',
@@ -162,8 +12,18 @@ module.exports = [
         note: 'Standard oro post-chirurgico implantare, parodontale ed estrattivo.'
     },
     {
+        id: 'curasept_012',
+        farmaco: 'Curasept ADS 0.12%',
+        principio_attivo: 'Clorexidina digluconato 0.12%',
+        categoria: 'collutori_antisettici',
+        dosaggio: 'Collutorio 200 ml',
+        posologia: '1 sciacquo per 1 minuto 2 volte al giorno',
+        durata_giorni: 21,
+        note: 'Trattamento prolungato per gengiviti e parodontiti croniche.'
+    },
+    {
         id: 'curasept_gel_1',
-        farmaco: 'Curasept Gel Parodontale',
+        farmaco: 'Curasept Gel Parodontale 1%',
         principio_attivo: 'Clorexidina digluconato 1% + PVP-VA',
         categoria: 'collutori_antisettici',
         dosaggio: 'Gel tubo 30 ml',
@@ -182,6 +42,16 @@ module.exports = [
         note: 'Favorisce la cicatrizzazione tissutale e la rigenerazione gengivale.'
     },
     {
+        id: 'curasept_lenitivo',
+        farmaco: 'Curasept ADS Lenitivo',
+        principio_attivo: 'Clorexidina 0.20% + Clorobutanolo',
+        categoria: 'collutori_antisettici',
+        dosaggio: 'Collutorio 200 ml',
+        posologia: '1 sciacquo 2 volte al giorno dopo i pasti',
+        durata_giorni: 10,
+        note: 'Azione anestetica e lenitiva locale su mucose irritate e dolenti.'
+    },
+    {
         id: 'dentosan_012',
         farmaco: 'Dentosan Trattamento Mese',
         principio_attivo: 'Clorexidina 0.12%',
@@ -190,6 +60,26 @@ module.exports = [
         posologia: '1 sciacquo per 1 minuto 2 volte al giorno',
         durata_giorni: 21,
         note: 'Mantenimento post-terapia parodontale e gengiviti croniche.'
+    },
+    {
+        id: 'dentosan_020',
+        farmaco: 'Dentosan Intensivo 0.20%',
+        principio_attivo: 'Clorexidina 0.20%',
+        categoria: 'collutori_antisettici',
+        dosaggio: 'Collutorio 200 ml',
+        posologia: '1 sciacquo per 1 minuto 2 volte al giorno per 7-10 giorni',
+        durata_giorni: 10,
+        note: 'Azione d\'urto antibatterica pre e post chirurgia orale.'
+    },
+    {
+        id: 'dentosan_gel',
+        farmaco: 'Dentosan Gel Parodontale',
+        principio_attivo: 'Clorexidina 0.50%',
+        categoria: 'collutori_antisettici',
+        dosaggio: 'Gel 30 ml',
+        posologia: 'Massaggiare localmente sulle gengive 2 volte al giorno',
+        durata_giorni: 10,
+        note: 'Trattamento topico di tasche parodontali e afte.'
     },
     {
         id: 'froben_gola',
@@ -232,6 +122,16 @@ module.exports = [
         note: 'Forma una pellicola protettiva isolando le afte da stimoli chimico-fisici.'
     },
     {
+        id: 'buccagel_gel',
+        farmaco: 'Buccagel Gel Protettivo',
+        principio_attivo: 'Clorexidina 0.20% + Acido Ialuronico',
+        categoria: 'collutori_antisettici',
+        dosaggio: 'Gel 15 ml',
+        posologia: 'Applicare localmente 2-3 volte al giorno',
+        durata_giorni: 7,
+        note: 'Per lesioni causate da apparecchi ortodontici o protesi mobili.'
+    },
+    {
         id: 'corsodyl_020',
         farmaco: 'Corsodyl',
         principio_attivo: 'Clorexidina digluconato 0.20%',
@@ -250,6 +150,16 @@ module.exports = [
         posologia: '1 capsula al giorno per 7-14 giorni',
         durata_giorni: 10,
         note: 'Terapia di elezione per candidosi orale (mughetto, cheilite angolare, stomatite da protesi).'
+    },
+    {
+        id: 'diflucan_50',
+        farmaco: 'Diflucan 50mg',
+        principio_attivo: 'Fluconazolo',
+        categoria: 'antimicotici_antivirali',
+        dosaggio: '50 mg capsule',
+        posologia: '1 capsula al giorno per 7-14 giorni',
+        durata_giorni: 10,
+        note: 'Candidosi orofaringee lievi o di mantenimento.'
     },
     {
         id: 'daktarin_gel',
@@ -280,5 +190,25 @@ module.exports = [
         posologia: '1 compressa 5 volte al giorno (a intervalli di 4 ore) per 5 giorni',
         durata_giorni: 5,
         note: 'Trattamento di gengivostomatite erpetica primaria ed Herpes labialis recidivante grave.'
+    },
+    {
+        id: 'zovirax_800',
+        farmaco: 'Zovirax 800mg',
+        principio_attivo: 'Aciclovir',
+        categoria: 'antimicotici_antivirali',
+        dosaggio: '800 mg compresse',
+        posologia: '1 compressa 5 volte al giorno per 7 giorni',
+        durata_giorni: 7,
+        note: 'Infezioni erpetiche gravi o Herpes Zoster del trigemino.'
+    },
+    {
+        id: 'brivirac_125',
+        farmaco: 'Brivirac',
+        principio_attivo: 'Brivudina',
+        categoria: 'antimicotici_antivirali',
+        dosaggio: '125 mg compresse',
+        posologia: '1 compressa una volta al giorno per 7 giorni',
+        durata_giorni: 7,
+        note: 'Antivirale specifico per Herpes Zoster oftalmico e trigeminale. Controindicazione assoluta con 5-fluorouracile.'
     }
 ];

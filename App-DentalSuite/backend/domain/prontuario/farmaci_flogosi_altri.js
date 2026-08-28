@@ -12,6 +12,16 @@ module.exports = [
         note: 'FANS di riferimento per dolore post-estrattivo e infiammazione odontoiatrica.'
     },
     {
+        id: 'brufen_400',
+        farmaco: 'Brufen 400mg',
+        principio_attivo: 'Ibuprofene',
+        categoria: 'fans_analgesici',
+        dosaggio: '400 mg compresse rivestite',
+        posologia: '1 compressa ogni 8 ore a stomaco pieno',
+        durata_giorni: 4,
+        note: 'Dolore odontoiatrico moderato.'
+    },
+    {
         id: 'spidifen_600',
         farmaco: 'Spidifen',
         principio_attivo: 'Ibuprofene sale di arginina',
@@ -20,6 +30,16 @@ module.exports = [
         posologia: '1 bustina ogni 8 ore a stomaco pieno',
         durata_giorni: 3,
         note: 'Assorbimento ultra-rapido (15-30 minuti) per dolore acuto da pulpite o chirurgia.'
+    },
+    {
+        id: 'momentact_400',
+        farmaco: 'Momentact',
+        principio_attivo: 'Ibuprofene',
+        categoria: 'fans_analgesici',
+        dosaggio: '400 mg capsule molli / compresse',
+        posologia: '1 capsula ogni 8 ore a stomaco pieno al bisogno',
+        durata_giorni: 3,
+        note: 'FANS ad azione rapida.'
     },
     {
         id: 'oki_80',
@@ -40,6 +60,36 @@ module.exports = [
         posologia: '20-30 gocce fino a 3 volte al giorno',
         durata_giorni: 3,
         note: 'Dosaggio flessibile per dolore dentale moderato.'
+    },
+    {
+        id: 'oki_task',
+        farmaco: 'Oki Task',
+        principio_attivo: 'Ketoprofene sale di lisina',
+        categoria: 'fans_analgesici',
+        dosaggio: '40 mg microgranuli orosolubili',
+        posologia: '1 bustina orosolubile direttamente sulla lingua senza acqua al bisogno (max 3/die)',
+        durata_giorni: 3,
+        note: 'Comodità di assunzione per dolore odontoiatrico improvviso.'
+    },
+    {
+        id: 'orudis_200',
+        farmaco: 'Orudis Retard',
+        principio_attivo: 'Ketoprofene',
+        categoria: 'fans_analgesici',
+        dosaggio: '200 mg cpr a rilascio prolungato',
+        posologia: '1 compressa al giorno dopo il pasto principale',
+        durata_giorni: 5,
+        note: 'Copertura analgesica continua 24h per disordini temporo-mandibolari.'
+    },
+    {
+        id: 'ketodol_25',
+        farmaco: 'Ketodol',
+        principio_attivo: 'Ketoprofene 25mg + Sucralfato 200mg',
+        categoria: 'fans_analgesici',
+        dosaggio: '25 mg compresse gastroprotette',
+        posologia: '1 compressa fino a 3 volte al giorno ai pasti',
+        durata_giorni: 4,
+        note: 'Gastroprotetto con sucralfato per pazienti con lieve sensibilità gastrica.'
     },
     {
         id: 'toradol_10',
@@ -92,6 +142,16 @@ module.exports = [
         note: 'Per dolori lievi o odontoiatria pediatrica/adolescenziale.'
     },
     {
+        id: 'efferalgan_1000',
+        farmaco: 'Efferalgan 1000',
+        principio_attivo: 'Paracetamolo',
+        categoria: 'fans_analgesici',
+        dosaggio: '1000 mg compresse effervescenti',
+        posologia: '1 compressa effervescente ogni 8 ore',
+        durata_giorni: 4,
+        note: 'Paracetamolo solubile ad assorbimento immediato.'
+    },
+    {
         id: 'tachidol',
         farmaco: 'Tachidol',
         principio_attivo: 'Paracetamolo + Codeina fosfato',
@@ -100,6 +160,16 @@ module.exports = [
         posologia: '1 bustina/cpr ogni 8 ore al bisogno dopo i pasti',
         durata_giorni: 3,
         note: 'Analgesico ad azione centrale per dolore odontoiatrico acuto refrattario ai FANS.'
+    },
+    {
+        id: 'co_efferalgan',
+        farmaco: 'Co-Efferalgan',
+        principio_attivo: 'Paracetamolo + Codeina',
+        categoria: 'fans_analgesici',
+        dosaggio: '500 mg + 30 mg compresse effervescenti',
+        posologia: '1 compressa ogni 8 ore dopo i pasti',
+        durata_giorni: 3,
+        note: 'Associazione analgesica oppioide debole.'
     },
     {
         id: 'enantyum_25',
@@ -133,13 +203,23 @@ module.exports = [
     },
     {
         id: 'arcoxia_60',
-        farmaco: 'Arcoxia',
+        farmaco: 'Arcoxia 60mg',
         principio_attivo: 'Etoricoxib',
         categoria: 'fans_analgesici',
         dosaggio: '60 mg cpr',
         posologia: '1 compressa al giorno',
         durata_giorni: 5,
         note: 'Minore tossicità gastrica. Cautela in ipertesi e cardiopatici.'
+    },
+    {
+        id: 'celebrex_200',
+        farmaco: 'Celebrex',
+        principio_attivo: 'Celecoxib',
+        categoria: 'fans_analgesici',
+        dosaggio: '200 mg capsule',
+        posologia: '1 capsula al giorno dopo i pasti',
+        durata_giorni: 5,
+        note: 'Inibitore selettivo COX-2 con ridotto rischio di ulcera gastrointestinale.'
     },
     {
         id: 'aulin_100',
@@ -150,6 +230,16 @@ module.exports = [
         posologia: '1 bustina ogni 12 ore a stomaco pieno',
         durata_giorni: 3,
         note: 'Seconda linea per flogosi acuta post-operatoria. Durata max 15 giorni per tollerabilità epatica.'
+    },
+    {
+        id: 'contramal_50',
+        farmaco: 'Contramal',
+        principio_attivo: 'Tramadolo cloridrato',
+        categoria: 'fans_analgesici',
+        dosaggio: '50 mg capsule rigide / gocce orali',
+        posologia: '1 capsula ogni 6-8 ore al bisogno (max 400 mg/die)',
+        durata_giorni: 3,
+        note: 'Analgesico centrale per dolore neuropatico severo post-chirurgico refrattario.'
     },
     {
         id: 'bentelan_1',
@@ -193,7 +283,7 @@ module.exports = [
     },
     {
         id: 'deflan_6',
-        farmaco: 'Deflan',
+        farmaco: 'Deflan 6mg',
         principio_attivo: 'Deflazacort',
         categoria: 'cortisonici',
         dosaggio: '6 mg cpr',
@@ -210,6 +300,16 @@ module.exports = [
         posologia: '1 fiala I.M. singola somministrazione',
         durata_giorni: 1,
         note: 'Corticosteroide a lunga durata d\'azione per chirurgie maxillo-facciali e rigenerative.'
+    },
+    {
+        id: 'deltacortene_25',
+        farmaco: 'Deltacortene',
+        principio_attivo: 'Prednisone',
+        categoria: 'cortisonici',
+        dosaggio: '25 mg compresse',
+        posologia: '1 compressa al mattino dopo colazione a scalare',
+        durata_giorni: 5,
+        note: 'Terapia corticosteroidea sistemica per edemi facciali imponenti.'
     },
     {
         id: 'muscoril_4',
@@ -230,6 +330,16 @@ module.exports = [
         posologia: '1 fiala I.M. ogni 12 ore per massimo 3-5 giorni',
         durata_giorni: 3,
         note: 'Per grave blocco mandibolare o trisma post-anestesia tronculare.'
+    },
+    {
+        id: 'miotens_4',
+        farmaco: 'Miotens',
+        principio_attivo: 'Tiocolchicoside',
+        categoria: 'miorilassanti',
+        dosaggio: '4 mg compresse',
+        posologia: '1 compressa ogni 12 ore',
+        durata_giorni: 5,
+        note: 'Miorilassante ad azione centrale per contratture masticatorie.'
     },
     {
         id: 'sirdalud_2',
@@ -282,6 +392,16 @@ module.exports = [
         note: 'Gastroprotettore standard.'
     },
     {
+        id: 'gaviscon_bustine',
+        farmaco: 'Gaviscon Advance',
+        principio_attivo: 'Sodio alginato + Potassio bicarbonato',
+        categoria: 'gastroprotettori',
+        dosaggio: 'Sospensione orale bustine 10 ml',
+        posologia: '1 bustina dopo i pasti principali e prima di coricarsi',
+        durata_giorni: 7,
+        note: 'Barriera antireflusso per pazienti con pirosi indotta da FANS.'
+    },
+    {
         id: 'tranex_500',
         farmaco: 'Tranex',
         principio_attivo: 'Acido Tranexamico',
@@ -290,6 +410,16 @@ module.exports = [
         posologia: '1 fiala usata per sciacqui orali compressivi per 3-5 minuti senza deglutire, oppure 1 cpr ogni 8 ore',
         durata_giorni: 3,
         note: 'Antifibrinolitico per emostasi locale in pazienti scoagulati (TAO/NAO) o sanguinamenti post-estrattivi.'
+    },
+    {
+        id: 'ugurol_500',
+        farmaco: 'Ugurol',
+        principio_attivo: 'Acido Tranexamico',
+        categoria: 'emostatici_altri',
+        dosaggio: '500 mg / 5 ml fiale per uso orale/topico',
+        posologia: 'Applicare garza imbevuta con una fiala sul sito emorragico per 10 minuti',
+        durata_giorni: 2,
+        note: 'Emostatico topico per emorragie alveolari post-estrattive.'
     },
     {
         id: 'zirtec_10',
