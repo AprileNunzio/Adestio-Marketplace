@@ -32,9 +32,16 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
         ...predefiniti
     ];
 
+    const chiudiQuestoModale = () => {
+        const fondale = corpo.closest('.ds-modal-backdrop');
+        if (fondale) {
+            fondale.remove();
+        }
+    };
+
     const corpo = el('div', { class: 'ds-prontuario-modal' });
 
-    const aggiornaVista = chiudiModale => {
+    const aggiornaVista = () => {
         const farmaciFiltrati = tuttiFarmaci().filter(f => {
             if (categoriaSelezionata === 'studio' && !f.isStudio) return false;
             if (categoriaSelezionata !== 'tutti' && categoriaSelezionata !== 'studio' && f.categoria !== categoriaSelezionata) return false;
@@ -51,12 +58,12 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
             ...categorie.map(c => el('button', {
                 type: 'button',
                 class: `ds-cat-chip ${categoriaSelezionata === c.id ? 'ds-cat-chip--active' : ''}`,
-                onClick: () => { categoriaSelezionata = c.id; aggiornaVista(chiudiModale); }
+                onClick: () => { categoriaSelezionata = c.id; aggiornaVista(); }
             }, [icona(c.simbolo || 'medication'), el('span', {}, c.etichetta)])),
             el('button', {
                 type: 'button',
                 class: `ds-cat-chip ${categoriaSelezionata === 'studio' ? 'ds-cat-chip--active' : ''}`,
-                onClick: () => { categoriaSelezionata = 'studio'; aggiornaVista(chiudiModale); }
+                onClick: () => { categoriaSelezionata = 'studio'; aggiornaVista(); }
             }, [icona('bookmark'), el('span', {}, `Personalizzati Studio (${personalizzati.length})`)])
         ]);
 
@@ -67,12 +74,12 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                 class: 'ds-input ds-search-input',
                 placeholder: 'Cerca per nome commerciale (es. Augmentin, Oki, Brufen, Bentelan), principio attivo...',
                 value: filtroTesto,
-                onInput: e => { filtroTesto = e.target.value; aggiornaVista(chiudiModale); }
+                onInput: e => { filtroTesto = e.target.value; aggiornaVista(); }
             }),
             filtroTesto ? el('button', {
                 type: 'button',
                 class: 'ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm',
-                onClick: () => { filtroTesto = ''; aggiornaVista(chiudiModale); }
+                onClick: () => { filtroTesto = ''; aggiornaVista(); }
             }, icona('close')) : null
         ].filter(Boolean));
 
@@ -86,8 +93,8 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                 return el('div', {
                     class: `ds-drug-card ${f.isStudio ? 'ds-drug-card--studio' : ''}`,
                     onClick: () => {
+                        chiudiQuestoModale();
                         onSeleziona(f);
-                        if (typeof chiudiModale === 'function') chiudiModale(true);
                     }
                 }, [
                     el('div', { class: 'ds-drug-card__header' }, [
@@ -127,7 +134,7 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                         if (ricaricato && ricaricato.personalizzati) {
                             personalizzati.length = 0;
                             personalizzati.push(...ricaricato.personalizzati);
-                            aggiornaVista(chiudiModale);
+                            aggiornaVista();
                         }
                     });
                 }
@@ -142,7 +149,8 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
         ]);
     };
 
-    let controllerChiudi = null;
+    aggiornaVista();
+
     await apriModale({
         titolo: 'Prontuario Farmaceutico Odontoiatrico (100+ Farmaci)',
         corpo,
@@ -155,8 +163,6 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
             }
         ]
     });
-
-    aggiornaVista();
 }
 
 async function apriFormNuovoFarmaco(onSalvato) {
