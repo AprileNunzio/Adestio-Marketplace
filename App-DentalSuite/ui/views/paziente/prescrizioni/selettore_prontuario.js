@@ -2,7 +2,7 @@ import { el, icona, rimpiazza } from '../../../components/dom.js';
 import { bottone } from '../../../components/layout.js';
 import { apriModale } from '../../../components/modale.js';
 import { call } from '../../../kernel/transport.js';
-import { esito } from '../../../kernel/notifica.js';
+import { esito } from '../../../components/notifica.js';
 
 export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, paziente = {} }) {
     const datiProntuario = await call('prescrizioni.prontuario', {});
