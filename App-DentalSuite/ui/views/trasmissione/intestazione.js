@@ -16,28 +16,32 @@ function pastiglia(etichetta, valore) {
 }
 
 function allerteInLinea(dossier, massimo) {
-    const voci = dossier.anamnesi.allerte || [];
-    if (voci.length === 0) {
-        return el('div', { class: 'ds-mn__allerte ds-mn__allerte--sereno' }, [
-            icona('verified_user'),
-            el('span', {}, 'Nessuna allerta in anamnesi')
-        ]);
+    try {
+        const voci = (dossier.anamnesi && dossier.anamnesi.allerte) || [];
+        if (voci.length === 0) {
+            return el('div', { class: 'ds-mn__allerte ds-mn__allerte--sereno' }, [
+                icona('verified_user'),
+                el('span', {}, 'Nessuna allerta in anamnesi')
+            ]);
+        }
+
+        const mostrate = voci.slice(0, massimo);
+        const residue = voci.length - mostrate.length;
+
+        return el('div', { class: 'ds-mn__allerte' }, [
+            ...mostrate.map(voce => el('span', {
+                class: 'ds-mn__allerta',
+                dataset: { livello: voce.livello },
+                title: voce.etichetta
+            }, [
+                icona(SIMBOLI_ALLERTA[voce.livello] || 'info'),
+                el('span', {}, voce.etichetta)
+            ])),
+            residue > 0 ? el('span', { class: 'ds-mn__allerta ds-mn__allerta--resto' }, `+${residue}`) : null
+        ].filter(Boolean));
+    } catch {
+        return el('div', { class: 'ds-mn__allerte' });
     }
-
-    const mostrate = voci.slice(0, massimo);
-    const residue = voci.length - mostrate.length;
-
-    return el('div', { class: 'ds-mn__allerte' }, [
-        ...mostrate.map(voce => el('span', {
-            class: 'ds-mn__allerta',
-            dataset: { livello: voce.livello },
-            title: voce.etichetta
-        }, [
-            icona(SIMBOLI_ALLERTA[voce.livello] || 'info'),
-            el('span', {}, voce.etichetta)
-        ])),
-        residue > 0 ? el('span', { class: 'ds-mn__allerta ds-mn__allerta--resto' }, `+${residue}`) : null
-    ].filter(Boolean));
 }
 
 export function intestazionePaziente({ dossier, ricevutoIl, allerteVisibili = 4 }) {

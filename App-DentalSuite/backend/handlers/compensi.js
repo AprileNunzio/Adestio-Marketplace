@@ -1,8 +1,8 @@
-'use strict';
-
 const { staff, prestazioni, liquidazioni } = require('../repositories/organization');
 const { mensilita } = require('../repositories/compensi');
-const { trattamenti } = require('../repositories/clinical');
+const { trattamenti, pazienti } = require('../repositories/clinical');
+const { appuntamenti } = require('../repositories/facility');
+const { orari, assenze } = require('../repositories/personale');
 const { db, persist, now } = require('../kernel/database');
 const { validationError, conflictError } = require('../kernel/errors');
 const money = require('../domain/money');
@@ -10,6 +10,7 @@ const actor = require('../kernel/actor');
 const riferimenti = require('../kernel/riferimenti');
 const calcolo = require('../domain/compensi');
 const maturatoDominio = require('../domain/maturato');
+const flussiStaffDominio = require('../domain/flussi_staff');
 const { oggiIso } = require('../domain/rateizzazione');
 
 function periodo(payload) {
@@ -61,11 +62,13 @@ function componiMaturato(payload) {
     const { dal, al } = periodo(payload);
     const liquidabili = trattamentiLiquidabili(payload.staff_id, dal, al);
     const catalogo = riferimenti.mappaPerId(prestazioni, riferimenti.raccogli(liquidabili, 'prestazione_id'));
+    const mappaPazienti = riferimenti.mappaPerId(pazienti, riferimenti.raccogli(liquidabili, 'paziente_id'));
 
     const dettaglio = maturatoDominio.componi({
         trattamenti: liquidabili,
         staffId: payload.staff_id,
         catalogo,
+        mappaPazienti,
         compensoMensile: collaboratore.compenso_mensile,
         dal,
         al,
@@ -107,6 +110,8 @@ function calcola(payload = {}) {
             id: voce.id,
             data_trattamento: voce.data,
             descrizione: voce.descrizione,
+            dente: voce.dente || '',
+            paziente: voce.paziente || '',
             categoria: voce.categoria,
             importo: voce.importo,
             quota: voce.quota,
@@ -172,4 +177,41 @@ async function liquida(payload = {}) {
     };
 }
 
-module.exports = { listLiquidazioni, maturato, calcola, liquida };
+function flussiStaff(payload = {}) {
+    if (!payload.staff_id) throw validationError('Selezionare il collaboratore');
+    const collaboratore = staff.requireById(payload.staff_id, { includeArchived: true });
+    const dal = String(payload.dal || payload.periodo_dal || '').trim();
+    const al = String(payload.al || payload.periodo_al || '').trim();
+
+    const filtriTratt = [
+        {
+            oppure: [
+                { colonna: 'medico_id', operatore: 'eq', valore: payload.staff_id },
+                { colonna: 'segretaria_id', operatore: 'eq', valore: payload.staff_id }
+            ]
+        }
+    ];
+    if (dal) filtriTratt.push({ colonna: 'data_trattamento', operatore: 'gte', valore: dal });
+    if (al) filtriTratt.push({ colonna: 'data_trattamento', operatore: 'lte', valore: al });
+
+    const righeTrattamenti = trattamenti.findAll({ filtri: filtriTratt });
+    const catalogo = riferimenti.mappaPerId(prestazioni, riferimenti.raccogli(righeTrattamenti, 'prestazione_id'));
+    const righeAppuntamenti = appuntamenti.findAll({ where: { medico_id: payload.staff_id } });
+    const righeOrari = orari.findAll({ where: { staff_id: payload.staff_id } });
+    const righeAssenze = assenze.findAll({ where: { staff_id: payload.staff_id } });
+    const righeLiquidazioni = liquidazioni.findAll({ where: { staff_id: payload.staff_id } });
+
+    return flussiStaffDominio.analizza({
+        staffMember: collaboratore,
+        trattamenti: righeTrattamenti,
+        appuntamenti: righeAppuntamenti,
+        orari: righeOrari,
+        assenze: righeAssenze,
+        liquidazioni: righeLiquidazioni,
+        catalogo,
+        dal,
+        al
+    });
+}
+
+module.exports = { listLiquidazioni, maturato, calcola, liquida, flussiStaff };

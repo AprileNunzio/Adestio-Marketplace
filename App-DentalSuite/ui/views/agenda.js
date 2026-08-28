@@ -151,6 +151,16 @@ export default {
                             onClick: () => apri(null)
                         })] : []
                     }),
+                    pannello({
+                        titolo: 'Planning giornaliero',
+                        azioni: [
+                            navigatore,
+                            spaziatore(),
+                            ...Object.entries(perStato).map(([stato, quanti]) =>
+                                distintivo(`${fmt.etichettaStato(stato)}: ${quanti}`, 'info'))
+                        ],
+                        flush: poltrone.length > 0
+                    }, contenuto),
                     pannelloPanoramica({
                         giorno,
                         onApri: voce => apri({
@@ -169,17 +179,7 @@ export default {
                             giorno = fmt.isoDa(new Date(Number(riga.data_ora_inizio)));
                             aggiorna();
                         }
-                    }),
-                    pannello({
-                        titolo: 'Planning giornaliero',
-                        azioni: [
-                            navigatore,
-                            spaziatore(),
-                            ...Object.entries(perStato).map(([stato, quanti]) =>
-                                distintivo(`${fmt.etichettaStato(stato)}: ${quanti}`, 'info'))
-                        ],
-                        flush: poltrone.length > 0
-                    }, contenuto)
+                    })
                 ];
             }
         });

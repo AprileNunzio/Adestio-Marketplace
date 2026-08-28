@@ -21,6 +21,9 @@ function rispondi(risposta, codice, corpo) {
     risposta.writeHead(codice, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
         'Content-Length': Buffer.byteLength(testo)
     });
     risposta.end(testo);
@@ -257,6 +260,21 @@ async function gestisciPazienteCambiato(richiesta, risposta) {
     return rispondi(risposta, 200, { successo: true, ...esito });
 }
 
+async function gestisciMeshStatoBroadcast(richiesta, risposta) {
+    try {
+        const corpo = await leggiCorpo(richiesta);
+        const scopertaMesh = require('./scoperta_mesh');
+        const ipMittente = indirizzoDi(richiesta);
+        scopertaMesh.riceviStatoGossip({
+            ...(corpo || {}),
+            ip: ipMittente
+        });
+        return rispondi(risposta, 200, { successo: true });
+    } catch (_) {
+        return rispondi(risposta, 200, { successo: false });
+    }
+}
+
 async function gestisciRiceviAtto(richiesta, risposta) {
     try {
         const corpo = await leggiCorpo(richiesta);
@@ -271,7 +289,39 @@ async function gestisciRiceviAtto(richiesta, risposta) {
     }
 }
 
+async function gestisciAllegatoContenuto(richiesta, risposta) {
+    try {
+        const corpo = await leggiCorpo(richiesta);
+        const allegati = require('../handlers/allegati');
+        const esito = await allegati.contenuto(corpo || {});
+        return rispondi(risposta, 200, { successo: true, ...esito });
+    } catch (e) {
+        return rispondi(risposta, 400, { successo: false, errore: e.message });
+    }
+}
+
+async function gestisciRichiediDossierAggiornato(richiesta, risposta) {
+    try {
+        const corpo = await leggiCorpo(richiesta);
+        const pazienteId = corpo && corpo.paziente_id;
+        if (!pazienteId) return rispondi(risposta, 400, { errore: 'ID paziente mancante' });
+        const comp = require('../domain/composizione_dossier');
+        const dossier = comp.componiDossier(pazienteId, corpo.dentizione, corpo.schermo);
+        return rispondi(risposta, 200, { successo: true, dossier });
+    } catch (e) {
+        return rispondi(risposta, 500, { errore: e.message });
+    }
+}
+
 async function instrada(richiesta, risposta) {
+    if (richiesta.method === 'OPTIONS') {
+        risposta.writeHead(204, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+        });
+        return risposta.end();
+    }
     const indirizzo = new URL(richiesta.url, 'http://postazione.local');
     if (richiesta.method === 'GET' && indirizzo.pathname === protocollo.ROTTE.stato) {
         const info = identita.scheda() || { errore: 'Postazione non inizializzata' };
@@ -299,6 +349,12 @@ async function instrada(richiesta, risposta) {
     if (richiesta.method === 'POST' && indirizzo.pathname === '/ricevi-atto') {
         return gestisciRiceviAtto(richiesta, risposta);
     }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/allegato-contenuto') {
+        return gestisciAllegatoContenuto(richiesta, risposta);
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/richiedi-dossier-aggiornato') {
+        return gestisciRichiediDossierAggiornato(richiesta, risposta);
+    }
     if (richiesta.method === 'POST' && indirizzo.pathname === '/seduta-stato') {
         return gestisciStatoSeduta(richiesta, risposta);
     }
@@ -307,6 +363,9 @@ async function instrada(richiesta, risposta) {
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === '/paziente-cambiato') {
         return gestisciPazienteCambiato(richiesta, risposta);
+    }
+    if (richiesta.method === 'POST' && indirizzo.pathname === '/mesh-stato-broadcast') {
+        return gestisciMeshStatoBroadcast(richiesta, risposta);
     }
     if (richiesta.method === 'POST' && indirizzo.pathname === protocollo.ROTTE.accoppia) {
         return gestisciAccoppiamento(richiesta, risposta);

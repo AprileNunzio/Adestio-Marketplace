@@ -99,6 +99,12 @@
       "permission": "cartella_edit",
       "mutates": true
     },
+    "trattamenti.suggerisci": {
+      "handler": "trattamenti",
+      "method": "suggerisci",
+      "permission": "cartella_view",
+      "mutates": false
+    },
     "prescrizioni.listByPaziente": {
       "handler": "prescrizioni",
       "method": "listByPaziente",
@@ -114,6 +120,24 @@
     "prescrizioni.remove": {
       "handler": "prescrizioni",
       "method": "remove",
+      "permission": "prescrizioni_edit",
+      "mutates": true
+    },
+    "prescrizioni.prontuario": {
+      "handler": "prescrizioni",
+      "method": "prontuario",
+      "permission": "prescrizioni_view",
+      "mutates": false
+    },
+    "prescrizioni.salvaFarmaco": {
+      "handler": "prescrizioni",
+      "method": "salvaFarmaco",
+      "permission": "prescrizioni_edit",
+      "mutates": true
+    },
+    "prescrizioni.eliminaFarmaco": {
+      "handler": "prescrizioni",
+      "method": "eliminaFarmaco",
       "permission": "prescrizioni_edit",
       "mutates": true
     },
@@ -140,6 +164,12 @@
       "method": "remove",
       "permission": "allegati_delete",
       "mutates": true
+    },
+    "allegati.contenuto": {
+      "handler": "allegati",
+      "method": "contenuto",
+      "permission": "allegati_view",
+      "mutates": false
     },
     "agenda.listByRange": {
       "handler": "agenda",
@@ -585,6 +615,12 @@
       "permission": "compensi_view",
       "mutates": false
     },
+    "compensi.flussiStaff": {
+      "handler": "compensi",
+      "method": "flussiStaff",
+      "permission": "compensi_view",
+      "mutates": false
+    },
     "postazioni.profilo": {
       "handler": "postazioni",
       "method": "profilo",
@@ -705,6 +741,18 @@
       "method": "cambiaPaziente",
       "permission": "trasmissione_cambia_paziente",
       "mutates": true
+    },
+    "trasmissioni.applicaDossierAggiornato": {
+      "handler": "trasmissioni",
+      "method": "applicaDossierAggiornato",
+      "permission": "trasmissione_ricevi",
+      "mutates": true
+    },
+    "trasmissioni.scaricaAllegato": {
+      "handler": "trasmissioni",
+      "method": "scaricaAllegato",
+      "permission": "trasmissione_ricevi",
+      "mutates": false
     },
     "atti.registra": {
       "handler": "atti",

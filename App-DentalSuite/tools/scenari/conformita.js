@@ -136,6 +136,22 @@ module.exports = async function scenario({ chiama, verifica, assertOk, assertKo,
         maturato.per_categoria.length === 1 && maturato.per_categoria[0].etichetta === 'conservativa'
         && maturato.per_giorno[0].etichetta === '2026-08-12',
         `${maturato.per_categoria[0].etichetta} / ${maturato.per_giorno[0].etichetta}`);
+    verifica('Il maturato include il paziente associato',
+        maturato.voci.length === 1 && maturato.voci[0].paziente.includes('Rossi'),
+        maturato.voci[0].paziente);
+    verifica('Il maturato include raggruppamento per prestazione con ids',
+        maturato.per_prestazione.length === 1 && maturato.per_prestazione[0].ids.length === 1,
+        maturato.per_prestazione[0].etichetta);
+
+    const flussiStaff = assertOk('Flussi staff a 360 gradi calcolati', await chiama('compensi.flussiStaff', {
+        staff_id: igienista.id, dal: '2026-08-01', al: '2026-08-31'
+    }));
+    verifica('I flussi calcolano produzione, margine e competenze',
+        flussiStaff.totale_prodotto === 150 && flussiStaff.competenze_maturate === 90 && flussiStaff.margine_studio === 40,
+        `prod ${flussiStaff.totale_prodotto}, comp ${flussiStaff.competenze_maturate}, marg ${flussiStaff.margine_studio}`);
+    verifica('I flussi includono andamento mensile e top prestazioni',
+        flussiStaff.flusso_mensile.length >= 1 && flussiStaff.top_prestazioni.length >= 1,
+        `${flussiStaff.flusso_mensile.length} mesi`);
 
     const soloVariabile = assertOk('Liquidazione della sola parte variabile', await chiama('compensi.liquida', {
         staff_id: igienista.id, periodo_dal: '2026-08-01', periodo_al: '2026-08-31',

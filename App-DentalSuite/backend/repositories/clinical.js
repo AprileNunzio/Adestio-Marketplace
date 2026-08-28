@@ -15,10 +15,13 @@ const pazienti = createRepository('pazienti', [
 ], { label: 'Paziente', orderBy: 'cognome ASC, nome ASC', systemColumns: AUTORE });
 
 const anamnesi = createRepository('anamnesi', [
-    'paziente_id', 'allergie_farmaci', 'allergie_materiali', 'patologie_cardiovascolari',
+    'paziente_id', 'allergie_farmaci', 'allergie_materiali', 'intolleranze', 'patologie_cardiovascolari',
     'terapia_anticoagulanti', 'diabete', 'ipertensione', 'epatiti_hiv',
     'osteoporosi_bifosfonati', 'fumatore', 'gravidanza', 'ansia_odontoiatrica', 'bruxismo',
-    'altre_patologie', 'terapie_in_corso', 'note_mediche', 'data_compilazione'
+    'altre_patologie', 'terapie_in_corso', 'note_mediche', 'data_compilazione',
+    'patologie_strutturate', 'allergie_strutturate', 'intolleranze_strutturate',
+    'valutazione_rischio', 'stile_vita_strutturato', 'farmaci_abituali',
+    'data_revisione', 'medico_revisore_id'
 ], { label: 'Anamnesi', systemColumns: AUTORE });
 
 const odontogramma = createRepository('odontogramma', [
@@ -29,7 +32,8 @@ const odontogramma = createRepository('odontogramma', [
 const trattamenti = createRepository('trattamenti_paziente', [
     'paziente_id', 'prestazione_id', 'descrizione', 'dente', 'superfici', 'medico_id',
     'segretaria_id', 'poltrona_id', 'data_trattamento', 'stato', 'importo',
-    'quota_medico', 'quota_segretaria', 'costo_materiali', 'liquidazione_id', 'note'
+    'quota_medico', 'quota_segretaria', 'costo_materiali', 'liquidazione_id', 'note',
+    'anestesia', 'lotto_materiali'
 ], { label: 'Trattamento', orderBy: 'data_trattamento DESC', systemColumns: AUTORE });
 
 const prescrizioni = createRepository('prescrizioni_farmaci', [
@@ -43,4 +47,8 @@ const allegati = createRepository('allegati_diagnostici', [
     'visione_path', 'larghezza', 'altezza', 'derivate_stato'
 ], { label: 'Referto', orderBy: 'data_esame DESC', systemColumns: AUTORE });
 
-module.exports = { pazienti, anamnesi, odontogramma, trattamenti, prescrizioni, allegati };
+const prontuarioFarmaci = createRepository('prontuario_farmaci_studio', [
+    'farmaco', 'principio_attivo', 'categoria', 'dosaggio', 'posologia', 'durata_giorni', 'note'
+], { label: 'Farmaco Prontuario', orderBy: 'farmaco ASC', systemColumns: AUTORE });
+
+module.exports = { pazienti, anamnesi, odontogramma, trattamenti, prescrizioni, allegati, prontuarioFarmaci };

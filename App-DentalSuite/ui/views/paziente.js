@@ -43,7 +43,7 @@ export default {
                     return vuoto({ titolo: 'Cartella non trovata', simbolo: 'person_off' });
                 }
 
-                const contenuto = el('div', {});
+                const contenuto = el('div', { class: 'ds-root' });
 
                 const mostra = async idScheda => {
                     attiva = idScheda;

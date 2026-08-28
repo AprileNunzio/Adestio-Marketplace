@@ -8,30 +8,24 @@ const identita = require('../rete/identita');
 function righeDiQuestaPostazione() {
     const locale = identita.scheda();
     if (!locale) return [];
-    return trasmissioni.findAll({ stato: 'aperta' }).filter(riga =>
+    return trasmissioni.findAll({ where: { stato: 'aperta' } }).filter(riga =>
         riga.impronta_postazione && riga.impronta_postazione === locale.impronta
     );
 }
 
 async function chiudiPerRete(payload = {}) {
     const motivo = payload.motivo || 'seduta chiusa dalla segreteria';
-    const attualeSeduta = seduta.istantanea();
-
-    if (payload.trasmissione_id
-        && attualeSeduta.trasmissione_id
-        && payload.trasmissione_id !== attualeSeduta.trasmissione_id) {
-        return { chiusa: false, ignorata: true };
-    }
-
     const versione = seduta.svuota(motivo);
 
     for (const riga of righeDiQuestaPostazione()) {
         if (payload.trasmissione_id && riga.id !== payload.trasmissione_id) continue;
-        await trasmissioni.update(riga.id, {
-            stato: 'chiusa',
-            chiusa_il: Date.now(),
-            motivo_chiusura: motivo
-        }, actor.stamp());
+        try {
+            await trasmissioni.update(riga.id, {
+                stato: 'chiusa',
+                chiusa_il: Date.now(),
+                motivo_chiusura: motivo
+            }, actor.stamp());
+        } catch (_) {}
     }
 
     return { chiusa: true, versione };

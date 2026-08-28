@@ -256,11 +256,36 @@ async function remove(payload = {}) {
     return { id: payload.id };
 }
 
+async function contenuto(payload = {}) {
+    const riga = allegati.requireById(payload.id, { includeArchived: true });
+    const tipo = tipoDi(riga);
+    const variante = VARIANTI.includes(payload.variante) ? payload.variante : 'visione';
+    let percorso = percorsoVariante(riga, variante);
+    if (!percorso || !fs.existsSync(percorso)) percorso = riga.file_path;
+    if (!percorso || !fs.existsSync(percorso)) throw notFoundError('File del referto non presente su disco');
+    const statistiche = fs.statSync(percorso);
+    const buffer = fs.readFileSync(percorso);
+    const mime = tipo.mime || 'application/octet-stream';
+    return {
+        id: riga.id,
+        titolo: riga.titolo || riga.file_name,
+        tipo: riga.tipo,
+        mime_type: riga.mime_type,
+        data_esame: riga.data_esame,
+        note: riga.note || '',
+        dimensione: statistiche.size,
+        mime,
+        immagine: tipo.immagine || percorso.endsWith('.webp'),
+        data_url: `data:${mime};base64,${buffer.toString('base64')}`
+    };
+}
+
 module.exports = {
     listByPaziente,
     upload,
     open,
     remove,
+    contenuto,
     porzione,
     daDerivare,
     salvaDerivate,

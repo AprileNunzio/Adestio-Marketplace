@@ -139,10 +139,20 @@ export default {
                     },
                     {
                         titolo: '',
-                        rendi: riga => azioniRiga([
+                        rendi: (riga, idx) => azioniRiga([
+                            bottone({
+                                simbolo: 'visibility', variante: 'primario', piccolo: true,
+                                etichetta: 'Visualizza',
+                                titolo: 'Apri nel visualizzatore diagnostico',
+                                onClick: () => {
+                                    import('../shared/visualizzatore_diagnostico.js').then(m => {
+                                        m.apriVisualizzatoreDiagnostico({ referti: righe, indiceIniziale: idx });
+                                    });
+                                }
+                            }),
                             bottone({
                                 simbolo: 'open_in_new', variante: 'ghost', piccolo: true,
-                                titolo: 'Apri referto', onClick: () => apriFile(riga)
+                                titolo: 'Apri file esterno', onClick: () => apriFile(riga)
                             }),
                             puoEliminare ? bottone({
                                 simbolo: 'delete', variante: 'ghost', piccolo: true,

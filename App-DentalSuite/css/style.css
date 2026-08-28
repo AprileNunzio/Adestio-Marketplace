@@ -5,6 +5,8 @@
 @import "./riunito.css";
 @import "./turni.css";
 @import "./grafici.css";
+@import "./anamnesi.css";
+@import "./prescrizioni.css";
 
 .ds-root {
     --ds-accent: #0d9488;
@@ -234,7 +236,7 @@
 .ds-badge--neutral { background: color-mix(in srgb, var(--ds-muted) 16%, transparent); color: var(--ds-muted); }
 
 .ds-empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 3rem 1.5rem; text-align: center; color: var(--ds-muted); }
-.ds-empty .material-symbols-rounded { font-size: 2.6rem; color: var(--ds-accent); opacity: .45; }
+.ds-empty > .material-symbols-rounded, .ds-empty > .material-symbols-outlined { font-size: 2.6rem; color: var(--ds-accent); opacity: .45; }
 .ds-empty__title { font-weight: 620; color: var(--ds-text); font-size: .95rem; }
 .ds-empty__text { font-size: .82rem; max-width: 46ch; line-height: 1.55; }
 .ds-empty__azione { margin-top: .7rem; }
@@ -413,9 +415,9 @@
 .ds-bar__fill { height: 100%; border-radius: 999px; background: var(--ds-accent); }
 .ds-bar__value { font-variant-numeric: tabular-nums; font-weight: 600; }
 
-.ds-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 22rem)); gap: .7rem 1.2rem; justify-content: start; }
-.ds-kv__label { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ds-muted); font-weight: 600; }
-.ds-kv__value { font-size: .88rem; }
+.ds-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1.1rem 1.6rem; justify-content: start; }
+.ds-kv__label { font-size: .73rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ds-muted); font-weight: 600; margin-bottom: .3rem; }
+.ds-kv__value { font-size: .92rem; font-weight: 520; color: var(--ds-text); word-break: break-word; line-height: 1.4; }
 
 
 .ds-firma { display: flex; flex-direction: column; gap: .5rem; }

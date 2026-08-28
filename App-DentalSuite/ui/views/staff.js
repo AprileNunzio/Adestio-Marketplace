@@ -12,6 +12,7 @@ import { SEZIONI_STAFF, STAFF_VUOTO, TONI_RUOLO } from './forms/staff_form.js';
 import { rendiLiquidazioni } from './staff/liquidazioni.js';
 import { rendiAccordi } from './staff/accordi.js';
 import { rendiTurni } from './staff/turni.js';
+import { rendiFlussiStaff } from './staff/flussi.js';
 
 export default {
     rendi: async ({ indietro }) => {
@@ -70,6 +71,10 @@ export default {
                     });
                     if (id === 'liquidazioni') {
                         rimpiazza(contenuto, await rendiLiquidazioni({ collaboratori: attivi, permessi }));
+                        return;
+                    }
+                    if (id === 'flussi') {
+                        rimpiazza(contenuto, await rendiFlussiStaff({ collaboratori: attivi, staffInizialeId: scelto }));
                         return;
                     }
                     if (id === 'turni') {
@@ -154,7 +159,8 @@ export default {
                     { id: 'collaboratori', titolo: 'Collaboratori', simbolo: 'groups', attiva: true },
                     { id: 'turni', titolo: 'Turni & Assenze', simbolo: 'schedule', attiva: permessi.turniVista },
                     { id: 'accordi', titolo: 'Accordi economici', simbolo: 'handshake', attiva: permessi.compensi },
-                    { id: 'liquidazioni', titolo: 'Compensi & Liquidazioni', simbolo: 'payments', attiva: permessi.compensi }
+                    { id: 'liquidazioni', titolo: 'Compensi & Liquidazioni', simbolo: 'payments', attiva: permessi.compensi },
+                    { id: 'flussi', titolo: 'Flussi & Rendimento', simbolo: 'insights', attiva: permessi.compensi }
                 ];
 
                 const barra = el('nav', { class: 'ds-tabs' }, schede.map(voce => el('button', {

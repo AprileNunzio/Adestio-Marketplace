@@ -1,10 +1,11 @@
+import { el } from '../../components/dom.js';
 import { pannello, coppie } from '../../components/layout.js';
 import * as fmt from '../../kernel/format.js';
 
 const SESSI = { M: 'Maschile', F: 'Femminile', X: 'Non specificato' };
 
 export default {
-    rendi: async ({ paziente }) => [
+    rendi: async ({ paziente }) => el('div', { class: 'ds-root' }, [
         pannello({ titolo: 'Dati anagrafici' }, coppie([
             { etichetta: 'Nominativo', valore: paziente.nominativo },
             { etichetta: 'Codice fiscale', valore: paziente.codice_fiscale },
@@ -15,7 +16,7 @@ export default {
             { etichetta: 'Professione', valore: paziente.professione },
             { etichetta: 'Gruppo sanguigno', valore: paziente.gruppo_sanguigno }
         ])),
-        pannello({ titolo: 'Recapiti' }, coppie([
+        pannello({ titolo: 'Recapiti e comunicazioni' }, coppie([
             { etichetta: 'Telefono', valore: paziente.telefono },
             { etichetta: 'Email', valore: paziente.email },
             { etichetta: 'Indirizzo', valore: paziente.indirizzo },
@@ -23,14 +24,14 @@ export default {
             { etichetta: 'PEC', valore: paziente.pec },
             { etichetta: 'Codice SDI', valore: paziente.codice_sdi }
         ])),
-        pannello({ titolo: 'Copertura sanitaria' }, coppie([
+        pannello({ titolo: 'Copertura sanitaria e medico curante' }, coppie([
             { etichetta: 'Esenzioni', valore: paziente.esenzioni },
             { etichetta: 'Assicurazione', valore: paziente.assicurazione },
             { etichetta: 'Numero polizza', valore: paziente.numero_polizza },
             { etichetta: 'Medico curante', valore: paziente.medico_curante },
             { etichetta: 'Telefono curante', valore: paziente.tel_medico_curante }
         ])),
-        pannello({ titolo: 'Emergenze e consensi' }, coppie([
+        pannello({ titolo: 'Emergenze, preferenze e consensi' }, coppie([
             { etichetta: 'Contatto emergenza', valore: paziente.contatto_emergenza_nome },
             { etichetta: 'Parentela', valore: paziente.contatto_emergenza_parentela },
             { etichetta: 'Telefono emergenza', valore: paziente.contatto_emergenza_tel },
@@ -44,5 +45,5 @@ export default {
             },
             { etichetta: 'Note', valore: paziente.note }
         ]))
-    ]
+    ])
 };

@@ -126,6 +126,7 @@ function scheda(corrente) {
     const voce = corrente || riga();
     if (!voce) return null;
     return {
+        applicazione: 'adestio_dental_suite',
         id: voce.id,
         nome: voce.nome,
         ruolo: voce.ruolo,

@@ -1,0 +1,424 @@
+.ds-anamnesi-root {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.ds-anamnesi-tabs {
+    display: flex;
+    gap: 0.35rem;
+    border-bottom: 1px solid var(--ds-line);
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.ds-anamnesi-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.65rem 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--ds-muted);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 580;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    border-radius: var(--ds-radius-sm) var(--ds-radius-sm) 0 0;
+}
+
+.ds-anamnesi-tab:hover {
+    color: var(--ds-text);
+    background: var(--ds-accent-soft);
+}
+
+.ds-anamnesi-tab--active {
+    color: var(--ds-accent);
+    border-bottom-color: var(--ds-accent);
+    background: var(--ds-accent-soft);
+}
+
+.ds-anamnesi-tab .material-symbols-rounded {
+    font-size: 1.15rem;
+}
+
+.ds-anamnesi-sezione {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ds-section-intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+.ds-section-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 650;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ds-text);
+}
+
+.ds-section-title .material-symbols-rounded {
+    color: var(--ds-accent);
+}
+
+.ds-anamnesi-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    background: var(--ds-surface-raised);
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--ds-radius-sm);
+    border: 1px solid var(--ds-line);
+}
+
+.ds-search-field {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.ds-search-field .material-symbols-rounded {
+    color: var(--ds-muted);
+}
+
+.ds-search-input {
+    border: none;
+    background: transparent;
+    padding: 0.35rem 0.5rem;
+    box-shadow: none !important;
+}
+
+.ds-search-input:focus {
+    border: none;
+}
+
+.ds-counter-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+}
+
+.ds-category-card {
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-line);
+    border-radius: var(--ds-radius);
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ds-category-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ds-category-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.ds-category-title .material-symbols-rounded {
+    color: var(--ds-accent);
+    font-size: 1.3rem;
+}
+
+.ds-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ds-chip-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+}
+
+.ds-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--ds-line);
+    background: var(--ds-surface-raised);
+    color: var(--ds-text);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 520;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    user-select: none;
+}
+
+.ds-chip .material-symbols-rounded {
+    font-size: 1.05rem;
+    opacity: 0.6;
+}
+
+.ds-chip:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ds-accent) 15%, transparent);
+    border-color: var(--ds-accent-line);
+    color: var(--ds-accent);
+    transform: translateY(-1px);
+}
+
+.ds-chip--active {
+    background: var(--ds-accent);
+    color: #ffffff;
+    border-color: var(--ds-accent);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--ds-accent) 35%, transparent);
+}
+
+.ds-chip--active .material-symbols-rounded {
+    opacity: 1;
+}
+
+.ds-chip--critica.ds-chip--active {
+    background: var(--ds-danger);
+    border-color: var(--ds-danger);
+    color: #ffffff;
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--ds-danger) 35%, transparent);
+}
+
+.ds-chip--attenzione.ds-chip--active {
+    background: var(--ds-warning);
+    border-color: var(--ds-warning);
+    color: #ffffff;
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--ds-warning) 35%, transparent);
+}
+
+.ds-chip--custom.ds-chip--active {
+    background: #6366f1;
+    border-color: #6366f1;
+    color: #ffffff;
+}
+
+.ds-chip__details {
+    width: 170px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.78rem;
+    border-radius: var(--ds-radius-sm);
+}
+
+.ds-chip__details-text {
+    font-size: 0.78rem;
+    color: var(--ds-muted);
+    font-style: italic;
+}
+
+.ds-custom-adder {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 320px;
+    margin-top: 0.25rem;
+}
+
+.ds-custom-adder .ds-input {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+.ds-asa-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.75rem;
+}
+
+.ds-asa-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.95rem 1rem;
+    border-radius: var(--ds-radius);
+    border: 1px solid var(--ds-line);
+    background: var(--ds-surface);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    transition: all 0.15s ease;
+}
+
+.ds-asa-card:hover:not(:disabled) {
+    border-color: var(--ds-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--ds-shadow);
+}
+
+.ds-asa-card--active {
+    border-color: var(--ds-accent);
+    background: color-mix(in srgb, var(--ds-accent) 8%, transparent);
+    box-shadow: 0 0 0 2px var(--ds-accent);
+}
+
+.ds-asa-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+}
+
+.ds-asa-card--success .ds-asa-card__head .material-symbols-rounded { color: var(--ds-success); }
+.ds-asa-card--info .ds-asa-card__head .material-symbols-rounded { color: var(--ds-info); }
+.ds-asa-card--warning .ds-asa-card__head .material-symbols-rounded { color: var(--ds-warning); }
+.ds-asa-card--danger .ds-asa-card__head .material-symbols-rounded { color: var(--ds-danger); }
+
+.ds-asa-card__desc {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--ds-muted);
+    line-height: 1.45;
+}
+
+.ds-risk-factors-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1.1rem;
+    background: var(--ds-surface);
+    border-radius: var(--ds-radius);
+    border: 1px solid var(--ds-line);
+}
+
+.ds-segmented-control {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    background: var(--ds-surface-raised);
+    padding: 0.3rem;
+    border-radius: var(--ds-radius-sm);
+    border: 1px solid var(--ds-line);
+}
+
+.ds-seg-btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.45rem 0.75rem;
+    border-radius: calc(var(--ds-radius-sm) - 2px);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ds-text);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 550;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.ds-seg-btn:hover:not(:disabled) {
+    background: var(--ds-surface);
+}
+
+.ds-seg-btn--active {
+    background: var(--ds-surface);
+    color: var(--ds-text);
+    border-color: var(--ds-line);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.ds-seg-btn--success.ds-seg-btn--active {
+    background: var(--ds-success);
+    color: #ffffff;
+    border-color: var(--ds-success);
+}
+
+.ds-seg-btn--warning.ds-seg-btn--active {
+    background: var(--ds-warning);
+    color: #ffffff;
+    border-color: var(--ds-warning);
+}
+
+.ds-seg-btn--danger.ds-seg-btn--active {
+    background: var(--ds-danger);
+    color: #ffffff;
+    border-color: var(--ds-danger);
+}
+
+.ds-check--banner {
+    padding: 0.85rem 1rem;
+    background: var(--ds-surface-raised);
+    border-radius: var(--ds-radius-sm);
+    border: 1px solid var(--ds-line);
+}
+
+.ds-anamnesi-live-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ds-sintesi-medica {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ds-sintesi-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-line);
+    border-radius: var(--ds-radius);
+    padding: 1.25rem;
+}
+
+.ds-live-save-badge {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+    transition: all 0.2s ease;
+}
+
+.ds-live-save-badge .material-symbols-rounded {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .ds-anamnesi-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ds-chip-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+    .ds-chip {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .ds-chip__details {
+        width: 100%;
+    }
+    .ds-asa-grid {
+        grid-template-columns: 1fr;
+    }
+}

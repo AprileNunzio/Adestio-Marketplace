@@ -1,9 +1,8 @@
 'use strict';
 
 const { trasmissioni } = require('../repositories/trasmissione');
-const { pari, postazione } = require('../repositories/rete');
+const { postazione } = require('../repositories/rete');
 const seduta = require('../repositories/seduta_volatile');
-const actor = require('../kernel/actor');
 const riscontri = require('./riscontri');
 const sedute = require('./sedute');
 const lettura = require('../repositories/dossier');
@@ -14,183 +13,177 @@ const identita = require('../rete/identita');
 const scopertaMesh = require('../rete/scoperta_mesh');
 const sorveglianza = require('../rete/sorveglianza');
 const invio = require('./trasmissioni_invio');
+const riconciliazione = require('../domain/riconciliazione');
+const { validationError, conflictError, notFoundError } = require('../kernel/errors');
 
 function raggiungibile(voce) {
-    try {
-        if (!voce) return false;
-        if (voce.tipo_connessione === 'canale') return true;
-        return Boolean(voce.ip && voce.porta);
-    } catch (_) {
-        return false;
-    }
+    if (!voce) return false;
+    if (voce.tipo_connessione === 'canale') return true;
+    return Boolean(voce.stato_osservato);
 }
 
-async function destinazioni() {
-    try {
-        const mappa = new Map();
-
-        const pariAccoppiate = pari.findAll({}).filter(voce =>
-            !voce.is_deleted
-            && voce.ruolo === protocollo.RUOLO_RIUNITO
-            && voce.ultimo_indirizzo
-        );
-
-        for (const voce of pariAccoppiate) {
-            mappa.set(voce.id, {
-                sessione_id: voce.id,
-                nome: voce.nome || 'Monitor Studio',
-                impronta: voce.impronta || voce.id,
-                indirizzo: `${voce.ultimo_indirizzo}:${voce.ultima_porta || protocollo.PORTA_SERVIZIO}`,
-                ip: voce.ultimo_indirizzo,
-                porta: Number(voce.ultima_porta) || protocollo.PORTA_SERVIZIO,
-                ruolo: protocollo.RUOLO_RIUNITO,
-                aperta_il: voce.ultimo_contatto || voce.last_modified || Date.now(),
-                in_seduta: false,
-                stato_osservato: false,
-                tipo_connessione: 'accoppiata'
-            });
-        }
-
-        const canaliLocali = trasporto.stato().canali.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
-        for (const voce of canaliLocali) {
-            mappa.set(voce.sessione_id, {
-                ...voce,
-                stato_osservato: false,
-                tipo_connessione: 'canale'
-            });
-        }
-
-        const monitorLan = await scopertaMesh.scansionaMonitors(false);
-        for (const m of monitorLan) {
-            const idSessione = `lan-${m.ip}:${m.porta}`;
-            const perImpronta = [...mappa.values()].find(voce => m.impronta && voce.impronta === m.impronta);
-            if (perImpronta) {
-                perImpronta.ip = m.ip;
-                perImpronta.porta = m.porta;
-                perImpronta.indirizzo = m.indirizzo;
-                perImpronta.in_seduta = Boolean(m.in_seduta);
-                perImpronta.stato_osservato = true;
-                continue;
-            }
-            if (!mappa.has(idSessione)) {
-                mappa.set(idSessione, {
-                    sessione_id: idSessione,
-                    nome: m.nome || `Studio (${m.ip})`,
-                    impronta: m.impronta || m.id,
-                    indirizzo: m.indirizzo,
-                    ip: m.ip,
-                    porta: m.porta,
-                    ruolo: protocollo.RUOLO_RIUNITO,
-                    aperta_il: Date.now(),
-                    in_seduta: Boolean(m.in_seduta),
-                    stato_osservato: true,
-                    tipo_connessione: 'diretto'
-                });
-            }
-        }
-
-        return [...mappa.values()].filter(raggiungibile);
-    } catch (_) {
-        return [];
+function nomiDi(righe) {
+    const nomi = new Map();
+    const ids = [...new Set(righe.map(riga => riga.paziente_id).filter(Boolean))];
+    for (const pid of ids) {
+        try {
+            const scheda = lettura.schedaPaziente(pid);
+            if (scheda) nomi.set(pid, `${scheda.cognome || ''} ${scheda.nome || ''}`.trim());
+        } catch (_) {}
     }
+    return nomi;
 }
 
-async function postazioniDisponibili() {
-    try {
-        const dest = await destinazioni();
-        const aperte = trasmissioni.findAll({ stato: 'aperta' });
-        const chiuseInRiconciliazione = await sedute.riconcilia(aperte, dest);
-        const vive = aperte.filter(riga => chiuseInRiconciliazione.indexOf(riga.id) === -1);
+async function destinazioni(forza = true) {
+    const mappa = new Map();
+    const monitorLan = await scopertaMesh.scansionaMonitors(forza);
 
-        const idsPazienti = [...new Set(vive.map(r => r.paziente_id).filter(Boolean))];
-        const nomiPazienti = new Map();
-        for (const pid of idsPazienti) {
-            try {
-                const p = lettura.schedaPaziente(pid);
-                if (p) nomiPazienti.set(pid, `${p.cognome || ''} ${p.nome || ''}`.trim());
-            } catch (_) {}
-        }
-
-        const collegate = dest.map(voce => {
-            const attiva = vive.find(r =>
-                r.sessione_id === voce.sessione_id
-                || (voce.impronta && r.impronta_postazione === voce.impronta)
-                || (voce.ip && r.indirizzo_consegna && r.indirizzo_consegna.includes(voce.ip))
-            );
-            const inSedutaEffettiva = Boolean(voce.in_seduta) || Boolean(attiva);
-            const pazienteNome = voce.paziente_nome || (attiva && attiva.paziente_id ? (nomiPazienti.get(attiva.paziente_id) || null) : null);
-            const raggiungibileOra = voce.tipo_connessione === 'canale' || Boolean(voce.ip);
-            return {
-                sessione_id: voce.sessione_id,
-                nome: voce.nome,
-                impronta: voce.impronta,
-                indirizzo: voce.indirizzo,
-                tipo_connessione: voce.tipo_connessione,
-                aperta_il: voce.aperta_il,
-                online: raggiungibileOra,
-                in_seduta: inSedutaEffettiva,
-                trasmissione_id: inSedutaEffettiva && attiva ? attiva.id : null,
-                paziente_nome: pazienteNome
-            };
+    const canaliLocali = trasporto.stato().canali.filter(voce => voce.ruolo === protocollo.RUOLO_RIUNITO);
+    for (const voce of canaliLocali) {
+        mappa.set(voce.sessione_id, {
+            ...voce,
+            stato_osservato: true,
+            tipo_connessione: 'canale'
         });
-
-        const irraggiungibili = vive
-            .filter(riga => !dest.some(voce =>
-                voce.sessione_id === riga.sessione_id
-                || (riga.impronta_postazione && voce.impronta === riga.impronta_postazione)))
-            .map(riga => ({
-                trasmissione_id: riga.id,
-                nome: riga.postazione_nome || 'Monitor',
-                motivo: 'monitor non raggiungibile'
-            }));
-
-        return { collegate, irraggiungibili, rete: trasporto.stato() };
-    } catch (_) {
-        return { collegate: [], irraggiungibili: [], rete: null };
     }
+
+    for (const m of monitorLan) {
+        if (!m || !m.ip) continue;
+        const porta = Number(m.porta) || protocollo.PORTA_SERVIZIO;
+        const chiave = `${m.ip}:${porta}`;
+        if (mappa.has(chiave)) continue;
+        mappa.set(chiave, {
+            sessione_id: `lan-${chiave}`,
+            nome: m.nome || `Studio (${m.ip})`,
+            impronta: m.impronta || m.id || chiave,
+            indirizzo: chiave,
+            ip: m.ip,
+            porta,
+            ruolo: protocollo.RUOLO_RIUNITO,
+            aperta_il: Date.now(),
+            in_seduta: Boolean(m.in_seduta),
+            paziente_id: m.paziente_id || null,
+            paziente_nome: m.paziente_nome || null,
+            trasmissione_id: m.trasmissione_id || null,
+            stato_osservato: true,
+            tipo_connessione: 'diretto'
+        });
+    }
+
+    return [...mappa.values()].filter(raggiungibile);
+}
+
+function componiCollegata(voce, riga, nomiPazienti) {
+    const osservato = riconciliazione.osservabile(voce);
+    const inSeduta = osservato ? Boolean(voce.in_seduta) : Boolean(riga);
+    const nomeDaRiga = riga && riga.paziente_id ? nomiPazienti.get(riga.paziente_id) : null;
+
+    return {
+        sessione_id: voce.sessione_id,
+        nome: voce.nome,
+        impronta: voce.impronta,
+        indirizzo: voce.indirizzo,
+        ip: voce.ip || '',
+        porta: voce.porta || 0,
+        tipo_connessione: voce.tipo_connessione,
+        aperta_il: voce.aperta_il,
+        online: true,
+        in_seduta: inSeduta,
+        trasmissione_id: riga ? riga.id : (voce.trasmissione_id || null),
+        paziente_nome: inSeduta ? (nomeDaRiga || voce.paziente_nome || 'Paziente in visita') : null
+    };
+}
+
+function componiOrfana(riga, nomiPazienti) {
+    const recapito = riconciliazione.recapitoRiga(riga);
+    return {
+        sessione_id: riga.sessione_id || riga.id,
+        nome: riga.postazione_nome || 'Monitor dello studio',
+        impronta: riga.impronta_postazione || '',
+        indirizzo: riga.indirizzo_consegna || 'Rete locale LAN',
+        ip: recapito.ip,
+        porta: recapito.ip ? recapito.porta : 0,
+        tipo_connessione: 'diretto',
+        aperta_il: riga.aperta_il || Date.now(),
+        online: false,
+        in_seduta: true,
+        trasmissione_id: riga.id,
+        paziente_nome: nomiPazienti.get(riga.paziente_id) || 'Paziente in visita'
+    };
+}
+
+async function postazioniDisponibili(payload = {}) {
+    const dest = await destinazioni(payload.forza !== false);
+    const aperte = trasmissioni.findAll({ where: { stato: 'aperta' } });
+    const chiuse = await sedute.riconcilia(aperte, dest);
+    const vive = aperte.filter(riga => chiuse.indexOf(riga.id) === -1);
+    const nomiPazienti = nomiDi(vive);
+
+    const collegate = dest.map(voce => componiCollegata(
+        voce,
+        vive.find(riga => riconciliazione.corrisponde(riga, voce)) || null,
+        nomiPazienti
+    ));
+
+    const orfane = vive.filter(riga => !dest.some(voce => riconciliazione.corrisponde(riga, voce)));
+    for (const riga of orfane) {
+        collegate.push(componiOrfana(riga, nomiPazienti));
+    }
+
+    return { collegate, irraggiungibili: orfane.map(riga => riga.id), rete: trasporto.stato() };
+}
+
+async function avvisaChiusuraNodi(recapiti, motivo) {
+    const consegna = require('../rete/consegna');
+    let avvisati = 0;
+    for (const recapito of recapiti) {
+        const esito = await consegna.conRitentativo(recapito.ip, recapito.porta, '/chiudi-diretto', { motivo });
+        if (esito.consegnato) {
+            avvisati += 1;
+            scopertaMesh.impostaStato(recapito.ip, false, '');
+        }
+    }
+    return avvisati;
 }
 
 async function chiudi(payload = {}) {
-    try {
-        let riga = null;
-        if (payload.id) {
-            riga = trasmissioni.findById(payload.id, { includeArchived: true });
-        }
-        if (!riga && payload.sessione_id) {
-            const aperte = trasmissioni.findAll({ stato: 'aperta' });
-            riga = aperte.find(r => r.sessione_id === payload.sessione_id || (payload.impronta && r.impronta_postazione === payload.impronta));
-        }
-        if (!riga) {
-            if (payload.sessione_id) {
-                const dest = await destinazioni();
-                const bersaglio = dest.find(v => v.sessione_id === payload.sessione_id);
-                if (bersaglio) {
-                    await sedute.chiudiPrecedenti(bersaglio, '');
-                    return { id: payload.sessione_id, stato: 'chiusa', monitor_avvisato: true };
-                }
-            }
-            return { stato: 'chiusa' };
-        }
-        if (riga.stato !== 'aperta') return { id: riga.id, stato: riga.stato };
+    const motivo = payload.motivo || 'seduta chiusa dalla segreteria';
+    const riga = payload.id ? trasmissioni.findById(payload.id, { includeArchived: true }) : null;
+    if (payload.id && !riga) throw notFoundError('Trasmissione non trovata');
 
-        const motivo = payload.motivo || 'seduta chiusa dalla segreteria';
-        const esito = await invio.avvisaChiusura(riga, motivo, destinazioni);
+    const dest = await destinazioni(true);
+    const criterio = riconciliazione.criterioDaPayload(payload, riga);
+    const nodo = riconciliazione.risolviNodo(dest, criterio);
+    const recapiti = riconciliazione.recapitiDiChiusura(nodo, criterio);
 
-        await trasmissioni.update(riga.id, {
-            stato: 'chiusa',
-            chiusa_il: Date.now(),
-            motivo_chiusura: motivo
-        }, actor.stamp());
-
-        return {
-            id: riga.id,
-            stato: 'chiusa',
-            monitor_avvisato: esito.consegnato,
-            avviso_motivo: esito.motivo
-        };
-    } catch (e) {
-        throw e;
+    if (!riga && recapiti.length === 0) {
+        throw validationError('Monitor da chiudere non identificabile');
     }
+
+    const avvisati = await avvisaChiusuraNodi(recapiti, motivo);
+
+    const aperte = trasmissioni.findAll({ where: { stato: 'aperta' } });
+    const candidati = new Set([
+        ...(nodo ? riconciliazione.righeDelNodo(aperte, nodo) : []),
+        ...riconciliazione.righeDelNodo(aperte, riconciliazione.comeNodo(criterio))
+    ].map(voce => voce.id));
+    if (riga && riga.stato === 'aperta') candidati.add(riga.id);
+
+    const chiuse = await sedute.chiudiRighe([...candidati], motivo);
+
+    if (chiuse.length === 0 && avvisati === 0) {
+        throw conflictError('Il monitor non ha risposto e non risulta alcuna seduta aperta da chiudere');
+    }
+
+    scopertaMesh.invalidaCache();
+    scopertaMesh.diffondiStatoLive();
+
+    return {
+        id: (riga && riga.id) || payload.sessione_id || 'chiusura',
+        stato: 'chiusa',
+        schede_chiuse: chiuse.length,
+        monitor_avvisati: avvisati
+    };
 }
 
 async function diagnosticaRete() {
@@ -203,10 +196,33 @@ async function diagnosticaRete() {
 
 async function elencoTrasmissioni(payload = {}) {
     try {
-        const righe = trasmissioni.findAll({
-            orderBy: 'aperta_il DESC',
-            limit: Number(payload.dimensione) || 20
-        });
+        let righe = trasmissioni.findPage({
+            ordina: 'aperta_il DESC',
+            dimensione: Number(payload.dimensione) || 100
+        }).righe;
+
+        if (payload.data) {
+            const dataStr = String(payload.data).slice(0, 10);
+            righe = righe.filter(r => {
+                const t = Number(r.aperta_il || 0);
+                if (!t) return false;
+                const d = new Date(t);
+                const aaaa = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const gg = String(d.getDate()).padStart(2, '0');
+                return `${aaaa}-${mm}-${gg}` === dataStr;
+            });
+        }
+
+        if (payload.poltrona) {
+            const cercaPoltrona = String(payload.poltrona).toLowerCase().trim();
+            righe = righe.filter(r => (r.postazione_nome || '').toLowerCase().includes(cercaPoltrona));
+        }
+
+        if (payload.stato) {
+            righe = righe.filter(r => r.stato === payload.stato);
+        }
+
         const idsPazienti = [...new Set(righe.map(r => r.paziente_id).filter(Boolean))];
         const nomiPazienti = new Map();
         for (const pid of idsPazienti) {
@@ -244,12 +260,29 @@ async function attiva(payload = {}) {
                 versione: (aggiornata && aggiornata.versione) || 0,
                 trasmissione_id: (aggiornata && aggiornata.trasmissione_id) || '',
                 origine: (aggiornata && aggiornata.origine) || '',
+                servitore_info: (aggiornata && aggiornata.servitore_info) || null,
                 dossier: (aggiornata && aggiornata.dossier) || null,
                 motivo: (aggiornata && aggiornata.origine) || ''
             };
         }
 
         const locale = seduta.estrai();
+
+        if ((payload.ricarica === true || payload.forza === true) && locale && locale.dossier && locale.dossier.paziente && locale.dossier.paziente.id) {
+            try {
+                const comp = require('../domain/composizione_dossier');
+                const dentizione = locale.dossier.odontogramma ? locale.dossier.odontogramma.dentizione : null;
+                const nuovoDossier = comp.componiDossier(locale.dossier.paziente.id, dentizione);
+                if (nuovoDossier) {
+                    seduta.riponi(nuovoDossier, {
+                        trasmissione_id: locale.trasmissione_id || `tx-${Date.now()}`,
+                        origine: locale.origine || 'ricarica'
+                    }, seduta.mittente());
+                    return seduta.estrai();
+                }
+            } catch (_) {}
+        }
+
         if (locale && locale.presente && locale.dossier) {
             return locale;
         }
@@ -266,12 +299,83 @@ async function attiva(payload = {}) {
     }
 }
 
+async function applicaDossierAggiornato(payload = {}) {
+    try {
+        if (!payload.dossier) return { successo: false };
+        const locale = seduta.estrai();
+        seduta.riponi(payload.dossier, {
+            trasmissione_id: locale ? locale.trasmissione_id : '',
+            origine: 'aggiornato da remoto'
+        }, seduta.mittente());
+        return { successo: true };
+    } catch (_) {
+        return { successo: false };
+    }
+}
+
 async function scaricaAllegato(payload = {}) {
     try {
-        const allegati = require('../repositories/allegati');
+        const allegatiHandler = require('./allegati');
         if (!payload.id) return { successo: false, errore: 'ID allegato mancante' };
-        const record = await allegati.get(payload.id);
-        return { successo: Boolean(record), allegato: record };
+
+        try {
+            const locale = await allegatiHandler.contenuto({ id: payload.id });
+            if (locale && locale.data_url) {
+                return { successo: true, ...locale };
+            }
+        } catch (_) {}
+
+        const http = require('http');
+        const fetchNode = (ip, porta) => new Promise(resolve => {
+            try {
+                const req = http.request({
+                    hostname: ip,
+                    port: Number(porta) || protocollo.PORTA_SERVIZIO,
+                    path: '/allegato-contenuto',
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 4500
+                }, res => {
+                    if (res.statusCode !== 200) return resolve(null);
+                    let body = '';
+                    res.on('data', c => body += c);
+                    res.on('end', () => {
+                        try {
+                            const json = JSON.parse(body);
+                            resolve(json && json.data_url ? json : null);
+                        } catch (_) {
+                            resolve(null);
+                        }
+                    });
+                });
+                req.on('error', () => resolve(null));
+                req.on('timeout', () => { try { req.destroy(); } catch (_) {} resolve(null); });
+                req.write(JSON.stringify({ id: payload.id }));
+                req.end();
+            } catch (_) {
+                resolve(null);
+            }
+        });
+
+        const mitt = seduta.mittente();
+        if (mitt && mitt.ip) {
+            const res = await fetchNode(mitt.ip, mitt.porta);
+            if (res) return { successo: true, ...res };
+        }
+
+        if (payload.server && payload.server.ip) {
+            const res = await fetchNode(payload.server.ip, payload.server.porta);
+            if (res) return { successo: true, ...res };
+        }
+
+        const stazioni = await scopertaMesh.scansionaStazioni(true);
+        for (const s of (stazioni || [])) {
+            if (!s.ip) continue;
+            const res = await fetchNode(s.ip, s.porta);
+            if (res) return { successo: true, ...res };
+        }
+
+        return { successo: false, errore: 'File non presente sui nodi dello studio' };
     } catch (e) {
         return { successo: false, errore: e.message };
     }
@@ -302,6 +406,7 @@ module.exports = {
     dichiaraSchermo,
     scaricaAllegato,
     attiva,
+    applicaDossierAggiornato,
     diagnosticaRete,
     heartbeatPostazione,
     cambiaPaziente: invio.cambiaPaziente,

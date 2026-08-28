@@ -26,6 +26,11 @@ function registra(dati, indirizzo) {
         indirizzo,
         porta: Number(dati.porta) || protocollo.PORTA_SERVIZIO,
         versione_protocollo: Number(dati.versione_protocollo) || 0,
+        in_seduta: Boolean(dati.in_seduta),
+        paziente_id: dati.paziente_id || null,
+        paziente_nome: dati.paziente_nome || null,
+        trasmissione_id: dati.trasmissione_id || null,
+        stato_attivita: dati.stato_attivita || (dati.in_seduta ? 'in_visita' : 'libero'),
         visto_il: Date.now()
     });
 }
@@ -33,6 +38,25 @@ function registra(dati, indirizzo) {
 function messaggio() {
     const locale = identita.scheda();
     if (!locale) return null;
+
+    let inSeduta = false;
+    let pazienteId = null;
+    let pazienteNome = null;
+    let trasmissioneId = null;
+    let statoAttivita = 'libero';
+
+    try {
+        const seduta = require('../repositories/seduta_volatile');
+        const s = seduta.istantanea();
+        if (s && s.presente && s.dossier && s.dossier.paziente) {
+            inSeduta = true;
+            pazienteId = s.dossier.paziente.id || null;
+            pazienteNome = `${s.dossier.paziente.cognome || ''} ${s.dossier.paziente.nome || ''}`.trim() || 'Paziente in seduta';
+            trasmissioneId = s.trasmissione_id || null;
+            statoAttivita = 'in_visita';
+        }
+    } catch (_) {}
+
     return Buffer.from(JSON.stringify({
         applicazione: 'adestio_dental_suite',
         versione_protocollo: protocollo.VERSIONE,
@@ -40,7 +64,13 @@ function messaggio() {
         nome: locale.nome,
         ruolo: locale.ruolo,
         porta: locale.porta,
-        impronta: locale.impronta
+        impronta: locale.impronta,
+        in_seduta: inSeduta,
+        paziente_id: pazienteId,
+        paziente_nome: pazienteNome,
+        trasmissione_id: trasmissioneId,
+        stato_attivita: statoAttivita,
+        aggiornato_il: Date.now()
     }), 'utf8');
 }
 

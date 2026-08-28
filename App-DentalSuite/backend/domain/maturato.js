@@ -17,23 +17,28 @@ function raggruppa(voci, chiave) {
     const mappa = new Map();
     voci.forEach(voce => {
         const gruppo = chiave(voce) || 'non classificato';
-        const corrente = mappa.get(gruppo) || { etichetta: gruppo, totale: 0, voci: 0 };
+        const corrente = mappa.get(gruppo) || { etichetta: gruppo, totale: 0, voci: 0, ids: [] };
         corrente.totale = money.round(corrente.totale + voce.quota);
         corrente.voci += 1;
+        corrente.ids.push(voce.id);
         mappa.set(gruppo, corrente);
     });
     return [...mappa.values()].sort((primo, secondo) => secondo.totale - primo.totale);
 }
 
-function componiVoci(trattamenti, staffId, catalogo) {
+function componiVoci(trattamenti, staffId, catalogo, mappaPazienti) {
     return trattamenti
         .map(trattamento => {
             const prestazione = catalogo.get(trattamento.prestazione_id) || null;
+            const pz = mappaPazienti ? mappaPazienti.get(trattamento.paziente_id) : null;
+            const nomePaziente = pz ? `${pz.cognome} ${pz.nome}`.trim() : '';
             return {
                 id: trattamento.id,
                 data: trattamento.data_trattamento,
                 descrizione: trattamento.descrizione,
+                dente: trattamento.dente || '',
                 paziente_id: trattamento.paziente_id,
+                paziente: nomePaziente,
                 prestazione_id: trattamento.prestazione_id,
                 categoria: prestazione ? prestazione.categoria : '',
                 branca: prestazione ? prestazione.branca : '',
@@ -58,8 +63,8 @@ function mensilitaAperte(compensoMensile, dal, al, periodiGiaLiquidati) {
     };
 }
 
-function componi({ trattamenti, staffId, catalogo, compensoMensile, dal, al, periodiLiquidati }) {
-    const voci = componiVoci(trattamenti, staffId, catalogo);
+function componi({ trattamenti, staffId, catalogo, mappaPazienti, compensoMensile, dal, al, periodiLiquidati }) {
+    const voci = componiVoci(trattamenti, staffId, catalogo, mappaPazienti);
     const fisso = mensilitaAperte(compensoMensile, dal, al, periodiLiquidati);
     const totaleVariabile = money.sum(voci.map(voce => voce.quota));
 
@@ -86,6 +91,7 @@ function selezione(maturato, richiesta = {}) {
     const voci = maturato.voci.filter(voce => {
         if (idRichiesti) return idRichiesti.has(voce.id);
         if (richiesta.categoria) return voce.categoria === richiesta.categoria;
+        if (richiesta.prestazione) return voce.descrizione === richiesta.prestazione;
         if (richiesta.giorno) return voce.data === richiesta.giorno;
         if (richiesta.solo_mensilita === true) return false;
         return true;
@@ -94,7 +100,7 @@ function selezione(maturato, richiesta = {}) {
     const mensilita = maturato.mensilita_aperte.filter(voce => {
         if (periodiRichiesti) return periodiRichiesti.has(voce.periodo);
         if (richiesta.escludi_mensilita === true) return false;
-        if (idRichiesti || richiesta.categoria || richiesta.giorno) return false;
+        if (idRichiesti || richiesta.categoria || richiesta.prestazione || richiesta.giorno) return false;
         return true;
     });
 

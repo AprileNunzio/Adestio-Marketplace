@@ -50,7 +50,9 @@ function arricchisci(payload) {
         importo: ripartizione.importo,
         quota_medico: ripartizione.quota_medico,
         quota_segretaria: ripartizione.quota_segretaria,
-        costo_materiali: ripartizione.costo_materiali
+        costo_materiali: ripartizione.costo_materiali,
+        anestesia: payload.anestesia || '',
+        lotto_materiali: payload.lotto_materiali || ''
     };
 }
 
@@ -60,6 +62,86 @@ function valida(payload) {
         throw validationError(`Stato trattamento non valido: ${payload.stato}`);
     }
     if (Number(payload.importo) < 0) throw validationError("L'importo non può essere negativo");
+}
+
+function suggerisci(payload = {}) {
+    const prestazione = payload.prestazione_id ? prestazioni.findById(payload.prestazione_id) : null;
+    const importo = payload.importo !== undefined && payload.importo !== ''
+        ? money.round(payload.importo)
+        : money.round(prestazione ? prestazione.prezzo_paziente : 0);
+    const data = payload.data_trattamento || '';
+
+    const tuttiAccordi = accordi.findAll({ where: { attivo: 1 } });
+    const tuttiStaff = staff.findAll({ includeArchived: false });
+
+    let suggeritoSegretariaId = payload.segretaria_id || '';
+    let suggeritoMedicoId = payload.medico_id || '';
+    let motivoSegretaria = '';
+    let motivoMedico = '';
+
+    if (prestazione && !suggeritoSegretariaId) {
+        for (const s of tuttiStaff) {
+            if (s.ruolo === 'aso' || s.ruolo === 'segreteria' || s.ruolo === 'amministrazione') {
+                const accordiStaff = tuttiAccordi.filter(a => a.staff_id === s.id && a.ruolo === 'assistente');
+                const accordo = accordiDominio.risolvi(accordiStaff, prestazione, 'assistente', data);
+                if (accordo) {
+                    suggeritoSegretariaId = s.id;
+                    motivoSegretaria = `Accordo economico (${s.cognome} ${s.nome})`;
+                    break;
+                }
+            }
+        }
+        if (!suggeritoSegretariaId) {
+            const assistenti = tuttiStaff.filter(s => s.ruolo === 'aso' || s.ruolo === 'segreteria');
+            if (assistenti.length === 1) {
+                suggeritoSegretariaId = assistenti[0].id;
+                motivoSegretaria = 'Unico assistente in organico';
+            }
+        }
+    }
+
+    if (prestazione && !suggeritoMedicoId) {
+        for (const s of tuttiStaff) {
+            if (s.ruolo === 'medico' || s.ruolo === 'odontoiatra' || s.ruolo === 'igienista') {
+                const accordiStaff = tuttiAccordi.filter(a => a.staff_id === s.id && a.ruolo === 'medico');
+                const accordo = accordiDominio.risolvi(accordiStaff, prestazione, 'medico', data);
+                if (accordo && (accordo.ambito === 'prestazione' || accordo.ambito === 'categoria' || accordo.ambito === 'branca')) {
+                    suggeritoMedicoId = s.id;
+                    motivoMedico = `Accordo economico (${s.cognome} ${s.nome})`;
+                    break;
+                }
+            }
+        }
+        if (!suggeritoMedicoId) {
+            const medici = tuttiStaff.filter(s => s.ruolo === 'medico' || s.ruolo === 'odontoiatra' || s.ruolo === 'igienista');
+            if (medici.length === 1) {
+                suggeritoMedicoId = medici[0].id;
+                motivoMedico = 'Unico operatore in organico';
+            }
+        }
+    }
+
+    const qMed = quotaDaAccordo(suggeritoMedicoId, prestazione, 'medico', data, importo);
+    const qSeg = quotaDaAccordo(suggeritoSegretariaId, prestazione, 'assistente', data, importo);
+    const sovrascritture = {};
+    if (qMed !== null) sovrascritture.quota_medico = qMed;
+    if (qSeg !== null) sovrascritture.quota_segretaria = qSeg;
+
+    const ripartizione = compensi.ripartisci(prestazione || {}, importo, sovrascritture);
+    const margineStudio = money.round(importo - ripartizione.quota_medico - ripartizione.quota_segretaria - ripartizione.costo_materiali);
+
+    return {
+        descrizione: prestazione ? prestazione.nome : '',
+        importo: ripartizione.importo,
+        costo_materiali: ripartizione.costo_materiali,
+        suggerito_medico_id: suggeritoMedicoId,
+        suggerito_segretaria_id: suggeritoSegretariaId,
+        motivo_medico: motivoMedico,
+        motivo_segretaria: motivoSegretaria,
+        quota_medico_stimata: ripartizione.quota_medico,
+        quota_segretaria_stimata: ripartizione.quota_segretaria,
+        margine_studio_stimato: margineStudio
+    };
 }
 
 function listByPaziente(payload = {}) {
@@ -104,4 +186,4 @@ async function remove(payload = {}) {
     return { id: payload.id };
 }
 
-module.exports = { listByPaziente, add, update, remove, STATI };
+module.exports = { listByPaziente, add, update, remove, suggerisci, STATI };

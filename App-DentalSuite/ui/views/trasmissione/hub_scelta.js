@@ -19,16 +19,16 @@ export function hubSceltaModalita({
         }
     }, [
         el('div', { class: 'ds-hub-card__icona ds-hub-card__icona--trasmetti' }, icona('cast_connected')),
-        el('div', { class: 'ds-hub-card__titolo' }, 'Trasmetti'),
+        el('div', { class: 'ds-hub-card__titolo' }, 'Trasmetti Scheda Clinica'),
         el('div', { class: 'ds-hub-card__descrizione' },
-            'Invia in tempo reale la cartella clinica di un paziente a uno o più monitor attivi dello studio.'
+            'Invia la scheda clinica di un paziente a qualsiasi postazione o monitor medico attivo nella rete locale dello studio.'
         ),
         el('div', { class: 'ds-hub-card__piede' }, [
             el('span', {
                 class: `ds-hub-card__badge ${monitorOnline > 0 ? 'ds-hub-card__badge--online' : 'ds-hub-card__badge--offline'}`
             }, [
                 el('span', { class: 'ds-hub-card__punto' }),
-                monitorOnline > 0 ? `${monitorOnline} monitor online` : 'Nessun monitor collegato'
+                monitorOnline > 0 ? `${monitorOnline} monitor online nello studio` : 'Nessun monitor collegato'
             ]),
             !puoTrasmettere
                 ? el('span', { class: 'ds-hub-card__avviso-permesso' }, 'Permesso trasmissione_invia richiesto')
@@ -49,12 +49,12 @@ export function hubSceltaModalita({
         el('div', { class: 'ds-hub-card__icona ds-hub-card__icona--ricevi' }, icona('desktop_windows')),
         el('div', { class: 'ds-hub-card__titolo' }, 'Ricevi (Monitor del Medico)'),
         el('div', { class: 'ds-hub-card__descrizione' },
-            'Visualizza la cartella clinica del paziente a schermo intero live con interfaccia ottimizzata per il touch.'
+            'Usa questo computer come monitor riunito touch per ricevere live le cartelle cliniche inviate dalla segreteria.'
         ),
         el('div', { class: 'ds-hub-card__piede' }, [
             el('span', { class: 'ds-hub-card__badge ds-hub-card__badge--postazione' }, [
                 icona('place'),
-                postazione ? postazione.nome : 'Seleziona postazione'
+                postazione ? `Questo PC: ${postazione.nome}` : 'Seleziona poltrona per questo PC'
             ]),
             !puoRicevere
                 ? el('span', { class: 'ds-hub-card__avviso-permesso' }, 'Permesso trasmissione_ricevi richiesto')

@@ -16,8 +16,11 @@ import { adattaAlTelaio } from '../../kernel/telaio.js';
 function voceTrattamento(voce) {
     return el('li', { class: 'ds-mn__riga' }, [
         el('time', { class: 'ds-mn__quando' }, fmt.data(voce.data)),
-        el('span', { class: 'ds-mn__titolo' }, `${voce.dente ? `${voce.dente} · ` : ''}${voce.descrizione}`),
-        el('span', { class: 'ds-mn__coda' }, `${fmt.etichettaStato(voce.stato)} · ${fmt.euro(voce.importo)}`)
+        el('span', { class: 'ds-mn__titolo' }, [
+            voce.dente ? el('strong', { style: 'color: var(--ds-accent, #0d9488); margin-right: 4px;' }, `d.${voce.dente}`) : null,
+            voce.descrizione
+        ]),
+        el('span', { class: 'ds-mn__coda' }, fmt.etichettaStato(voce.stato))
     ]);
 }
 
@@ -30,11 +33,26 @@ function vocePrescrizione(voce) {
     ]);
 }
 
-function voceReferto(voce) {
-    return el('li', { class: 'ds-mn__riga' }, [
+function voceReferto(voce, idx, tutti) {
+    return el('li', {
+        class: 'ds-mn__riga ds-mn__riga--cliccabile',
+        style: 'cursor: pointer;',
+        onClick: () => {
+            import('../shared/visualizzatore_diagnostico.js').then(m => {
+                m.apriVisualizzatoreDiagnostico({
+                    referti: tutti || [voce],
+                    indiceIniziale: typeof idx === 'number' ? idx : 0
+                });
+            });
+        }
+    }, [
         el('time', { class: 'ds-mn__quando' }, fmt.data(voce.data)),
-        el('span', { class: 'ds-mn__titolo' }, voce.titolo),
-        el('span', { class: 'ds-mn__coda' }, voce.tipo || '')
+        el('span', { class: 'ds-mn__titolo' }, [
+            icona(String(voce.tipo || '').includes('rx') || String(voce.tipo || '').includes('opt') || String(voce.tipo || '').includes('cbct') ? 'radiology' : 'image'),
+            ' ',
+            voce.titolo
+        ]),
+        el('span', { class: 'ds-mn__coda' }, (voce.tipo || '').toUpperCase())
     ]);
 }
 
@@ -125,12 +143,58 @@ export function schermoScheda({ istantanea, collegato, onChiudi, onAggiorna, onC
             voci: dossier.prescrizioni,
             rendiVoce: vocePrescrizione
         }),
-        onApriReferti: () => apriLivello({
-            titolo: 'Archivio diagnostico',
-            sottotitolo: dossier.paziente.nominativo,
-            voci: dossier.referti,
-            rendiVoce: voceReferto
-        })
+        onApriReferti: () => {
+            if (!dossier.referti || dossier.referti.length === 0) return;
+            const gridReferti = el('div', {
+                style: 'display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 10px 0;'
+            }, dossier.referti.map((voce, idx) => {
+                const isRx = String(voce.tipo || '').includes('rx') || String(voce.tipo || '').includes('opt') || String(voce.tipo || '').includes('cbct');
+                return el('div', {
+                    class: 'ds-panel',
+                    style: 'background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px;'
+                }, [
+                    el('div', { style: 'display: flex; justify-content: space-between; align-items: center;' }, [
+                        el('span', { class: 'ds-badge ds-badge--info', style: 'text-transform: uppercase; font-size: 0.75rem;' }, voce.tipo || 'Esame'),
+                        el('time', { style: 'font-size: 0.8rem; color: #94a3b8;' }, fmt.data(voce.data))
+                    ]),
+                    el('div', { style: 'display: flex; align-items: center; gap: 10px; margin: 4px 0;' }, [
+                        el('div', { style: `width: 40px; height: 40px; border-radius: 8px; background: ${isRx ? '#0284c7' : '#0d9488'}; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff;` },
+                            icona(isRx ? 'radiology' : (String(voce.mime_type || '').includes('pdf') ? 'description' : 'imagesmode'))
+                        ),
+                        el('strong', { style: 'font-size: 1rem; color: #f8fafc; overflow: hidden; text-overflow: ellipsis;' }, voce.titolo)
+                    ]),
+                    voce.note ? el('p', { style: 'font-size: 0.82rem; color: #94a3b8; margin: 0;' }, voce.note) : null,
+                    el('div', { style: 'display: flex; gap: 8px; margin-top: auto; padding-top: 8px;' }, [
+                        el('button', {
+                            class: 'ds-btn ds-btn--primario',
+                            style: 'flex: 1;',
+                            type: 'button',
+                            onClick: () => {
+                                import('../shared/visualizzatore_diagnostico.js').then(m => {
+                                    m.apriVisualizzatoreDiagnostico({
+                                        referti: dossier.referti,
+                                        indiceIniziale: idx,
+                                        serverOrigine: istantanea.servitore_info
+                                    });
+                                });
+                            }
+                        }, [icona('visibility'), 'Visualizza Touch']),
+                        el('button', {
+                            class: 'ds-btn ds-btn--ghost',
+                            type: 'button',
+                            title: 'Apri file esterno',
+                            onClick: () => call('allegati.open', { id: voce.id }).catch(() => {})
+                        }, icona('open_in_new'))
+                    ])
+                ]);
+            }));
+
+            apriLivello({
+                titolo: 'Archivio Diagnostico & Radiologia',
+                sottotitolo: `${dossier.paziente.nominativo} · ${dossier.referti.length} referti clinici`,
+                contenuto: gridReferti
+            });
+        }
     };
 
     const colonnaSinistra = el('div', { class: 'ds-mn__colonna ds-mn__colonna--sinistra' }, [
@@ -140,7 +204,7 @@ export function schermoScheda({ istantanea, collegato, onChiudi, onAggiorna, onC
     const colonnaDestra = el('div', { class: 'ds-mn__colonna ds-mn__colonna--destra' }, [
         pannelloStoria(dossier, { onApriTutto: approfondimenti.onApriTrattamenti }),
         pannelloPrescrizioni(dossier, { onApriTutto: approfondimenti.onApriPrescrizioni }),
-        pannelloReferti(dossier, { onApriTutto: approfondimenti.onApriReferti })
+        pannelloReferti(dossier, { onApriTutto: approfondimenti.onApriReferti, servitoreInfo: istantanea.servitore_info })
     ]);
 
     const radice = el('div', {

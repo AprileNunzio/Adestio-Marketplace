@@ -109,8 +109,12 @@ export async function selezionaMonitorETrasmetti({ pazienteId, pazienteNome = ''
         const chiudiMonitor = async (voce) => {
             try {
                 const risposta = await call('trasmissioni.chiudi', {
-                    id: voce.trasmissione_id || null,
-                    sessione_id: voce.sessione_id
+                    id: voce.trasmissione_id || undefined,
+                    sessione_id: voce.sessione_id,
+                    impronta: voce.impronta,
+                    ip: voce.ip,
+                    porta: voce.porta,
+                    indirizzo: voce.indirizzo
                 });
                 if (esito(risposta, `Seduta chiusa su ${voce.nome || 'Monitor'}`)) {
                     await caricaPostazioni();

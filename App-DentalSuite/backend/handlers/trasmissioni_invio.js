@@ -175,7 +175,7 @@ async function chiudiLocale(payload = {}) {
 
         seduta.svuota(motivo);
 
-        const aperte = trasmissioni.findAll({ stato: 'aperta' });
+        const aperte = trasmissioni.findAll({ where: { stato: 'aperta' } });
         const locale = identita.scheda();
         for (const riga of aperte) {
             if (!locale || riga.sessione_id === locale.id || riga.impronta_postazione === locale.impronta) {

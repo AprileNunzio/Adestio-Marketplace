@@ -41,6 +41,10 @@ function riponi(dossier, dettagli = {}, mittenteNuovo) {
     contattoIl = Date.now();
     programmaScadenza();
     notifica();
+    try {
+        const scopertaMesh = require('../rete/scoperta_mesh');
+        scopertaMesh.diffondiStatoLive();
+    } catch (_) {}
     return stato.versione;
 }
 
@@ -95,6 +99,10 @@ function svuota(motivo) {
     verificataIl = 0;
     contattoIl = 0;
     notifica();
+    try {
+        const scopertaMesh = require('../rete/scoperta_mesh');
+        scopertaMesh.diffondiStatoLive();
+    } catch (_) {}
     return stato.versione;
 }
 
@@ -110,6 +118,7 @@ function istantanea() {
         ricevuto_il: stato.ricevutoIl,
         trasmissione_id: stato.trasmissioneId,
         origine: stato.origine,
+        servitore_info: sorgente ? { ...sorgente } : null,
         dossier: stato.dossier
     };
 }

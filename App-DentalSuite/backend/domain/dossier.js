@@ -29,17 +29,32 @@ function intestazione(paziente) {
 }
 
 function quadroAnamnestico(scheda, paziente) {
-    if (!scheda) {
-        return { compilata: false, data_compilazione: '', allerte: allerte.elencoDettagliato({}, paziente), note: '' };
+    try {
+        if (!scheda) {
+            return {
+                compilata: false,
+                data_compilazione: '',
+                intolleranze: '',
+                allergie_farmaci: '',
+                allergie_materiali: '',
+                allerte: allerte.elencoDettagliato({}, paziente),
+                note: ''
+            };
+        }
+        return {
+            compilata: true,
+            data_compilazione: scheda.data_compilazione || '',
+            intolleranze: scheda.intolleranze || '',
+            allergie_farmaci: scheda.allergie_farmaci || '',
+            allergie_materiali: scheda.allergie_materiali || '',
+            allerte: allerte.elencoDettagliato(scheda, paziente),
+            terapie_in_corso: scheda.terapie_in_corso || '',
+            altre_patologie: scheda.altre_patologie || '',
+            note: scheda.note_mediche || ''
+        };
+    } catch {
+        return { compilata: false, allerte: [], note: '' };
     }
-    return {
-        compilata: true,
-        data_compilazione: scheda.data_compilazione || '',
-        allerte: allerte.elencoDettagliato(scheda, paziente),
-        terapie_in_corso: scheda.terapie_in_corso || '',
-        altre_patologie: scheda.altre_patologie || '',
-        note: scheda.note_mediche || ''
-    };
 }
 
 function arcata(dentizione, righe) {

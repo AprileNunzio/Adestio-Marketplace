@@ -57,7 +57,7 @@ function schermoDisplay({ indietro, onCambiaPostazione, puoCambiarePaziente }) {
                 istantanea,
                 collegato,
                 onChiudi: chiudiSeduta,
-                onAggiorna: ciclo,
+                onAggiorna: ricaricaCompleta,
                 onCambiaPaziente: puoCambiarePaziente ? cambiaPaziente : null,
                 onEsci: abbandona(indietro),
                 onCambiaPostazione: onCambiaPostazione ? abbandona(onCambiaPostazione) : null
@@ -68,6 +68,33 @@ function schermoDisplay({ indietro, onCambiaPostazione, puoCambiarePaziente }) {
             postazione: rete ? rete.postazione : null,
             onCambiaPostazione
         }));
+    };
+
+    const ricaricaCompleta = async () => {
+        try {
+            const resLocale = oggetto(await call('trasmissioni.attiva', { ricarica: true, forza: true }), null);
+            if (resLocale && resLocale.presente && resLocale.dossier) {
+                if (resLocale.servitore_info && resLocale.dossier.paziente && resLocale.dossier.paziente.id) {
+                    try {
+                        const host = resLocale.servitore_info.ip;
+                        const porta = resLocale.servitore_info.porta || 7345;
+                        const resLan = await fetch(`http://${host}:${porta}/richiedi-dossier-aggiornato`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paziente_id: resLocale.dossier.paziente.id })
+                        });
+                        if (resLan.ok) {
+                            const jsonLan = await resLan.json();
+                            if (jsonLan && jsonLan.dossier) {
+                                await call('trasmissioni.applicaDossierAggiornato', { dossier: jsonLan.dossier });
+                            }
+                        }
+                    } catch (_) {}
+                }
+                esito({ success: true }, 'Scheda del paziente e referti aggiornati');
+            }
+        } catch (_) {}
+        await ciclo();
     };
 
     const cambiaPaziente = async () => {

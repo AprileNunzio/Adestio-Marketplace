@@ -41,10 +41,23 @@ module.exports = async function scenario({ chiama, verifica, assertOk, assertKo,
     verifica('Età calcolata', schedaPaziente.eta === 40, `eta: ${schedaPaziente.eta}`);
 
     assertOk('Anamnesi salvata', await chiama('anamnesi.save', {
-        paziente_id: paziente.id, terapia_anticoagulanti: 1, allergie_farmaci: 'Penicillina'
+        paziente_id: paziente.id, terapia_anticoagulanti: 1, allergie_farmaci: 'Penicillina', intolleranze: 'Lattosio'
     }));
     const anamnesi = assertOk('Anamnesi riletta', await chiama('anamnesi.get', { paziente_id: paziente.id }));
-    verifica('Allerte cliniche generate', anamnesi.allerte.length === 2, anamnesi.allerte.join(' | '));
+    verifica('Allerte cliniche generate', anamnesi.allerte.length === 3, anamnesi.allerte.join(' | '));
+    verifica('Intolleranza registrata in anamnesi', anamnesi.scheda.intolleranze === 'Lattosio', anamnesi.scheda.intolleranze);
+
+    assertOk('Anamnesi avanzata strutturata salvata', await chiama('anamnesi.save', {
+        paziente_id: paziente.id,
+        patologie_strutturate: { anticoagulanti_tao: { attivo: true, dettagli: 'INR 2.8' }, bifosfonati_orali: { attivo: true } },
+        allergie_strutturate: { lattice: { attivo: true }, penicilline: { attivo: true } },
+        intolleranze_strutturate: { glutine: { attivo: true } },
+        valutazione_rischio: { asa: '3', rischio_emorragico: 'alto', rischio_mronj: 'medio', profilassi_antibiotica: true }
+    }));
+    const anamnesiStrutturata = assertOk('Anamnesi avanzata riletta', await chiama('anamnesi.get', { paziente_id: paziente.id }));
+    verifica('Sincronizzazione automatica flag osteoporosi_bifosfonati', Number(anamnesiStrutturata.scheda.osteoporosi_bifosfonati) === 1);
+    verifica('Calcolo rischio ASA 3', Number(anamnesiStrutturata.rischio.asa) === 3);
+    verifica('Allerta critica lattice presente', anamnesiStrutturata.allerteDettagliate.some(a => a.etichetta.includes('lattice')));
 
     assertOk('Dente 16 aggiornato', await chiama('odontogramma.saveDente', {
         paziente_id: paziente.id, numero_dente: '16', stato: 'cariato',
@@ -105,15 +118,26 @@ module.exports = async function scenario({ chiama, verifica, assertOk, assertKo,
     verifica('Resta una sola rilevazione attiva', storiaCompleta.length === 1, `${storiaCompleta.length}`);
 
 
-    const trattamento = assertOk('Trattamento registrato', await chiama('trattamenti.add', {
+    const suggerimento = assertOk('Suggerimento trattamento calcolato', await chiama('trattamenti.suggerisci', {
+        prestazione_id: prestazione.id, medico_id: medico.id
+    }));
+    verifica('Suggerimento calcola importo e quota',
+        suggerimento.importo === 150 && suggerimento.quota_medico_stimata === 60,
+        `imp ${suggerimento.importo}, quota ${suggerimento.quota_medico_stimata}`);
+
+    const trattamento = assertOk('Trattamento registrato con tracciabilita', await chiama('trattamenti.add', {
         paziente_id: paziente.id, prestazione_id: prestazione.id, medico_id: medico.id,
-        dente: '16', data_trattamento: '2026-08-01', stato: 'eseguito'
+        dente: '16', data_trattamento: '2026-08-01', stato: 'eseguito',
+        anestesia: 'Articaina 1:100.000', lotto_materiali: 'Lotto #49281'
     }));
     const trattamenti = assertOk('Trattamenti letti', await chiama('trattamenti.listByPaziente', {
         paziente_id: paziente.id
     }));
     verifica('Quota medico 40% di 150 = 60', trattamenti[0].quota_medico === 60, `${trattamenti[0].quota_medico}`);
     verifica('Margine studio = 70', trattamenti[0].margine_studio === 70, `${trattamenti[0].margine_studio}`);
+    verifica('Tracciabilita anestesia e lotto salvata',
+        trattamenti[0].anestesia === 'Articaina 1:100.000' && trattamenti[0].lotto_materiali === 'Lotto #49281',
+        `${trattamenti[0].anestesia} · ${trattamenti[0].lotto_materiali}`);
 
     const inizio = Date.UTC(2026, 8, 1, 9, 0);
     assertOk('Appuntamento creato', await chiama('agenda.create', {
@@ -178,6 +202,47 @@ module.exports = async function scenario({ chiama, verifica, assertOk, assertKo,
         id: refertoId,
         anteprima: ''
     }), 'VALIDATION');
+
+    const datiProntuario = assertOk('Prontuario farmaci letto', await chiama('prescrizioni.prontuario', {}));
+    verifica('Il prontuario predefinito contiene i farmaci odontoiatrici',
+        datiProntuario.predefiniti.length >= 25, `${datiProntuario.predefiniti.length}`);
+    verifica('Le categorie del prontuario sono configurate',
+        datiProntuario.categorie.length >= 8, `${datiProntuario.categorie.length}`);
+
+    const nuovoFarmaco = assertOk('Nuovo farmaco personalizzato salvato', await chiama('prescrizioni.salvaFarmaco', {
+        farmaco: 'Collutorio Personalizzato Studio',
+        principio_attivo: 'Clorexidina 0.30% + Zinco',
+        categoria: 'collutori_antisettici',
+        dosaggio: '250 ml',
+        posologia: '1 sciacquo mattina e sera',
+        durata_giorni: 10
+    }));
+
+    const prontuarioAggiornato = assertOk('Prontuario riletto con personalizzati', await chiama('prescrizioni.prontuario', {}));
+    verifica('Il farmaco personalizzato e presente nel prontuario',
+        prontuarioAggiornato.personalizzati.some(f => f.farmaco === 'Collutorio Personalizzato Studio'));
+
+    const nuovaPrescrizione = assertOk('Prescrizione emessa da prontuario', await chiama('prescrizioni.add', {
+        paziente_id: paziente.id,
+        medico_id: medico.id,
+        farmaco: 'Augmentin',
+        principio_attivo: 'Amoxicillina + Acido Clavulanico',
+        dosaggio: '875mg + 125mg',
+        posologia: '1 compressa ogni 12 ore',
+        durata_giorni: 6,
+        data_prescrizione: '2026-08-15',
+        salva_in_prontuario: true
+    }));
+
+    const listaPrescrizioni = assertOk('Prescrizioni del paziente lette', await chiama('prescrizioni.listByPaziente', {
+        paziente_id: paziente.id
+    }));
+    verifica('La prescrizione e presente con medico prescrittore associato',
+        listaPrescrizioni.some(p => p.farmaco === 'Augmentin' && p.medico.includes('Bianchi')));
+
+    assertOk('Farmaco personalizzato eliminato dal prontuario', await chiama('prescrizioni.eliminaFarmaco', {
+        id: nuovoFarmaco.id
+    }));
 
     contesto.referto = refertoId;
     contesto.sede = sede;

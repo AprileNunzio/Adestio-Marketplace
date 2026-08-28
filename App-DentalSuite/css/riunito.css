@@ -137,6 +137,8 @@
 .ds-mn__allerta[data-livello="attenzione"] { background: #fef3c7; color: #92400e; }
 .ds-mn__allerta[data-livello="nota"] { background: #e0f2fe; color: #075985; }
 .ds-mn__allerta--resto { background: var(--mn-line); color: var(--mn-soft); }
+.ds-mn__avviso-farmaci { display: flex; align-items: center; gap: 0.4em; padding: 0.3em 0.5em; border-radius: 4px; font-size: calc(var(--mn-testo) * 0.85); font-weight: 700; margin-bottom: 0.4em; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.ds-mn__avviso-farmaci .material-symbols-rounded { font-size: 1.1em; flex-shrink: 0; }
 
 .ds-mn__allerte--sereno {
     color: #15803d;

@@ -33,6 +33,38 @@ ALTER TABLE preventivi ADD COLUMN numero_rate INTEGER DEFAULT 0;
 ALTER TABLE preventivi ADD COLUMN cadenza_mesi INTEGER DEFAULT 1;
 ALTER TABLE preventivi ADD COLUMN prima_scadenza TEXT DEFAULT '';
 `;
+const intolleranzeAnamnesi = `ALTER TABLE anamnesi ADD COLUMN intolleranze TEXT DEFAULT '';`;
+const tracciabilitaTrattamenti = `
+ALTER TABLE trattamenti_paziente ADD COLUMN anestesia TEXT DEFAULT '';
+ALTER TABLE trattamenti_paziente ADD COLUMN lotto_materiali TEXT DEFAULT '';
+`;
+const anamnesiStrutturata = `
+ALTER TABLE anamnesi ADD COLUMN patologie_strutturate TEXT DEFAULT '{}';
+ALTER TABLE anamnesi ADD COLUMN allergie_strutturate TEXT DEFAULT '{}';
+ALTER TABLE anamnesi ADD COLUMN intolleranze_strutturate TEXT DEFAULT '{}';
+ALTER TABLE anamnesi ADD COLUMN valutazione_rischio TEXT DEFAULT '{}';
+ALTER TABLE anamnesi ADD COLUMN stile_vita_strutturato TEXT DEFAULT '{}';
+ALTER TABLE anamnesi ADD COLUMN farmaci_abituali TEXT DEFAULT '';
+ALTER TABLE anamnesi ADD COLUMN data_revisione TEXT DEFAULT '';
+ALTER TABLE anamnesi ADD COLUMN medico_revisore_id TEXT DEFAULT '';
+`;
+const prontuarioStudio = `
+CREATE TABLE IF NOT EXISTS prontuario_farmaci_studio (
+    id TEXT PRIMARY KEY,
+    farmaco TEXT NOT NULL,
+    principio_attivo TEXT DEFAULT '',
+    categoria TEXT DEFAULT '',
+    dosaggio TEXT DEFAULT '',
+    posologia TEXT DEFAULT '',
+    durata_giorni INTEGER DEFAULT 0,
+    note TEXT DEFAULT '',
+    autore_id TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    last_modified INTEGER NOT NULL,
+    is_deleted INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_prontuario_farmaco ON prontuario_farmaci_studio(farmaco);
+`;
 
 module.exports = [
     {
@@ -86,5 +118,21 @@ module.exports = [
     {
         version: 13,
         sql: preventivoCampiAvanzati
+    },
+    {
+        version: 14,
+        sql: intolleranzeAnamnesi
+    },
+    {
+        version: 15,
+        sql: tracciabilitaTrattamenti
+    },
+    {
+        version: 16,
+        sql: anamnesiStrutturata
+    },
+    {
+        version: 17,
+        sql: prontuarioStudio
     }
 ];
