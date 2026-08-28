@@ -1,10 +1,32 @@
 'use strict';
 
-const antibiotici = require('./prontuario/farmaci_antibiotici');
-const antisettici = require('./prontuario/farmaci_antisettici_antimicotici');
-const flogosiAltri = require('./prontuario/farmaci_flogosi_altri');
+const antibioticiPenicilline = require('./prontuario/antibiotici_penicilline');
+const antibioticiMacrolidi = require('./prontuario/antibiotici_macrolidi_lincosamidi');
+const antibioticiCefalo = require('./prontuario/antibiotici_cefalosporine_chinoloni');
+const antibioticiAnaerobi = require('./prontuario/antibiotici_anaerobi_tetracicline');
+const fansIbuprofene = require('./prontuario/fans_ibuprofene_ketoprofene');
+const fansParacetamolo = require('./prontuario/fans_paracetamolo_oppioidi');
+const fansAltri = require('./prontuario/fans_altri_cox2');
+const cortisonici = require('./prontuario/cortisonici_antiedema');
+const antisettici = require('./prontuario/antisettici_collutori_gel');
+const antimicotici = require('./prontuario/antimicotici_antivirali');
+const miorilassanti = require('./prontuario/miorilassanti_atm_sedativi');
+const gastroprotettori = require('./prontuario/gastroprotettori_emostatici_antistaminici');
 
-const FARMACI_PREDEFINITI = [].concat(antibiotici, antisettici, flogosiAltri);
+const FARMACI_PREDEFINITI = [].concat(
+    antibioticiPenicilline,
+    antibioticiMacrolidi,
+    antibioticiCefalo,
+    antibioticiAnaerobi,
+    fansIbuprofene,
+    fansParacetamolo,
+    fansAltri,
+    cortisonici,
+    antisettici,
+    antimicotici,
+    miorilassanti,
+    gastroprotettori
+);
 
 const CATEGORIE_PRONTUARIO = [
     { id: 'tutti', etichetta: 'Tutti i farmaci', simbolo: 'medication' },

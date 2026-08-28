@@ -1,6 +1,7 @@
-import { FARMACI_ANTIBIOTICI } from './farmaci_antibiotici.js';
-import { FARMACI_ANTISETTICI } from './farmaci_antisettici.js';
-import { FARMACI_FLOGOSI } from './farmaci_flogosi.js';
+import { FARMACI_ANTIBIOTICI_CAT } from './catalogo/antibiotici.js';
+import { FARMACI_FANS_CAT } from './catalogo/fans_antidolorifici.js';
+import { FARMACI_CORTISONICI_ANTISETTICI_CAT } from './catalogo/cortisonici_antisettici.js';
+import { FARMACI_ALTRI_SPECIALISTICI_CAT } from './catalogo/altri_specialistici.js';
 
 export const CATEGORIE_PRONTUARIO = [
     { id: 'tutti', etichetta: 'Tutti i farmaci', simbolo: 'medication' },
@@ -15,7 +16,8 @@ export const CATEGORIE_PRONTUARIO = [
 ];
 
 export const FARMACI_PREDEFINITI = [].concat(
-    FARMACI_ANTIBIOTICI,
-    FARMACI_ANTISETTICI,
-    FARMACI_FLOGOSI
+    FARMACI_ANTIBIOTICI_CAT,
+    FARMACI_FANS_CAT,
+    FARMACI_CORTISONICI_ANTISETTICI_CAT,
+    FARMACI_ALTRI_SPECIALISTICI_CAT
 );
