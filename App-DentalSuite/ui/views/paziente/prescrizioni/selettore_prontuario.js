@@ -40,10 +40,18 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
         }
     };
 
+    const contaPerCategoria = catId => {
+        const lista = tuttiFarmaci();
+        if (catId === 'tutti') return lista.length;
+        if (catId === 'studio') return personalizzati.length;
+        return lista.filter(f => f.categoria === catId).length;
+    };
+
     const corpo = el('div', { class: 'ds-prontuario-modal' });
 
     const aggiornaVista = () => {
-        const farmaciFiltrati = tuttiFarmaci().filter(f => {
+        const tutti = tuttiFarmaci();
+        const farmaciFiltrati = tutti.filter(f => {
             if (categoriaSelezionata === 'studio' && !f.isStudio) return false;
             if (categoriaSelezionata !== 'tutti' && categoriaSelezionata !== 'studio' && f.categoria !== categoriaSelezionata) return false;
 
@@ -55,25 +63,12 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                 (f.dosaggio && f.dosaggio.toLowerCase().includes(query));
         });
 
-        const chipsCategorie = el('div', { class: 'ds-prontuario-cats' }, [
-            ...categorie.map(c => el('button', {
-                type: 'button',
-                class: `ds-cat-chip ${categoriaSelezionata === c.id ? 'ds-cat-chip--active' : ''}`,
-                onClick: () => { categoriaSelezionata = c.id; aggiornaVista(); }
-            }, [icona(c.simbolo || 'medication'), el('span', {}, c.etichetta)])),
-            el('button', {
-                type: 'button',
-                class: `ds-cat-chip ${categoriaSelezionata === 'studio' ? 'ds-cat-chip--active' : ''}`,
-                onClick: () => { categoriaSelezionata = 'studio'; aggiornaVista(); }
-            }, [icona('bookmark'), el('span', {}, `Personalizzati Studio (${personalizzati.length})`)])
-        ]);
-
         const barraRicerca = el('div', { class: 'ds-prontuario-search' }, [
             icona('search'),
             el('input', {
                 type: 'text',
                 class: 'ds-input ds-search-input',
-                placeholder: 'Cerca per nome commerciale (es. Augmentin, Oki, Brufen, Bentelan), principio attivo...',
+                placeholder: 'Cerca per nome commerciale (es. Augmentin, Oki, Brufen, Bentelan, Toradol), principio attivo o indicazione...',
                 value: filtroTesto,
                 onInput: e => { filtroTesto = e.target.value; aggiornaVista(); }
             }),
@@ -83,6 +78,35 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                 onClick: () => { filtroTesto = ''; aggiornaVista(); }
             }, icona('close')) : null
         ].filter(Boolean));
+
+        const chipsCategorie = el('div', { class: 'ds-prontuario-cats' }, [
+            ...categorie.map(c => {
+                const count = contaPerCategoria(c.id);
+                return el('button', {
+                    type: 'button',
+                    class: `ds-cat-chip ${categoriaSelezionata === c.id ? 'ds-cat-chip--active' : ''}`,
+                    onClick: () => { categoriaSelezionata = c.id; aggiornaVista(); }
+                }, [
+                    icona(c.simbolo || 'medication'),
+                    el('span', {}, c.etichetta),
+                    el('span', { class: 'ds-cat-chip__count' }, String(count))
+                ]);
+            }),
+            el('button', {
+                type: 'button',
+                class: `ds-cat-chip ${categoriaSelezionata === 'studio' ? 'ds-cat-chip--active' : ''}`,
+                onClick: () => { categoriaSelezionata = 'studio'; aggiornaVista(); }
+            }, [
+                icona('bookmark'),
+                el('span', {}, 'Personalizzati Studio'),
+                el('span', { class: 'ds-cat-chip__count' }, String(personalizzati.length))
+            ])
+        ]);
+
+        const headbar = el('div', { class: 'ds-prontuario-headbar' }, [
+            barraRicerca,
+            chipsCategorie
+        ]);
 
         const grigliaFarmaci = el('div', { class: 'ds-prontuario-grid' }, farmaciFiltrati.length === 0
             ? [el('div', { class: 'ds-empty-box' }, [
@@ -103,28 +127,30 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                             el('strong', { class: 'ds-drug-name' }, f.farmaco),
                             f.isStudio ? el('span', { class: 'ds-badge ds-badge--info' }, 'Studio') : null
                         ].filter(Boolean)),
-                        el('span', { class: 'ds-badge ds-badge--neutral' }, f.dosaggio || 'Standard')
+                        el('span', { class: 'ds-drug-card__dosage-badge' }, f.dosaggio || 'Dosaggio Standard')
                     ]),
                     el('div', { class: 'ds-drug-card__active' }, [
                         icona('science'),
                         el('span', {}, f.principio_attivo || 'Principio attivo')
                     ]),
-                    f.posologia ? el('div', { class: 'ds-drug-card__poso' }, [
-                        icona('schedule'),
-                        el('span', {}, f.posologia)
-                    ]) : null,
-                    f.durata_giorni ? el('div', { class: 'ds-drug-card__durata' }, [
-                        icona('timelapse'),
-                        el('span', {}, `Durata consigliata: ${f.durata_giorni} giorni`)
-                    ]) : null,
-                    f.note ? el('div', { class: 'ds-drug-card__note' }, f.note) : null
-                ].filter(Boolean));
+                    el('div', { class: 'ds-drug-card__body' }, [
+                        f.posologia ? el('div', { class: 'ds-drug-card__poso' }, [
+                            icona('schedule'),
+                            el('span', {}, f.posologia)
+                        ]) : null,
+                        f.durata_giorni ? el('div', { class: 'ds-drug-card__durata' }, [
+                            icona('timelapse'),
+                            el('span', {}, `Durata consigliata: ${f.durata_giorni} giorni`)
+                        ]) : null,
+                        f.note ? el('div', { class: 'ds-drug-card__note' }, f.note) : null
+                    ].filter(Boolean))
+                ]);
             }));
 
         const barraAggiunta = el('div', { class: 'ds-prontuario-footer-actions' }, [
-            el('span', { class: 'ds-muted', style: 'font-size: 0.8rem;' }, `${farmaciFiltrati.length} farmaci disponibili`),
+            el('span', { class: 'ds-muted', style: 'font-size: 0.85rem; font-weight: 560;' }, `${farmaciFiltrati.length} farmaci visualizzati (su ${tutti.length} totali)`),
             bottone({
-                etichetta: 'Aggiungi nuovo farmaco personalizzato',
+                etichetta: 'Aggiungi nuovo farmaco personalizzato allo studio',
                 simbolo: 'add',
                 variante: 'ghost',
                 piccolo: true,
@@ -143,8 +169,7 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
         ]);
 
         rimpiazza(corpo, [
-            barraRicerca,
-            chipsCategorie,
+            headbar,
             grigliaFarmaci,
             barraAggiunta
         ]);
@@ -155,7 +180,7 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
     await apriModale({
         titolo: 'Prontuario Farmaceutico Odontoiatrico (100+ Farmaci)',
         corpo,
-        ampia: true,
+        extraAmpia: true,
         azioni: [
             {
                 etichetta: 'Chiudi',
@@ -255,6 +280,7 @@ async function apriFormNuovoFarmaco(onSalvato) {
     await apriModale({
         titolo: 'Nuovo Farmaco nel Prontuario dello Studio',
         corpo: form,
+        ampia: true,
         azioni: [
             {
                 etichetta: 'Salva nel prontuario',

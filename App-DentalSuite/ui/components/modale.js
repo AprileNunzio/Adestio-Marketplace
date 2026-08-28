@@ -9,7 +9,7 @@ function chiudi(fondale, risolvi, esito) {
     risolvi(esito);
 }
 
-export function apriModale({ titolo, corpo, azioni = [], ampia = false, suChiusura }) {
+export function apriModale({ titolo, corpo, azioni = [], ampia = false, extraAmpia = false, classeExtra = '', suChiusura }) {
     return new Promise(risolvi => {
         const fondale = el('div', { class: 'ds-modal-backdrop ds-root' });
         const termina = esito => {
@@ -27,7 +27,17 @@ export function apriModale({ titolo, corpo, azioni = [], ampia = false, suChiusu
             }
         }));
 
-        const finestra = el('div', { class: ampia ? 'ds-modal ds-modal--wide' : 'ds-modal' }, [
+        let classeModale = 'ds-modal';
+        if (extraAmpia) {
+            classeModale += ' ds-modal--xlarge';
+        } else if (ampia) {
+            classeModale += ' ds-modal--wide';
+        }
+        if (classeExtra) {
+            classeModale += ` ${classeExtra}`;
+        }
+
+        const finestra = el('div', { class: classeModale }, [
             el('div', { class: 'ds-modal__head' }, [
                 el('h3', { class: 'ds-modal__title' }, titolo),
                 el('button', {
