@@ -3,23 +3,24 @@ import { bottone } from '../../../components/layout.js';
 import { apriModale } from '../../../components/modale.js';
 import { call } from '../../../kernel/transport.js';
 import { esito } from '../../../components/notifica.js';
-import { CATEGORIE_PRONTUARIO } from './catalogo_farmaci.js';
+import { dataOr } from '../../../kernel/result.js';
+import { CATEGORIE_PRONTUARIO, FARMACI_PREDEFINITI } from './catalogo_farmaci.js';
 
 export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, paziente = {} }) {
-    let predefiniti = [];
+    let predefiniti = FARMACI_PREDEFINITI;
     let personalizzati = [];
     let categorie = CATEGORIE_PRONTUARIO;
 
     try {
         const res = await call('prescrizioni.prontuario', {});
-        const datiProntuario = (res && res.payload) ? res.payload : (res && res.predefiniti ? res : {});
-        if (datiProntuario.predefiniti && Array.isArray(datiProntuario.predefiniti)) {
+        const datiProntuario = dataOr(res, (res && res.data) || (res && res.payload) || res || {});
+        if (datiProntuario && Array.isArray(datiProntuario.predefiniti) && datiProntuario.predefiniti.length > 0) {
             predefiniti = datiProntuario.predefiniti;
         }
-        if (datiProntuario.personalizzati && Array.isArray(datiProntuario.personalizzati)) {
+        if (datiProntuario && Array.isArray(datiProntuario.personalizzati)) {
             personalizzati = datiProntuario.personalizzati;
         }
-        if (datiProntuario.categorie && Array.isArray(datiProntuario.categorie) && datiProntuario.categorie.length > 0) {
+        if (datiProntuario && Array.isArray(datiProntuario.categorie) && datiProntuario.categorie.length > 0) {
             categorie = datiProntuario.categorie;
         }
     } catch {}
@@ -130,8 +131,8 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                 onClick: async () => {
                     await apriFormNuovoFarmaco(async () => {
                         const ricaricatoRes = await call('prescrizioni.prontuario', {});
-                        const ricaricato = (ricaricatoRes && ricaricatoRes.payload) ? ricaricatoRes.payload : (ricaricatoRes || {});
-                        if (ricaricato && ricaricato.personalizzati) {
+                        const ricaricato = dataOr(ricaricatoRes, (ricaricatoRes && ricaricatoRes.data) || (ricaricatoRes && ricaricatoRes.payload) || ricaricatoRes || {});
+                        if (ricaricato && Array.isArray(ricaricato.personalizzati)) {
                             personalizzati.length = 0;
                             personalizzati.push(...ricaricato.personalizzati);
                             aggiornaVista();
