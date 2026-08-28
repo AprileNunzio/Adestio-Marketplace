@@ -66,6 +66,13 @@ CREATE TABLE IF NOT EXISTS prontuario_farmaci_studio (
 CREATE INDEX IF NOT EXISTS idx_prontuario_farmaco ON prontuario_farmaci_studio(farmaco);
 `;
 
+const poltronaDellaPostazione = `
+ALTER TABLE rete_postazione ADD COLUMN poltrona_id TEXT DEFAULT '';
+ALTER TABLE rete_postazione ADD COLUMN poltrona_nome TEXT DEFAULT '';
+ALTER TABLE trasmissioni ADD COLUMN poltrona_id TEXT DEFAULT '';
+ALTER TABLE trasmissioni ADD COLUMN poltrona_nome TEXT DEFAULT '';
+`;
+
 module.exports = [
     {
         version: 1,
@@ -134,5 +141,9 @@ module.exports = [
     {
         version: 17,
         sql: prontuarioStudio
+    },
+    {
+        version: 18,
+        sql: poltronaDellaPostazione
     }
 ];

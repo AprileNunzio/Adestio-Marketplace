@@ -471,7 +471,6 @@
         grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr);
     }
     .ds-mn__pannello--odontogramma { grid-column: 1; grid-row: 1; }
-    .ds-mn__colonna--sinistra { display: none; }
     .ds-mn__pannello--rilevazioni { display: none; }
     .ds-mn__colonna--destra { grid-column: 1; grid-row: 2; grid-auto-flow: column; }
     .ds-mn__fianco { flex-basis: 100%; justify-content: flex-start; }

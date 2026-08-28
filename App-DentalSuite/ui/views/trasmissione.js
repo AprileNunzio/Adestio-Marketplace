@@ -224,6 +224,7 @@ function schermoDisplay({ indietro, onCambiaPostazione, puoCambiarePaziente }) {
 export default {
     rendi: async ({ parametri, naviga, indietro }) => {
         assicuraFoglio('riunito');
+        assicuraFoglio('monitor_clinico');
         assicuraFoglio('livelli');
         assicuraFoglio('monitor');
         assicuraFoglio('attesa');

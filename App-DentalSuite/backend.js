@@ -5,6 +5,7 @@ const authz = require('./backend/kernel/authz');
 const registry = require('./backend/kernel/registry');
 const trasporto = require('./backend/rete/trasporto');
 const sorveglianza = require('./backend/rete/sorveglianza');
+const rilancio = require('./backend/rete/rilancio');
 const protocollo = require('./backend/rete/protocollo');
 
 const handlers = {
@@ -35,7 +36,8 @@ const handlers = {
     atti: require('./backend/handlers/atti'),
     turni: require('./backend/handlers/turni'),
     disponibilita: require('./backend/handlers/disponibilita'),
-    economia: require('./backend/handlers/economia')
+    economia: require('./backend/handlers/economia'),
+    collegamenti: require('./backend/handlers/collegamenti')
 };
 
 function instradaMessaggioDiRete(messaggio) {
@@ -48,6 +50,14 @@ function instradaMessaggioDiRete(messaggio) {
 function avviaReteDiStudio() {
     trasporto.ascolta(instradaMessaggioDiRete);
     sorveglianza.avvia();
+    rilancio.avvia();
+    setTimeout(() => {
+        handlers.trasmissioni.ripristinaSeduta()
+            .then(esito => {
+                if (esito.ripristinata) console.log('[DentalSuite] Seduta ripristinata dalla segreteria dopo il riavvio.');
+            })
+            .catch(errore => console.error('[DentalSuite] Ripristino seduta non riuscito:', errore.message));
+    }, 4000).unref();
     trasporto
         .avvia()
         .then(esito => {

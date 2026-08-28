@@ -1,5 +1,7 @@
 'use strict';
 
+const diario = require('../rete/diario');
+
 const { trasmissioni } = require('../repositories/trasmissione');
 const actor = require('../kernel/actor');
 const seduta = require('../repositories/seduta_volatile');
@@ -25,7 +27,7 @@ async function chiudiPerRete(payload = {}) {
                 chiusa_il: Date.now(),
                 motivo_chiusura: motivo
             }, actor.stamp());
-        } catch (_) {}
+        } catch (errore) { diario.annota('riscontri:1', errore); }
     }
 
     return { chiusa: true, versione };

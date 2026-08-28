@@ -10,6 +10,10 @@ const canale = require('./canale');
 const stretta = require('./stretta');
 const identita = require('./identita');
 const seduta = require('../repositories/seduta_volatile');
+const presenza = require('../domain/rete/presenza');
+const autenticazione = require('./autenticazione');
+const rotte = require('./rotte');
+const registroOperazioni = require('./registro_operazioni');
 
 let servitore = null;
 let portaAttiva = 0;
@@ -61,23 +65,7 @@ function indirizzoDi(richiesta) {
 function scheda() {
     const voce = identita.scheda();
     if (!voce) return null;
-    let inSeduta = false;
-    try {
-        const seduta = require('../repositories/seduta_volatile');
-        inSeduta = Boolean(seduta.istantanea().presente);
-    } catch (_) {}
-    return {
-        applicazione: 'adestio_dental_suite',
-        versione_protocollo: protocollo.VERSIONE,
-        id: voce.id,
-        nome: voce.nome,
-        ruolo: voce.ruolo,
-        impronta: voce.impronta,
-        nodo: voce.nodo || '',
-        porta: portaAttiva || voce.porta,
-        attiva: true,
-        in_seduta: inSeduta
-    };
+    return presenza.componi(voce, seduta.presente(), protocollo.VERSIONE);
 }
 
 async function gestisciAccoppiamento(richiesta, risposta) {
@@ -114,15 +102,9 @@ async function gestisciAvvio(richiesta, risposta) {
     const locale = identita.riga();
     if (!locale) return rispondi(risposta, 503, { errore: 'Postazione non inizializzata' });
 
-    let pari = accoppiamento.pariPerImpronta(String(corpo.impronta || ''));
-    if (!pari || Number(pari.is_deleted) === 1) {
-        pari = {
-            id: corpo.impronta || 'lan-peer',
-            nome: corpo.nome || 'Postazione LAN',
-            ruolo: protocollo.RUOLO_RIUNITO,
-            impronta: corpo.impronta || '',
-            chiave_pubblica: corpo.chiave_pubblica || ''
-        };
+    const pari = accoppiamento.pariPerImpronta(String(corpo.impronta || ''));
+    if (!pari || Number(pari.is_deleted) === 1 || !pari.chiave_pubblica) {
+        return rispondi(risposta, 403, { errore: 'Nodo non accoppiato: autorizzalo dalla segreteria prima di collegarti' });
     }
 
     const messaggio = stretta.messaggioAvvio({
@@ -130,7 +112,7 @@ async function gestisciAvvio(richiesta, risposta) {
         effimera: corpo.effimera,
         nonce: corpo.nonce
     });
-    if (pari.chiave_pubblica && !cifratura.verificaFirma(pari.chiave_pubblica, messaggio, corpo.firma)) {
+    if (!cifratura.verificaFirma(pari.chiave_pubblica, messaggio, corpo.firma)) {
         return rispondi(risposta, 403, { errore: 'Firma di avvio sessione non valida' });
     }
 
@@ -217,170 +199,77 @@ async function gestisciMessaggio(richiesta, risposta) {
     });
 }
 
-async function gestisciTrasmettiDiretto(richiesta, risposta) {
-    const corpo = await leggiCorpo(richiesta);
-    if (!corpo || !corpo.dossier) {
-        return rispondi(risposta, 400, { errore: 'Dossier clinico mancante' });
-    }
-    const seduta = require('../repositories/seduta_volatile');
-    const versione = seduta.riponi(corpo.dossier, {
-        trasmissione_id: corpo.trasmissione_id || `tx-${Date.now()}`,
-        origine: corpo.origine || indirizzoDi(richiesta)
-    }, {
-        ip: indirizzoDi(richiesta),
-        porta: Number(corpo.origine_porta) || protocollo.PORTA_SERVIZIO
+function preflight(risposta) {
+    risposta.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
     });
-    return rispondi(risposta, 200, { successo: true, versione });
+    return risposta.end();
 }
 
-async function gestisciChiudiDiretto(richiesta, risposta) {
+function statoPubblico(risposta) {
+    const locale = identita.scheda();
+    if (!locale) return rispondi(risposta, 503, { errore: 'Postazione non inizializzata' });
+    return rispondi(risposta, 200, presenza.componi(locale, seduta.presente(), protocollo.VERSIONE));
+}
+
+async function instradaProtette(richiesta, risposta, percorso) {
+    const gestore = rotte.trova(percorso);
+    if (!gestore) return rispondi(risposta, 404, { errore: 'Rotta non prevista' });
+
     const corpo = await leggiCorpo(richiesta);
-    const trasmissioni = require('../handlers/trasmissioni');
-    const esito = await trasmissioni.chiudiPerRete(corpo || {});
-    return rispondi(risposta, 200, { successo: true, ...esito });
-}
+    const mittente = indirizzoDi(richiesta);
+    const controllo = autenticazione.verifica('POST', percorso, corpo, mittente);
 
-async function gestisciStatoSeduta(richiesta, risposta) {
-    const corpo = await leggiCorpo(richiesta);
-    const trasmissioni = require('../handlers/trasmissioni');
-    return rispondi(risposta, 200, trasmissioni.statoSeduta(corpo || {}));
-}
-
-async function gestisciSedutaChiusa(richiesta, risposta) {
-    const corpo = await leggiCorpo(richiesta);
-    const trasmissioni = require('../handlers/trasmissioni');
-    const esito = await trasmissioni.segnalaChiusuraRemota(corpo || {});
-    return rispondi(risposta, 200, { successo: true, ...esito });
-}
-
-async function gestisciPazienteCambiato(richiesta, risposta) {
-    const corpo = await leggiCorpo(richiesta);
-    const trasmissioni = require('../handlers/trasmissioni');
-    const esito = await trasmissioni.segnalaCambioPaziente(corpo || {});
-    return rispondi(risposta, 200, { successo: true, ...esito });
-}
-
-async function gestisciMeshStatoBroadcast(richiesta, risposta) {
-    try {
-        const corpo = await leggiCorpo(richiesta);
-        const scopertaMesh = require('./scoperta_mesh');
-        const ipMittente = indirizzoDi(richiesta);
-        scopertaMesh.riceviStatoGossip({
-            ...(corpo || {}),
-            ip: ipMittente
-        });
-        return rispondi(risposta, 200, { successo: true });
-    } catch (_) {
-        return rispondi(risposta, 200, { successo: false });
+    if (!controllo.valida) {
+        return rispondi(risposta, controllo.codice || 403, { errore: controllo.motivo });
     }
-}
 
-async function gestisciRiceviAtto(richiesta, risposta) {
-    try {
-        const corpo = await leggiCorpo(richiesta);
-        const atti = require('../handlers/atti');
-        const esito = await atti.accogli({
-            tipo: protocollo.MESSAGGI.atto,
-            contenuto: (corpo && corpo.atto) ? corpo.atto : corpo
-        });
-        return rispondi(risposta, 200, { successo: true, ...esito });
-    } catch (e) {
-        return rispondi(risposta, 500, { errore: e.message });
-    }
-}
+    const contenuto = controllo.contenuto || {};
+    const firmatario = controllo.pari ? controllo.pari.impronta : mittente;
+    const ripetuta = registroOperazioni.precedente(firmatario, contenuto.operazione_id);
+    if (ripetuta) return rispondi(risposta, ripetuta.codice, { ...ripetuta.corpo, ripetuta: true });
 
-async function gestisciAllegatoContenuto(richiesta, risposta) {
-    try {
-        const corpo = await leggiCorpo(richiesta);
-        const allegati = require('../handlers/allegati');
-        const esito = await allegati.contenuto(corpo || {});
-        return rispondi(risposta, 200, { successo: true, ...esito });
-    } catch (e) {
-        return rispondi(risposta, 400, { successo: false, errore: e.message });
-    }
-}
+    const esito = await gestore(contenuto, {
+        indirizzo: mittente,
+        percorso,
+        pari: controllo.pari,
+        sconosciuto: Boolean(controllo.sconosciuto)
+    });
 
-async function gestisciRichiediDossierAggiornato(richiesta, risposta) {
-    try {
-        const corpo = await leggiCorpo(richiesta);
-        const pazienteId = corpo && corpo.paziente_id;
-        if (!pazienteId) return rispondi(risposta, 400, { errore: 'ID paziente mancante' });
-        const comp = require('../domain/composizione_dossier');
-        const dossier = comp.componiDossier(pazienteId, corpo.dentizione, corpo.schermo);
-        return rispondi(risposta, 200, { successo: true, dossier });
-    } catch (e) {
-        return rispondi(risposta, 500, { errore: e.message });
-    }
+    registroOperazioni.ricorda(firmatario, contenuto.operazione_id, esito);
+    return rispondi(risposta, esito.codice, esito.corpo);
 }
 
 async function instrada(richiesta, risposta) {
-    if (richiesta.method === 'OPTIONS') {
-        risposta.writeHead(204, {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
-        });
-        return risposta.end();
-    }
+    if (richiesta.method === 'OPTIONS') return preflight(risposta);
+
     const indirizzo = new URL(richiesta.url, 'http://postazione.local');
-    if (richiesta.method === 'GET' && indirizzo.pathname === protocollo.ROTTE.stato) {
-        const info = identita.scheda() || { errore: 'Postazione non inizializzata' };
-        try {
-            const s = seduta.istantanea();
-            if (s && s.presente && s.dossier && s.dossier.paziente) {
-                info.in_seduta = true;
-                info.paziente_id = s.dossier.paziente.id || null;
-                info.paziente_nome = `${s.dossier.paziente.cognome || ''} ${s.dossier.paziente.nome || ''}`.trim() || 'Paziente in seduta';
-                info.trasmissione_id = s.trasmissione_id || null;
-            } else {
-                info.in_seduta = false;
-                info.paziente_id = null;
-                info.paziente_nome = null;
-            }
-        } catch (_) {}
-        return rispondi(risposta, 200, info);
+    const percorso = indirizzo.pathname;
+
+    if (richiesta.method === 'GET' && percorso === protocollo.ROTTE.stato) {
+        return statoPubblico(risposta);
     }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/trasmetti-diretto') {
-        return gestisciTrasmettiDiretto(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/chiudi-diretto') {
-        return gestisciChiudiDiretto(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/ricevi-atto') {
-        return gestisciRiceviAtto(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/allegato-contenuto') {
-        return gestisciAllegatoContenuto(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/richiedi-dossier-aggiornato') {
-        return gestisciRichiediDossierAggiornato(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/seduta-stato') {
-        return gestisciStatoSeduta(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/seduta-chiusa') {
-        return gestisciSedutaChiusa(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/paziente-cambiato') {
-        return gestisciPazienteCambiato(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === '/mesh-stato-broadcast') {
-        return gestisciMeshStatoBroadcast(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === protocollo.ROTTE.accoppia) {
-        return gestisciAccoppiamento(richiesta, risposta);
-    }
-    if (richiesta.method === 'POST' && indirizzo.pathname === protocollo.ROTTE.avvio) {
-        return gestisciAvvio(richiesta, risposta);
-    }
-    if (richiesta.method === 'GET' && indirizzo.pathname === protocollo.ROTTE.canale) {
+    if (richiesta.method === 'GET' && percorso === protocollo.ROTTE.canale) {
         return gestisciCanale(richiesta, risposta, indirizzo);
     }
-    if (richiesta.method === 'POST' && indirizzo.pathname === protocollo.ROTTE.messaggio) {
+    if (richiesta.method !== 'POST') {
+        return rispondi(risposta, 404, { errore: 'Rotta non prevista' });
+    }
+    if (percorso === protocollo.ROTTE.accoppia) {
+        return gestisciAccoppiamento(richiesta, risposta);
+    }
+    if (percorso === protocollo.ROTTE.avvio) {
+        return gestisciAvvio(richiesta, risposta);
+    }
+    if (percorso === protocollo.ROTTE.messaggio) {
         return gestisciMessaggio(richiesta, risposta);
     }
-    return rispondi(risposta, 404, { errore: 'Rotta non prevista' });
+
+    return instradaProtette(richiesta, risposta, percorso);
 }
+
 
 function provaAscolto(istanza, portaPartenza, tentativi = 4) {
     return new Promise((risolvi, rifiuta) => {
@@ -399,7 +288,7 @@ function provaAscolto(istanza, portaPartenza, tentativi = 4) {
                             istanza.once('listening', onListening);
                             istanza.listen(portaCorrente);
                         });
-                    } catch (_) {
+                    } catch (errore) { diario.annota('servitore:201', errore);
                         istanza.once('error', onError);
                         istanza.once('listening', onListening);
                         istanza.listen(portaCorrente);

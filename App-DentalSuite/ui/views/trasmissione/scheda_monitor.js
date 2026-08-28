@@ -81,12 +81,13 @@ export function schedaMonitor({ voce, onInvia, onChiudi }) {
         el('div', { class: 'ds-panel__head' }, [
             el('div', { style: 'display: flex; align-items: center; gap: 8px; min-width: 0;' }, [
                 icona('monitor'),
-                el('strong', {}, voce.nome || 'Monitor dello studio')
+                el('strong', {}, voce.etichetta || voce.poltrona_nome || voce.nome || 'Monitor dello studio')
             ]),
             distintivo(stile.etichetta, stile.tono)
         ]),
         el('div', { class: 'ds-panel__body', style: 'gap: 8px;' }, [
-            el('div', { class: 'ds-muted ds-numeric', style: 'font-size: 0.8rem;' }, voce.indirizzo || 'Rete locale LAN'),
+            el('div', { class: 'ds-muted ds-numeric', style: 'font-size: 0.8rem;' },
+                [voce.nome, voce.indirizzo].filter(Boolean).join(' · ') || 'Rete locale LAN'),
             corpoStato(voce, chiave),
             comandi(voce, chiave, onInvia, onChiudi)
         ])

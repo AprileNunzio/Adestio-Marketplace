@@ -1,5 +1,7 @@
 'use strict';
 
+const diario = require('./diario');
+
 const os = require('os');
 const crypto = require('crypto');
 const { postazione } = require('../repositories/rete');
@@ -68,7 +70,7 @@ async function rimuoviOrfane() {
             await postazione.hardRemove(voce.id);
             rimosse += 1;
             console.log(`[DentalSuite] Rimossa identita di postazione orfana "${voce.nome || voce.id}".`);
-        } catch (e) {}
+        } catch (e) { diario.annota('identita:301', e); }
     }
     return rimosse;
 }
@@ -103,6 +105,8 @@ async function aggiorna(dati = {}) {
     if (dati.ruolo !== undefined && protocollo.RUOLI.includes(dati.ruolo)) modifiche.ruolo = dati.ruolo;
     if (dati.porta !== undefined) modifiche.porta = Number(dati.porta) || protocollo.PORTA_SERVIZIO;
     if (dati.attiva !== undefined) modifiche.attiva = dati.attiva ? 1 : 0;
+    if (dati.poltrona_id !== undefined) modifiche.poltrona_id = String(dati.poltrona_id).trim().slice(0, 64);
+    if (dati.poltrona_nome !== undefined) modifiche.poltrona_nome = String(dati.poltrona_nome).trim().slice(0, 60);
     if (dati.indirizzo_archivio !== undefined) {
         modifiche.indirizzo_archivio = String(dati.indirizzo_archivio).trim();
     }
@@ -129,6 +133,8 @@ function scheda(corrente) {
         applicazione: 'adestio_dental_suite',
         id: voce.id,
         nome: voce.nome,
+        poltrona_id: voce.poltrona_id || '',
+        poltrona_nome: voce.poltrona_nome || '',
         ruolo: voce.ruolo,
         etichetta_ruolo: protocollo.etichettaRuolo(voce.ruolo),
         porta: Number(voce.porta) || protocollo.PORTA_SERVIZIO,

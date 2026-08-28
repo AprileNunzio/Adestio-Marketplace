@@ -90,6 +90,15 @@ export const MODULI = [
         accento: 'statistiche',
         permesso: 'statistiche_view',
         modulo: () => import(`./views/statistiche.js${versione()}`)
+    },
+    {
+        id: 'informazioni',
+        titolo: 'Info',
+        descrizione: 'Chi sviluppa DentalSuite, perché è gratuita, dove restano i dati dei pazienti e come sostenere il progetto',
+        simbolo: 'favorite',
+        accento: 'staff',
+        permesso: 'app_access',
+        modulo: () => import(`./views/informazioni/index.js${versione()}`)
     }
 ];
 

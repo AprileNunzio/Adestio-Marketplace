@@ -20,23 +20,22 @@ export function selettorePostazioneModalita({ postazioneAttuale, onSelezionato, 
     const contenitore = el('div', { class: 'ds-selettore-postazione' });
     let nomeScelto = postazioneAttuale ? postazioneAttuale.nome : '';
 
-    const salvaConfigurazione = async (nome) => {
+        const salvaConfigurazione = async (poltrona) => {
+        const nomeFinale = String(poltrona && poltrona.nome ? poltrona.nome : '').trim();
+        if (!nomeFinale) {
+            esito({ success: false, error: 'Seleziona la poltrona di questa postazione' }, '');
+            return;
+        }
         try {
-            const nomeFinale = String(nome || '').trim();
-            if (!nomeFinale) {
-                esito({ success: false, error: 'Seleziona la poltrona di questa postazione' }, '');
-                return;
-            }
             const risposta = await call('postazioni.configura', {
                 ruolo: 'riunito',
-                nome: nomeFinale
+                poltrona_id: poltrona.id || '',
+                poltrona_nome: nomeFinale
             });
-            if (!esito(risposta, `Postazione impostata su "${nomeFinale}"`)) return;
-            if (typeof onSelezionato === 'function') {
-                onSelezionato(nomeFinale);
-            }
-        } catch (e) {
-            esito({ success: false, error: e.message || 'Impossibile configurare postazione' }, '');
+            if (!esito(risposta, `Monitor assegnato a "${nomeFinale}"`)) return;
+            if (typeof onSelezionato === 'function') onSelezionato(nomeFinale);
+        } catch (eccezione) {
+            esito({ success: false, error: eccezione.message || 'Impossibile configurare la postazione' }, '');
         }
     };
 
@@ -75,7 +74,7 @@ export function selettorePostazioneModalita({ postazioneAttuale, onSelezionato, 
             type: 'button',
             onClick: () => {
                 nomeScelto = voce.nome;
-                salvaConfigurazione(voce.nome);
+                salvaConfigurazione(voce);
             }
         }, [
             el('span', { class: 'ds-selettore-postazione__preset-icona' }, icona(simboloDi(voce))),
@@ -92,7 +91,7 @@ export function selettorePostazioneModalita({ postazioneAttuale, onSelezionato, 
         ]);
     };
 
-    const carica = async () => {
+        const carica = async () => {
         try {
             const risposta = await call('postazioni.poltrone', {});
             const dati = oggetto(risposta, null);
@@ -106,16 +105,18 @@ export function selettorePostazioneModalita({ postazioneAttuale, onSelezionato, 
             const unita = dati.poltrone || [];
             if (unita.length === 0) {
                 disegnaVuoto(
-                    'Nessuna poltrona configurata nello studio',
-                    dati.sedi_configurate > 0
-                        ? 'Apri "Sedi, Sale & Poltrone" e aggiungi le poltrone: compariranno qui automaticamente.'
-                        : 'Apri "Sedi, Sale & Poltrone", crea la sede dello studio e poi le sue poltrone: compariranno qui automaticamente.'
+                    dati.raggiunto === false
+                        ? 'Elenco poltrone non raggiungibile'
+                        : 'Nessuna poltrona configurata nello studio',
+                    dati.raggiunto === false
+                        ? (dati.motivo || 'Accendi il computer della segreteria e riprova.')
+                        : 'Apri "Sedi, Sale & Poltrone" sulla segreteria e aggiungi le poltrone: compariranno qui automaticamente.'
                 );
                 return;
             }
             disegnaElenco(unita);
-        } catch (e) {
-            disegnaVuoto('Errore nel caricamento delle poltrone', e.message || 'Errore imprevisto');
+        } catch (eccezione) {
+            disegnaVuoto('Errore nel caricamento delle poltrone', eccezione.message || 'Errore imprevisto');
         }
     };
 

@@ -53,9 +53,7 @@ function oltreLaGrazia(riga, adesso, graziaMs) {
 
 function smentitaDalNodo(riga, voce) {
     if (!osservabile(voce)) return false;
-    if (!voce.in_seduta) return true;
-    const remota = String(voce.trasmissione_id || '');
-    return Boolean(remota) && remota !== String(riga.id);
+    return !voce.occupato;
 }
 
 function nodoDi(riga, destinazioni) {

@@ -4,6 +4,7 @@ const dgram = require('dgram');
 const os = require('os');
 const protocollo = require('./protocollo');
 const identita = require('./identita');
+const presenza = require('../domain/rete/presenza');
 
 let presa = null;
 let cadenza = null;
@@ -15,22 +16,21 @@ function chiaveDi(dati, indirizzo) {
 }
 
 function registra(dati, indirizzo) {
-    if (!dati || dati.applicazione !== 'adestio_dental_suite') return;
+    const pulito = presenza.depura(dati);
+    if (!pulito || pulito.applicazione !== presenza.APPLICAZIONE) return;
     const locale = identita.riga();
-    if (locale && dati.id === locale.id) return;
-    vicinato.set(chiaveDi(dati, indirizzo), {
-        id: dati.id,
-        nome: dati.nome,
-        ruolo: dati.ruolo,
-        impronta: dati.impronta,
+    if (locale && pulito.id === locale.id) return;
+    vicinato.set(chiaveDi(pulito, indirizzo), {
+        id: pulito.id,
+        nome: pulito.nome,
+        poltrona_id: pulito.poltrona_id || '',
+        poltrona_nome: pulito.poltrona_nome || '',
+        ruolo: pulito.ruolo,
+        impronta: pulito.impronta,
         indirizzo,
-        porta: Number(dati.porta) || protocollo.PORTA_SERVIZIO,
-        versione_protocollo: Number(dati.versione_protocollo) || 0,
-        in_seduta: Boolean(dati.in_seduta),
-        paziente_id: dati.paziente_id || null,
-        paziente_nome: dati.paziente_nome || null,
-        trasmissione_id: dati.trasmissione_id || null,
-        stato_attivita: dati.stato_attivita || (dati.in_seduta ? 'in_visita' : 'libero'),
+        porta: Number(pulito.porta) || protocollo.PORTA_SERVIZIO,
+        versione_protocollo: Number(pulito.versione_protocollo) || 0,
+        occupato: Boolean(pulito.occupato),
         visto_il: Date.now()
     });
 }
@@ -39,39 +39,17 @@ function messaggio() {
     const locale = identita.scheda();
     if (!locale) return null;
 
-    let inSeduta = false;
-    let pazienteId = null;
-    let pazienteNome = null;
-    let trasmissioneId = null;
-    let statoAttivita = 'libero';
-
+    let occupato = false;
     try {
         const seduta = require('../repositories/seduta_volatile');
-        const s = seduta.istantanea();
-        if (s && s.presente && s.dossier && s.dossier.paziente) {
-            inSeduta = true;
-            pazienteId = s.dossier.paziente.id || null;
-            pazienteNome = `${s.dossier.paziente.cognome || ''} ${s.dossier.paziente.nome || ''}`.trim() || 'Paziente in seduta';
-            trasmissioneId = s.trasmissione_id || null;
-            statoAttivita = 'in_visita';
-        }
-    } catch (_) {}
+        occupato = seduta.presente();
+    } catch (errore) {
+        ultimoErrore = errore.message;
+    }
 
-    return Buffer.from(JSON.stringify({
-        applicazione: 'adestio_dental_suite',
-        versione_protocollo: protocollo.VERSIONE,
-        id: locale.id,
-        nome: locale.nome,
-        ruolo: locale.ruolo,
-        porta: locale.porta,
-        impronta: locale.impronta,
-        in_seduta: inSeduta,
-        paziente_id: pazienteId,
-        paziente_nome: pazienteNome,
-        trasmissione_id: trasmissioneId,
-        stato_attivita: statoAttivita,
-        aggiornato_il: Date.now()
-    }), 'utf8');
+    const pacchetto = presenza.componi(locale, occupato, protocollo.VERSIONE);
+    if (!pacchetto) return null;
+    return Buffer.from(JSON.stringify(pacchetto), 'utf8');
 }
 
 function bersagli() {

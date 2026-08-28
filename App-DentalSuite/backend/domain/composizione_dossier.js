@@ -7,6 +7,7 @@ const densitaDominio = require('../domain/densita');
 const denti = require('../domain/denti');
 const { oggiIso } = require('../domain/rateizzazione');
 const identita = require('../rete/identita');
+const finalita = require('./dossier/finalita');
 
 const GIORNO_MS = 24 * 60 * 60 * 1000;
 
@@ -20,7 +21,7 @@ function improntaDi(dossier) {
     return crypto.createHash('sha256').update(JSON.stringify(dossier), 'utf8').digest('hex');
 }
 
-function componiDossier(pazienteId, dentizione, schermo) {
+function componiDossier(pazienteId, dentizione, schermo, scopo) {
     const limiti = densitaDominio.limitiDa(schermo);
     const paziente = lettura.schedaPaziente(pazienteId);
     if (!paziente) return null;
@@ -30,7 +31,7 @@ function componiDossier(pazienteId, dentizione, schermo) {
     const appuntamenti = lettura.appuntamentiDelGiorno(pazienteId, inizio, inizio + GIORNO_MS);
     const locale = identita.scheda();
 
-    return dominio.componi({
+    const completo = dominio.componi({
         oggi: oggiIso(),
         origine: locale ? locale.nome : '',
         schermo,
@@ -47,6 +48,8 @@ function componiDossier(pazienteId, dentizione, schermo) {
         nominativi: lettura.nominativiStaff([].concat(trattamentiRecenti, prescrizioniRecenti, appuntamenti)),
         catalogo: lettura.catalogoPrestazioni([].concat(trattamentiRecenti, appuntamenti))
     });
+
+    return finalita.proietta(completo, scopo);
 }
 
 module.exports = { componiDossier, improntaDi };

@@ -1,5 +1,7 @@
 'use strict';
 
+const diario = require('../rete/diario');
+
 const { trasmissioni } = require('../repositories/trasmissione');
 const seduta = require('../repositories/seduta_volatile');
 const { validationError, conflictError, notFoundError } = require('../kernel/errors');
@@ -12,6 +14,11 @@ const trasporto = require('../rete/trasporto');
 const identita = require('../rete/identita');
 const scopertaMesh = require('../rete/scoperta_mesh');
 const consegna = require('../rete/consegna');
+const consegnaSigillata = require('../rete/consegna_sigillata');
+const ordinamento = require('../domain/rete/ordinamento');
+const richiestaArchivio = require('../rete/richiesta_archivio');
+
+const prossimaMarca = ordinamento.creaContatore();
 
 async function invia(payload = {}, ottieniDestinazioni) {
     try {
@@ -55,7 +62,9 @@ async function invia(payload = {}, ottieniDestinazioni) {
                 dossier,
                 origine,
                 origine_impronta: locale ? locale.impronta : '',
-                origine_porta: locale ? locale.porta : protocollo.PORTA_SERVIZIO
+                origine_porta: locale ? locale.porta : protocollo.PORTA_SERVIZIO,
+                impronta_dossier: impronta,
+                marca: ordinamento.marca(prossimaMarca())
             };
 
             let esito = { consegnato: false, motivo: 'nessun trasporto disponibile per questo monitor' };
@@ -69,7 +78,7 @@ async function invia(payload = {}, ottieniDestinazioni) {
                     ? { consegnato: true, motivo: '' }
                     : { consegnato: false, motivo: 'canale cifrato non piu attivo' };
             } else if (bersaglio.ip && bersaglio.porta) {
-                esito = await consegna.trasmettiDiretto(bersaglio.ip, bersaglio.porta, busta);
+                esito = await consegnaSigillata.trasmettiDossier(bersaglio.ip, bersaglio.porta, busta);
             }
 
             if (!esito.consegnato) {
@@ -84,6 +93,8 @@ async function invia(payload = {}, ottieniDestinazioni) {
                 paziente_id: payload.paziente_id,
                 sessione_id: bersaglio.sessione_id,
                 postazione_nome: bersaglio.nome,
+                poltrona_id: bersaglio.poltrona_id || '',
+                poltrona_nome: bersaglio.poltrona_nome || '',
                 impronta_postazione: bersaglio.impronta,
                 stato: 'aperta',
                 aperta_il: Date.now(),
@@ -92,7 +103,7 @@ async function invia(payload = {}, ottieniDestinazioni) {
             }, actor.stamp());
 
             if (bersaglio.ip) {
-                scopertaMesh.impostaStato(bersaglio.ip, true, dossier.paziente ? dossier.paziente.nominativo : null);
+                scopertaMesh.impostaStato(bersaglio.ip, true);
             }
 
             riusciti.push({
@@ -161,7 +172,8 @@ async function avvisaChiusura(riga, motivo, ottieniDestinazioni) {
                 ? `il monitor ${memorizzato.ip}:${memorizzato.porta} non ha risposto`
                 : 'monitor non raggiungibile'
         };
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('trasmissioni_invio:101', errore);
         return { consegnato: false, motivo: 'errore chiusura' };
     }
 }
@@ -203,36 +215,39 @@ async function chiudiLocale(payload = {}) {
 }
 
 async function cambiaPaziente(payload = {}) {
-    try {
-        if (!payload.paziente_id) throw validationError('Selezionare il paziente da visualizzare');
+    if (!payload.paziente_id) throw validationError('Selezionare il paziente da visualizzare');
 
-        const dossier = componiDossier(payload.paziente_id, payload.dentizione);
-        if (!dossier) throw notFoundError('Cartella clinica non disponibile su questa postazione');
-
-        const istantanea = seduta.estrai();
-        const trasmissioneId = istantanea && istantanea.trasmissione_id
-            ? istantanea.trasmissione_id
-            : database.newId();
-
-        const locale = identita.scheda();
-        const versione = seduta.riponi(dossier, {
-            trasmissione_id: trasmissioneId,
-            origine: locale ? locale.nome : 'Monitor'
-        }, seduta.mittente());
-
-        const mittente = seduta.mittente();
-        if (mittente && mittente.ip) {
-            consegna.conRitentativo(mittente.ip, mittente.porta, '/paziente-cambiato', {
-                trasmissione_id: trasmissioneId,
-                paziente_id: payload.paziente_id,
-                paziente: dossier.paziente.nominativo
-            }).catch(() => {});
-        }
-
-        return { versione, paziente: dossier.paziente.nominativo };
-    } catch (e) {
-        throw e;
+    if (!richiestaArchivio.eArchivio()) {
+        const esito = await richiestaArchivio.richiediPaziente(payload.paziente_id, payload.dentizione);
+        if (!esito.riuscita) throw conflictError(esito.motivo);
+        const aggiornata = seduta.estrai();
+        return { versione: aggiornata.versione, paziente: (esito.dati && esito.dati.paziente) || '' };
     }
+
+    const dossier = componiDossier(payload.paziente_id, payload.dentizione);
+    if (!dossier) throw notFoundError('Cartella clinica non disponibile su questa postazione');
+
+    const istantanea = seduta.estrai();
+    const trasmissioneId = istantanea && istantanea.trasmissione_id
+        ? istantanea.trasmissione_id
+        : database.newId();
+
+    const locale = identita.scheda();
+    const versione = seduta.riponi(dossier, {
+        trasmissione_id: trasmissioneId,
+        origine: locale ? locale.nome : 'Monitor',
+        impronta: improntaDi(dossier)
+    }, seduta.mittente());
+
+    return { versione, paziente: dossier.paziente.nominativo };
+}
+
+async function ripristinaSeduta() {
+    if (richiestaArchivio.eArchivio()) return { ripristinata: false, motivo: 'la segreteria non riceve schede' };
+    if (seduta.presente()) return { ripristinata: false, motivo: 'seduta già presente' };
+    const esito = await richiestaArchivio.ripristinaSeduta();
+    if (!esito.riuscita) return { ripristinata: false, motivo: esito.motivo };
+    return { ripristinata: Boolean(esito.dati && esito.dati.ripristinata), ...esito.dati };
 }
 
 async function propagaAggiornamentoDossier(pazienteId) {
@@ -265,12 +280,14 @@ async function propagaAggiornamentoDossier(pazienteId) {
         }
 
         return propagati;
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('trasmissioni_invio:102', errore);
         return 0;
     }
 }
 
 module.exports = {
+    ripristinaSeduta,
     invia,
     avvisaChiusura,
     chiudiLocale,

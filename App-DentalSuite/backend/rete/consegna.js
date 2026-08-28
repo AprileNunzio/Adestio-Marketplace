@@ -1,6 +1,10 @@
 'use strict';
 
+const diario = require('./diario');
+
 const http = require('http');
+const autenticazione = require('./autenticazione');
+const crypto = require('crypto');
 
 const _agenteKeepAlive = new http.Agent({
     keepAlive: true,
@@ -11,12 +15,23 @@ const _agenteKeepAlive = new http.Agent({
 
 const ATTESA_BASE_MS = 4000;
 const ATTESA_PER_MB_MS = 3000;
-const TENTATIVI_CONSEGNA = 2;
+const TENTATIVI_CONSEGNA = 5;
+const ARRETRAMENTO_BASE_MS = 400;
+const ARRETRAMENTO_TETTO_MS = 8000;
+
+function attendi(ms) {
+    return new Promise(risolvi => setTimeout(risolvi, ms));
+}
+
+function attesaDi(tentativo) {
+    const esponenziale = Math.min(ARRETRAMENTO_BASE_MS * Math.pow(2, tentativo - 1), ARRETRAMENTO_TETTO_MS);
+    return Math.round(esponenziale * (0.7 + Math.random() * 0.6));
+}
 
 function postDiretto(ip, porta, rotta, payloadCorpo) {
     return new Promise((resolve) => {
         try {
-            const data = JSON.stringify(payloadCorpo);
+            const data = JSON.stringify(autenticazione.imbusta('POST', rotta, payloadCorpo));
             const byte = Buffer.byteLength(data);
             const attesa = ATTESA_BASE_MS + Math.ceil(byte / (1024 * 1024)) * ATTESA_PER_MB_MS;
             const req = http.request({
@@ -36,20 +51,21 @@ function postDiretto(ip, porta, rotta, payloadCorpo) {
                 res.on('end', () => {
                     if (res.statusCode === 200) {
                         let dati = null;
-                        try { dati = JSON.parse(corpo); } catch (_) {}
+                        try { dati = JSON.parse(corpo); } catch (errore) { diario.annota('consegna:1', errore); }
                         return resolve({ consegnato: true, motivo: '', dati });
                     }
+                    const definitivo = res.statusCode >= 400 && res.statusCode < 500 && res.statusCode !== 429;
                     let dettaglio = `risposta HTTP ${res.statusCode}`;
                     try {
                         const json = JSON.parse(corpo);
                         if (json && json.errore) dettaglio = json.errore;
-                    } catch (_) {}
-                    resolve({ consegnato: false, motivo: dettaglio });
+                    } catch (errore) { diario.annota('consegna:2', errore); }
+                    resolve({ consegnato: false, motivo: dettaglio, definitivo, codice: res.statusCode });
                 });
             });
             req.on('error', errore => resolve({ consegnato: false, motivo: errore.message }));
             req.on('timeout', () => {
-                try { req.destroy(); } catch (_) {}
+                try { req.destroy(); } catch (errore) { diario.annota('consegna:3', errore); }
                 resolve({ consegnato: false, motivo: `il monitor non ha risposto entro ${Math.round(attesa / 1000)} secondi` });
             });
             req.write(data);
@@ -61,10 +77,14 @@ function postDiretto(ip, porta, rotta, payloadCorpo) {
 }
 
 async function conRitentativo(ip, porta, rotta, payloadCorpo) {
+    const corpo = { operazione_id: crypto.randomUUID(), ...(payloadCorpo || {}) };
     let ultimo = { consegnato: false, motivo: 'nessun tentativo eseguito' };
+
     for (let tentativo = 1; tentativo <= TENTATIVI_CONSEGNA; tentativo += 1) {
-        ultimo = await postDiretto(ip, porta, rotta, payloadCorpo);
+        ultimo = await postDiretto(ip, porta, rotta, corpo);
         if (ultimo.consegnato) return ultimo;
+        if (ultimo.definitivo) return ultimo;
+        if (tentativo < TENTATIVI_CONSEGNA) await attendi(attesaDi(tentativo));
     }
     return ultimo;
 }

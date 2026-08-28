@@ -41,10 +41,9 @@ function stubDiscovery() {
         ip: IP,
         porta: PORTA,
         ruolo: 'riunito',
-        in_seduta: inSeduta,
-        paziente_id: pazienteRemoto ? 'paziente-remoto' : null,
-        paziente_nome: pazienteRemoto,
-        trasmissione_id: trasmissioneRemota
+        occupato: inSeduta,
+        poltrona_id: 'plt-prova',
+        poltrona_nome: 'Poltrona Prova'
     }]);
     mesh.impostaStato = () => {};
     mesh.diffondiStatoLive = async () => true;
@@ -122,10 +121,30 @@ async function main() {
     verifica('Dopo la chiusura la card torna libera', n4.in_seduta === false && !n4.paziente_nome);
 
     const ko = await chiama('trasmissioni.chiudi', { sessione_id: 'lan-10.99.99.99:7345' });
-    verifica('Chiusura su nodo inesistente fallisce esplicitamente', ko.success === false, JSON.stringify(ko));
+    verifica('Chiusura su nodo irraggiungibile finisce in coda, non persa',
+        ko.success === true && ko.data.stato === 'in_coda' && ko.data.chiusure_in_coda === 1,
+        JSON.stringify(ko.data));
+    verifica('La coda di rilancio conserva la chiusura',
+        require('../backend/rete/rilancio').stato().in_attesa >= 1,
+        JSON.stringify(require('../backend/rete/rilancio').stato()));
 
     const ko2 = await chiama('trasmissioni.chiudi', {});
     verifica('Chiusura senza identificativi rifiutata', ko2.success === false, JSON.stringify(ko2));
+
+
+    const presenza = require('../backend/domain/rete/presenza');
+    const pacchettoPresenza = presenza.componi(
+        { id: 'n', nome: 'PC-SALA', poltrona_nome: 'Poltrona Prova', ruolo: 'riunito', porta: 7345, impronta: 'AB' },
+        true,
+        1
+    );
+    verifica('Il pacchetto di presenza non contiene dati del paziente',
+        !presenza.contieneDatiPaziente(pacchettoPresenza),
+        JSON.stringify(Object.keys(pacchettoPresenza)));
+    verifica('Il pacchetto di presenza porta il nome della poltrona',
+        pacchettoPresenza.poltrona_nome === 'Poltrona Prova');
+    verifica('Un pacchetto sporco viene depurato',
+        !presenza.contieneDatiPaziente(presenza.depura({ ...pacchettoPresenza, paziente_nome: 'Marino Giulia' })));
 
     srv.close();
     riepiloga();

@@ -1,83 +1,140 @@
 'use strict';
 
+const diario = require('./diario');
+
 const seduta = require('../repositories/seduta_volatile');
 const consegna = require('./consegna');
-
-const CADENZA_MS = 5000;
-const SILENZIO_MASSIMO_MS = 15000;
+const vigilanza = require('../domain/rete/vigilanza');
 
 let battito = null;
 let inCorso = false;
-let ultimoEsito = { verificataIl: 0, raggiunta: false, motivo: '' };
+let fallimenti = 0;
+let fermo = false;
+let tolleranzaMs = vigilanza.SILENZIO_TOLLERATO_MS;
+let ultimoEsito = { verificataIl: 0, raggiunta: false, stato: vigilanza.VERDE, motivo: '' };
 
 function stato() {
     return {
         attiva: Boolean(battito),
         silenzio_ms: seduta.silenzioDa(),
-        silenzio_massimo_ms: SILENZIO_MASSIMO_MS,
+        tolleranza_ms: tolleranzaMs,
+        fermo,
+        cadenza_ms: vigilanza.cadenzaDa(fallimenti),
         ...ultimoEsito
     };
 }
 
+function impostaFermo(attivo) {
+    fermo = Boolean(attivo);
+    return fermo;
+}
+
+function impostaTolleranza(millisecondi) {
+    const valore = Number(millisecondi);
+    if (Number.isFinite(valore) && valore >= 15000) tolleranzaMs = Math.round(valore);
+    return tolleranzaMs;
+}
+
+async function interroga(mittente, trasmissioneId) {
+    return consegna.interroga(mittente.ip, mittente.porta, '/seduta-stato', {
+        trasmissione_id: trasmissioneId
+    });
+}
+
+function applica(decisione) {
+    ultimoEsito = {
+        verificataIl: Date.now(),
+        raggiunta: decisione.stato === vigilanza.VERDE,
+        stato: decisione.stato,
+        motivo: decisione.motivo
+    };
+
+    if (decisione.azione === 'svuota') {
+        seduta.svuota(decisione.motivo);
+        console.log(`[DentalSuite] Scheda rimossa dal monitor: ${decisione.motivo}.`);
+    }
+}
+
 async function controlla() {
-    if (inCorso) return;
+    if (inCorso) return stato();
     inCorso = true;
+
     try {
-        if (!seduta.presente()) return;
+        if (!seduta.presente()) {
+            fallimenti = 0;
+            ultimoEsito = { verificataIl: Date.now(), raggiunta: true, stato: vigilanza.VERDE, motivo: '' };
+            return stato();
+        }
 
         const mittente = seduta.mittente();
         const istantanea = seduta.istantanea();
 
         if (!mittente || !mittente.ip || !istantanea.trasmissione_id) {
-            ultimoEsito = { verificataIl: Date.now(), raggiunta: false, motivo: 'origine della scheda sconosciuta' };
-            return;
+            ultimoEsito = {
+                verificataIl: Date.now(),
+                raggiunta: false,
+                stato: vigilanza.GIALLO,
+                motivo: 'origine della scheda sconosciuta'
+            };
+            return stato();
         }
 
-        const risposta = await consegna.interroga(mittente.ip, mittente.porta, '/seduta-stato', {
-            trasmissione_id: istantanea.trasmissione_id
-        });
-
+        const risposta = await interroga(mittente, istantanea.trasmissione_id);
         if (risposta.raggiunto) {
             seduta.segnaContatto();
-            ultimoEsito = { verificataIl: Date.now(), raggiunta: true, motivo: '' };
-
-            if (risposta.dati && risposta.dati.conosciuta && risposta.dati.aperta === false) {
-                if (Date.now() - (istantanea.ricevuto_il || 0) >= 30000) {
-                    seduta.svuota(risposta.dati.motivo || 'seduta chiusa dalla segreteria');
-                }
-            }
-            return;
+            fallimenti = 0;
+        } else {
+            fallimenti += 1;
         }
 
-        ultimoEsito = { verificataIl: Date.now(), raggiunta: false, motivo: 'segreteria non raggiungibile' };
+        applica(vigilanza.decidi({
+            presente: true,
+            raggiunta: risposta.raggiunto,
+            sedutaChiusaDaSegreteria: Boolean(
+                risposta.dati && risposta.dati.conosciuta && risposta.dati.aperta === false
+            ),
+            silenzioMs: seduta.silenzioDa(),
+            fermo,
+            etaSedutaMs: Date.now() - (istantanea.ricevuto_il || 0),
+            tolleranzaMs
+        }));
 
-        const silenzio = seduta.silenzioDa();
-        if (silenzio >= SILENZIO_MASSIMO_MS) {
-            seduta.svuota('collegamento con la segreteria interrotto');
-            console.log(`[DentalSuite] Scheda rimossa dal monitor per tutela della privacy: segreteria irraggiungibile da ${Math.round(silenzio / 1000)} secondi.`);
-        }
-    } catch (e) {
-        ultimoEsito = { verificataIl: Date.now(), raggiunta: false, motivo: e.message };
+        return stato();
     } finally {
         inCorso = false;
+        riprogramma();
     }
+}
+
+function riprogramma() {
+    if (!battito) return;
+    clearTimeout(battito);
+    battito = setTimeout(() => { controlla().catch(errore => diario.annota('sorveglianza:301', errore)); }, vigilanza.cadenzaDa(fallimenti));
+    if (typeof battito.unref === 'function') battito.unref();
 }
 
 function avvia() {
     if (battito) return true;
-    battito = setInterval(() => {
-        controlla().catch(() => {});
-    }, CADENZA_MS);
+    battito = setTimeout(() => { controlla().catch(errore => diario.annota('sorveglianza:302', errore)); }, vigilanza.CADENZA_BASE_MS);
     if (typeof battito.unref === 'function') battito.unref();
     return true;
 }
 
 function ferma() {
     if (battito) {
-        clearInterval(battito);
+        clearTimeout(battito);
         battito = null;
     }
     return true;
 }
 
-module.exports = { avvia, ferma, controlla, stato, CADENZA_MS, SILENZIO_MASSIMO_MS };
+module.exports = {
+    avvia,
+    ferma,
+    controlla,
+    stato,
+    impostaFermo,
+    impostaTolleranza,
+    CADENZA_MS: vigilanza.CADENZA_BASE_MS,
+    SILENZIO_MASSIMO_MS: vigilanza.SILENZIO_TOLLERATO_MS
+};

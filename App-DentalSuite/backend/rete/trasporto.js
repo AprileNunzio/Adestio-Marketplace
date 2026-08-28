@@ -1,5 +1,7 @@
 'use strict';
 
+const diario = require('./diario');
+
 const protocollo = require('./protocollo');
 const identita = require('./identita');
 const servitore = require('./servitore');
@@ -47,10 +49,10 @@ async function avvia(portaPersonalizzata) {
 
         try {
             await annuncio.avvia();
-        } catch (erroreAnnuncio) {}
+        } catch (erroreAnnuncio) { diario.annota('trasporto:302', erroreAnnuncio); }
 
         if (locale.indirizzo_archivio && typeof cliente.collega === 'function') {
-            cliente.collega(locale.indirizzo_archivio).catch(() => {});
+            cliente.collega(locale.indirizzo_archivio).catch(errore => diario.annota('trasporto:301', errore));
         }
 
         avviato = true;

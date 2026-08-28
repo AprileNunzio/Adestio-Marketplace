@@ -6,6 +6,7 @@ const protocollo = require('../rete/protocollo');
 const identita = require('../rete/identita');
 const accoppiamento = require('../rete/accoppiamento');
 const trasporto = require('../rete/trasporto');
+const poltroneRemote = require('../rete/poltrone_remote');
 const cliente = require('../rete/cliente');
 const diagnosi = require('../rete/diagnosi');
 const annuncio = require('../rete/annuncio');
@@ -55,15 +56,29 @@ async function configura(payload = {}) {
     if (!guida.POSTI.some(voce => voce.id === payload.ruolo)) {
         throw validationError('Indicare dove si trova questo computer');
     }
-    const nome = String(payload.nome || '').trim();
-    if (!nome) throw validationError('Dai un nome a questo computer');
 
     const corrente = await identita.assicura();
+    const poltronaNome = String(payload.poltrona_nome || payload.nome || '').trim();
+    const nomeComputer = String(payload.nome_computer || corrente.nome || '').trim();
+
+    if (payload.ruolo === protocollo.RUOLO_RIUNITO && !poltronaNome) {
+        throw validationError('Seleziona la poltrona che questo monitor rappresenta');
+    }
+    if (!nomeComputer) throw validationError('Dai un nome a questo computer');
+
+    const modifiche = {
+        nome: nomeComputer,
+        ruolo: payload.ruolo,
+        attiva: true,
+        poltrona_id: String(payload.poltrona_id || '').trim(),
+        poltrona_nome: poltronaNome
+    };
+
     const partenza = Number(payload.porta) || Number(corrente.porta) || protocollo.PORTA_SERVIZIO;
 
     let esito = null;
     for (let scarto = 0; scarto < TENTATIVI_PORTA; scarto += 1) {
-        await identita.aggiorna({ nome, ruolo: payload.ruolo, porta: partenza + scarto, attiva: true });
+        await identita.aggiorna({ ...modifiche, porta: partenza + scarto });
         esito = await trasporto.riavvia();
         if (esito.avviato) break;
         if (!String(esito.motivo || '').includes('EADDRINUSE')) break;
@@ -148,7 +163,10 @@ async function riallinea() {
     return trasporto.riallinea();
 }
 
-function poltroneDisponibili() {
+function poltroneLocali() {
+    const { tableExists } = require('../kernel/database');
+    if (!tableExists('poltrone_studio')) return null;
+
     const { sedi, sale, poltrone } = require('../repositories/facility');
     const elencoSedi = sedi.findAll({});
     const elencoSale = sale.findAll({});
@@ -172,6 +190,45 @@ function poltroneDisponibili() {
     };
 }
 
+async function poltroneDisponibili() {
+    let locali = null;
+    let motivoLocale = '';
+
+    try {
+        locali = poltroneLocali();
+    } catch (errore) {
+        motivoLocale = errore.message;
+    }
+
+    if (locali && locali.poltrone.length > 0) {
+        return { ...locali, origine: 'archivio locale', raggiunto: true };
+    }
+
+    const remote = await poltroneRemote.richiedi();
+    if (remote.raggiunto) {
+        return {
+            poltrone: remote.poltrone,
+            sedi_configurate: remote.sedi_configurate,
+            origine: `segreteria ${remote.origine}`,
+            raggiunto: true
+        };
+    }
+
+    if (locali) {
+        return { ...locali, origine: 'archivio locale', raggiunto: true };
+    }
+
+    return {
+        poltrone: [],
+        sedi_configurate: 0,
+        origine: '',
+        raggiunto: false,
+        motivo: motivoLocale
+            ? `Archivio non disponibile su questo computer (${motivoLocale}) e ${remote.motivo.toLowerCase()}`
+            : remote.motivo
+    };
+}
+
 async function diagnosticaRete() {
     try {
         const scopertaMesh = require('../rete/scoperta_mesh');
@@ -183,6 +240,7 @@ async function diagnosticaRete() {
 
 module.exports = {
     poltroneDisponibili,
+    poltroneLocali,
     profilo,
     situazione,
     configura,

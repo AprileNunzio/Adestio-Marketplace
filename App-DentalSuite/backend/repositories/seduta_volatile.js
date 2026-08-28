@@ -1,9 +1,11 @@
 'use strict';
 
+const diario = require('../rete/diario');
+
 const INATTIVITA_MS = 20 * 60 * 1000;
 const ATTESA_MASSIMA_MS = 20000;
 
-let stato = { versione: 0, dossier: null, ricevutoIl: 0, trasmissioneId: '', origine: '' };
+let stato = { versione: 0, dossier: null, ricevutoIl: 0, trasmissioneId: '', origine: '', marca: null };
 let sorgente = null;
 let scadenza = null;
 const inAscolto = new Set();
@@ -27,12 +29,26 @@ function programmaScadenza() {
 }
 
 function riponi(dossier, dettagli = {}, mittenteNuovo) {
+    const ordinamento = require('../domain/rete/ordinamento');
+    const esito = ordinamento.valuta({
+        dossier,
+        marca: dettagli.marca || null,
+        impronta: dettagli.impronta || '',
+        marcaCorrente: stato.marca
+    });
+    if (!esito.accettabile) {
+        const rifiuto = new Error(esito.motivo);
+        rifiuto.code = 'CONFLICT';
+        throw rifiuto;
+    }
+
     stato = {
         versione: stato.versione + 1,
         dossier,
         ricevutoIl: Date.now(),
         trasmissioneId: dettagli.trasmissione_id || '',
-        origine: dettagli.origine || ''
+        origine: dettagli.origine || '',
+        marca: dettagli.marca || null
     };
     if (mittenteNuovo && mittenteNuovo.ip) {
         sorgente = { ip: mittenteNuovo.ip, porta: Number(mittenteNuovo.porta) || 7345 };
@@ -41,11 +57,13 @@ function riponi(dossier, dettagli = {}, mittenteNuovo) {
     contattoIl = Date.now();
     programmaScadenza();
     notifica();
-    try {
-        const scopertaMesh = require('../rete/scoperta_mesh');
-        scopertaMesh.diffondiStatoLive();
-    } catch (_) {}
+    diffondiPresenza();
     return stato.versione;
+}
+
+function diffondiPresenza() {
+    const scopertaMesh = require('../rete/scoperta_mesh');
+    scopertaMesh.diffondiStatoLive().catch(errore => diario.annota('seduta_volatile:301', errore));
 }
 
 let verificataIl = 0;
@@ -93,7 +111,8 @@ function svuota(motivo) {
         dossier: null,
         ricevutoIl: 0,
         trasmissioneId: '',
-        origine: motivo || ''
+        origine: motivo || '',
+        marca: null
     };
     sorgente = null;
     verificataIl = 0;
@@ -102,7 +121,7 @@ function svuota(motivo) {
     try {
         const scopertaMesh = require('../rete/scoperta_mesh');
         scopertaMesh.diffondiStatoLive();
-    } catch (_) {}
+    } catch (errore) { diario.annota('seduta_volatile:1', errore); }
     return stato.versione;
 }
 
@@ -163,7 +182,8 @@ function applicaReperto(datiDente) {
         programmaScadenza();
         notifica();
         return true;
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('seduta_volatile:101', errore);
         return false;
     }
 }

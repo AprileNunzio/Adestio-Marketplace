@@ -6,7 +6,8 @@ const AUTORE = ['autore_id'];
 
 const trasmissioni = createRepository('trasmissioni', [
     'paziente_id', 'pari_id', 'sessione_id', 'postazione_nome', 'impronta_postazione',
-    'stato', 'aperta_il', 'chiusa_il', 'impronta_dossier', 'motivo_chiusura', 'indirizzo_consegna'
+    'stato', 'aperta_il', 'chiusa_il', 'impronta_dossier', 'motivo_chiusura', 'indirizzo_consegna',
+    'poltrona_id', 'poltrona_nome'
 ], { label: 'Trasmissione', orderBy: 'created_at DESC', systemColumns: AUTORE });
 
 const attiRicevuti = createRepository('atti_ricevuti', [

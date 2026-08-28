@@ -1,5 +1,7 @@
 'use strict';
 
+const diario = require('../rete/diario');
+
 const { trasmissioni } = require('../repositories/trasmissione');
 const { postazione } = require('../repositories/rete');
 const seduta = require('../repositories/seduta_volatile');
@@ -14,6 +16,8 @@ const scopertaMesh = require('../rete/scoperta_mesh');
 const sorveglianza = require('../rete/sorveglianza');
 const invio = require('./trasmissioni_invio');
 const riconciliazione = require('../domain/riconciliazione');
+const presenza = require('../domain/rete/presenza');
+const rilancio = require('../rete/rilancio');
 const { validationError, conflictError, notFoundError } = require('../kernel/errors');
 
 function raggiungibile(voce) {
@@ -29,7 +33,7 @@ function nomiDi(righe) {
         try {
             const scheda = lettura.schedaPaziente(pid);
             if (scheda) nomi.set(pid, `${scheda.cognome || ''} ${scheda.nome || ''}`.trim());
-        } catch (_) {}
+        } catch (errore) { diario.annota('trasmissioni:1', errore); }
     }
     return nomi;
 }
@@ -55,16 +59,16 @@ async function destinazioni(forza = true) {
         mappa.set(chiave, {
             sessione_id: `lan-${chiave}`,
             nome: m.nome || `Studio (${m.ip})`,
+            poltrona_id: m.poltrona_id || '',
+            poltrona_nome: m.poltrona_nome || '',
+            etichetta: presenza.etichettaPostazione(m) || `Studio (${m.ip})`,
             impronta: m.impronta || m.id || chiave,
             indirizzo: chiave,
             ip: m.ip,
             porta,
             ruolo: protocollo.RUOLO_RIUNITO,
             aperta_il: Date.now(),
-            in_seduta: Boolean(m.in_seduta),
-            paziente_id: m.paziente_id || null,
-            paziente_nome: m.paziente_nome || null,
-            trasmissione_id: m.trasmissione_id || null,
+            occupato: Boolean(m.occupato),
             stato_osservato: true,
             tipo_connessione: 'diretto'
         });
@@ -75,12 +79,15 @@ async function destinazioni(forza = true) {
 
 function componiCollegata(voce, riga, nomiPazienti) {
     const osservato = riconciliazione.osservabile(voce);
-    const inSeduta = osservato ? Boolean(voce.in_seduta) : Boolean(riga);
+    const inSeduta = osservato ? Boolean(voce.occupato) : Boolean(riga);
     const nomeDaRiga = riga && riga.paziente_id ? nomiPazienti.get(riga.paziente_id) : null;
 
     return {
         sessione_id: voce.sessione_id,
         nome: voce.nome,
+        poltrona_id: voce.poltrona_id || '',
+        poltrona_nome: voce.poltrona_nome || '',
+        etichetta: presenza.etichettaPostazione(voce) || voce.nome,
         impronta: voce.impronta,
         indirizzo: voce.indirizzo,
         ip: voce.ip || '',
@@ -89,16 +96,20 @@ function componiCollegata(voce, riga, nomiPazienti) {
         aperta_il: voce.aperta_il,
         online: true,
         in_seduta: inSeduta,
-        trasmissione_id: riga ? riga.id : (voce.trasmissione_id || null),
-        paziente_nome: inSeduta ? (nomeDaRiga || voce.paziente_nome || 'Paziente in visita') : null
+        trasmissione_id: riga ? riga.id : null,
+        paziente_nome: inSeduta ? (nomeDaRiga || 'Paziente in visita') : null
     };
 }
 
 function componiOrfana(riga, nomiPazienti) {
     const recapito = riconciliazione.recapitoRiga(riga);
+    const etichetta = riga.poltrona_nome || riga.postazione_nome || 'Monitor dello studio';
     return {
         sessione_id: riga.sessione_id || riga.id,
         nome: riga.postazione_nome || 'Monitor dello studio',
+        poltrona_id: riga.poltrona_id || '',
+        poltrona_nome: riga.poltrona_nome || '',
+        etichetta,
         impronta: riga.impronta_postazione || '',
         indirizzo: riga.indirizzo_consegna || 'Rete locale LAN',
         ip: recapito.ip,
@@ -133,17 +144,26 @@ async function postazioniDisponibili(payload = {}) {
     return { collegate, irraggiungibili: orfane.map(riga => riga.id), rete: trasporto.stato() };
 }
 
-async function avvisaChiusuraNodi(recapiti, motivo) {
+async function avvisaChiusuraNodi(recapiti, motivo, trasmissioneId) {
     const consegna = require('../rete/consegna');
     let avvisati = 0;
+    let accodati = 0;
+
     for (const recapito of recapiti) {
-        const esito = await consegna.conRitentativo(recapito.ip, recapito.porta, '/chiudi-diretto', { motivo });
+        const esito = await consegna.conRitentativo(recapito.ip, recapito.porta, '/chiudi-diretto', {
+            motivo,
+            trasmissione_id: trasmissioneId || ''
+        });
         if (esito.consegnato) {
             avvisati += 1;
-            scopertaMesh.impostaStato(recapito.ip, false, '');
+            scopertaMesh.impostaStato(recapito.ip, false);
+            continue;
         }
+        await rilancio.accodaChiusura(recapito, motivo, trasmissioneId);
+        accodati += 1;
     }
-    return avvisati;
+
+    return { avvisati, accodati };
 }
 
 async function chiudi(payload = {}) {
@@ -160,7 +180,7 @@ async function chiudi(payload = {}) {
         throw validationError('Monitor da chiudere non identificabile');
     }
 
-    const avvisati = await avvisaChiusuraNodi(recapiti, motivo);
+    const consegne = await avvisaChiusuraNodi(recapiti, motivo, riga ? riga.id : '');
 
     const aperte = trasmissioni.findAll({ where: { stato: 'aperta' } });
     const candidati = new Set([
@@ -171,7 +191,7 @@ async function chiudi(payload = {}) {
 
     const chiuse = await sedute.chiudiRighe([...candidati], motivo);
 
-    if (chiuse.length === 0 && avvisati === 0) {
+    if (chiuse.length === 0 && consegne.avvisati === 0 && consegne.accodati === 0) {
         throw conflictError('Il monitor non ha risposto e non risulta alcuna seduta aperta da chiudere');
     }
 
@@ -180,9 +200,10 @@ async function chiudi(payload = {}) {
 
     return {
         id: (riga && riga.id) || payload.sessione_id || 'chiusura',
-        stato: 'chiusa',
+        stato: (chiuse.length > 0 || consegne.avvisati > 0) ? 'chiusa' : 'in_coda',
         schede_chiuse: chiuse.length,
-        monitor_avvisati: avvisati
+        monitor_avvisati: consegne.avvisati,
+        chiusure_in_coda: consegne.accodati
     };
 }
 
@@ -229,7 +250,7 @@ async function elencoTrasmissioni(payload = {}) {
             try {
                 const p = lettura.schedaPaziente(pid);
                 if (p) nomiPazienti.set(pid, `${p.cognome || ''} ${p.nome || ''}`.trim());
-            } catch (_) {}
+            } catch (errore) { diario.annota('trasmissioni:2', errore); }
         }
         return {
             righe: righe.map(riga => ({
@@ -237,7 +258,8 @@ async function elencoTrasmissioni(payload = {}) {
                 paziente_nome: nomiPazienti.get(riga.paziente_id) || (riga.paziente_id || '-')
             }))
         };
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('trasmissioni:101', errore);
         return { righe: [] };
     }
 }
@@ -246,7 +268,8 @@ async function dichiaraSchermo(payload = {}) {
     try {
         const id = densitaDominio.identifica(payload);
         return { id, profilo: densitaDominio.trova(id) };
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('trasmissioni:102', errore);
         return { id: 'compatto', profilo: null };
     }
 }
@@ -280,7 +303,7 @@ async function attiva(payload = {}) {
                     }, seduta.mittente());
                     return seduta.estrai();
                 }
-            } catch (_) {}
+            } catch (errore) { diario.annota('trasmissioni:3', errore); }
         }
 
         if (locale && locale.presente && locale.dossier) {
@@ -294,7 +317,8 @@ async function attiva(payload = {}) {
                 ? 'Collegamento con la segreteria interrotto'
                 : 'In attesa di trasmissione cartella clinica'
         };
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('trasmissioni:103', errore);
         return { presente: false, versione: 0 };
     }
 }
@@ -308,7 +332,8 @@ async function applicaDossierAggiornato(payload = {}) {
             origine: 'aggiornato da remoto'
         }, seduta.mittente());
         return { successo: true };
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('trasmissioni:104', errore);
         return { successo: false };
     }
 }
@@ -323,7 +348,7 @@ async function scaricaAllegato(payload = {}) {
             if (locale && locale.data_url) {
                 return { successo: true, ...locale };
             }
-        } catch (_) {}
+        } catch (errore) { diario.annota('trasmissioni:4', errore); }
 
         const http = require('http');
         const fetchNode = (ip, porta) => new Promise(resolve => {
@@ -343,16 +368,16 @@ async function scaricaAllegato(payload = {}) {
                         try {
                             const json = JSON.parse(body);
                             resolve(json && json.data_url ? json : null);
-                        } catch (_) {
+                        } catch (errore) { diario.annota('trasmissioni:201', errore);
                             resolve(null);
                         }
                     });
                 });
                 req.on('error', () => resolve(null));
-                req.on('timeout', () => { try { req.destroy(); } catch (_) {} resolve(null); });
+                req.on('timeout', () => { try { req.destroy(); } catch (errore) { diario.annota('trasmissioni:5', errore); } resolve(null); });
                 req.write(JSON.stringify({ id: payload.id }));
                 req.end();
-            } catch (_) {
+            } catch (errore) { diario.annota('trasmissioni:202', errore);
                 resolve(null);
             }
         });
@@ -391,7 +416,8 @@ async function heartbeatPostazione(payload = {}) {
             });
         }
         return { successo: true };
-    } catch (_) {
+    } catch (errore) {
+        diario.annota('trasmissioni:105', errore);
         return { successo: false };
     }
 }
@@ -410,6 +436,7 @@ module.exports = {
     diagnosticaRete,
     heartbeatPostazione,
     cambiaPaziente: invio.cambiaPaziente,
+    ripristinaSeduta: invio.ripristinaSeduta,
     propagaAggiornamentoDossier: invio.propagaAggiornamentoDossier,
     chiudiPerRete: riscontri.chiudiPerRete,
     statoSeduta: riscontri.statoSeduta,
