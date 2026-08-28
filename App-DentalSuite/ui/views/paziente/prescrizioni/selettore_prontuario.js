@@ -112,11 +112,13 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                             el('strong', { class: 'ds-drug-name' }, f.farmaco),
                             f.isStudio ? el('span', { class: 'ds-badge ds-badge--info' }, 'Studio') : null
                         ].filter(Boolean)),
-                        el('span', { class: 'ds-drug-card__dosage-badge' }, f.dosaggio || 'Dosaggio Standard')
-                    ]),
-                    el('div', { class: 'ds-drug-card__active' }, [
-                        icona('science'),
-                        el('span', {}, f.principio_attivo || 'Principio attivo')
+                        el('div', { class: 'ds-drug-card__meta-row' }, [
+                            el('div', { class: 'ds-drug-card__active' }, [
+                                icona('science'),
+                                el('span', {}, f.principio_attivo || 'Principio attivo')
+                            ]),
+                            f.dosaggio ? el('span', { class: 'ds-drug-card__dosage-badge' }, f.dosaggio) : null
+                        ].filter(Boolean))
                     ]),
                     allerte.length > 0 ? el('div', {
                         class: `ds-drug-card__alert-banner ${haCritica ? 'ds-drug-card__alert-banner--critica' : 'ds-drug-card__alert-banner--attenzione'}`
@@ -135,7 +137,7 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                         ]) : null,
                         f.note ? el('div', { class: 'ds-drug-card__note' }, f.note) : null
                     ].filter(Boolean))
-                ].filter(Boolean));
+                ]);
             });
 
         rimpiazza(grigliaFarmaci, cards);

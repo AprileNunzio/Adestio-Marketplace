@@ -297,6 +297,7 @@
 }
 
 .ds-modal--wide { width: min(1080px, 100%); }
+.ds-modal--xlarge { width: min(1560px, 96vw) !important; max-height: 92vh; }
 .ds-modal__head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--ds-line); }
 .ds-modal__title { margin: 0; font-size: 1.02rem; font-weight: 640; }
 .ds-modal__body { padding: 1.2rem; overflow-y: auto; display: flex; flex-direction: column; gap: var(--ds-gap); }
