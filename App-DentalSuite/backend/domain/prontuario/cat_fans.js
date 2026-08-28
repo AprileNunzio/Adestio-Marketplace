@@ -1,4 +1,6 @@
-export const FARMACI_FANS_CAT = [
+'use strict';
+
+module.exports = [
     {
         "id": "brufen_600_cpr",
         "farmaco": "Brufen 600mg Compresse",

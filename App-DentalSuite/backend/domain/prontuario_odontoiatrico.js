@@ -1,31 +1,23 @@
 'use strict';
 
-const antibioticiPenicilline = require('./prontuario/antibiotici_penicilline');
-const antibioticiMacrolidi = require('./prontuario/antibiotici_macrolidi_lincosamidi');
-const antibioticiCefalo = require('./prontuario/antibiotici_cefalosporine_chinoloni');
-const antibioticiAnaerobi = require('./prontuario/antibiotici_anaerobi_tetracicline');
-const fansIbuprofene = require('./prontuario/fans_ibuprofene_ketoprofene');
-const fansParacetamolo = require('./prontuario/fans_paracetamolo_oppioidi');
-const fansAltri = require('./prontuario/fans_altri_cox2');
-const cortisonici = require('./prontuario/cortisonici_antiedema');
-const antisettici = require('./prontuario/antisettici_collutori_gel');
-const antimicotici = require('./prontuario/antimicotici_antivirali');
-const miorilassanti = require('./prontuario/miorilassanti_atm_sedativi');
-const gastroprotettori = require('./prontuario/gastroprotettori_emostatici_antistaminici');
+const antibiotici = require('./prontuario/cat_antibiotici');
+const fans = require('./prontuario/cat_fans');
+const cortisonici = require('./prontuario/cat_cortisonici');
+const collutori = require('./prontuario/cat_collutori');
+const antimicotici = require('./prontuario/cat_antimicotici');
+const miorilassanti = require('./prontuario/cat_miorilassanti');
+const gastro = require('./prontuario/cat_gastro');
+const emostatici = require('./prontuario/cat_emostatici');
 
 const FARMACI_PREDEFINITI = [].concat(
-    antibioticiPenicilline,
-    antibioticiMacrolidi,
-    antibioticiCefalo,
-    antibioticiAnaerobi,
-    fansIbuprofene,
-    fansParacetamolo,
-    fansAltri,
+    antibiotici,
+    fans,
     cortisonici,
-    antisettici,
+    collutori,
     antimicotici,
     miorilassanti,
-    gastroprotettori
+    gastro,
+    emostatici
 );
 
 const CATEGORIE_PRONTUARIO = [

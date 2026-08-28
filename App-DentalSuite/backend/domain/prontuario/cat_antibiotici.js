@@ -1,4 +1,6 @@
-export const FARMACI_ANTIBIOTICI_CAT = [
+'use strict';
+
+module.exports = [
     {
         "id": "aug_875_cpr",
         "farmaco": "Augmentin Compresse",
