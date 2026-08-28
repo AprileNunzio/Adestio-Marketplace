@@ -4,6 +4,7 @@ import { apriModale } from '../../../components/modale.js';
 import { call } from '../../../kernel/transport.js';
 import { esito } from '../../../components/notifica.js';
 import { dataOr } from '../../../kernel/result.js';
+import { valutaCompatibilitaFarmaco } from './controllo_compatibilita.js';
 import { CATEGORIE_PRONTUARIO, FARMACI_PREDEFINITI } from './catalogo_farmaci.js';
 
 export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, paziente = {} }) {
@@ -48,8 +49,12 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
     };
 
     const corpo = el('div', { class: 'ds-prontuario-modal' });
+    const grigliaFarmaci = el('div', { class: 'ds-prontuario-grid' });
+    const labelContatore = el('span', { class: 'ds-muted', style: 'font-size: 0.85rem; font-weight: 560;' });
 
-    const aggiornaVista = () => {
+    const pulsantiCategoria = [];
+
+    const aggiornaGriglia = () => {
         const tutti = tuttiFarmaci();
         const farmaciFiltrati = tutti.filter(f => {
             if (categoriaSelezionata === 'studio' && !f.isStudio) return false;
@@ -63,60 +68,40 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                 (f.dosaggio && f.dosaggio.toLowerCase().includes(query));
         });
 
-        const barraRicerca = el('div', { class: 'ds-prontuario-search' }, [
-            icona('search'),
-            el('input', {
-                type: 'text',
-                class: 'ds-input ds-search-input',
-                placeholder: 'Cerca per nome commerciale (es. Augmentin, Oki, Brufen, Bentelan, Toradol), principio attivo o indicazione...',
-                value: filtroTesto,
-                onInput: e => { filtroTesto = e.target.value; aggiornaVista(); }
-            }),
-            filtroTesto ? el('button', {
-                type: 'button',
-                class: 'ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm',
-                onClick: () => { filtroTesto = ''; aggiornaVista(); }
-            }, icona('close')) : null
-        ].filter(Boolean));
+        labelContatore.textContent = `${farmaciFiltrati.length} farmaci visualizzati (su ${tutti.length} totali)`;
 
-        const chipsCategorie = el('div', { class: 'ds-prontuario-cats' }, [
-            ...categorie.map(c => {
-                const count = contaPerCategoria(c.id);
-                return el('button', {
-                    type: 'button',
-                    class: `ds-cat-chip ${categoriaSelezionata === c.id ? 'ds-cat-chip--active' : ''}`,
-                    onClick: () => { categoriaSelezionata = c.id; aggiornaVista(); }
-                }, [
-                    icona(c.simbolo || 'medication'),
-                    el('span', {}, c.etichetta),
-                    el('span', { class: 'ds-cat-chip__count' }, String(count))
-                ]);
-            }),
-            el('button', {
-                type: 'button',
-                class: `ds-cat-chip ${categoriaSelezionata === 'studio' ? 'ds-cat-chip--active' : ''}`,
-                onClick: () => { categoriaSelezionata = 'studio'; aggiornaVista(); }
-            }, [
-                icona('bookmark'),
-                el('span', {}, 'Personalizzati Studio'),
-                el('span', { class: 'ds-cat-chip__count' }, String(personalizzati.length))
-            ])
-        ]);
+        pulsantiCategoria.forEach(btn => {
+            const isAttivo = btn.dataset.cat === categoriaSelezionata;
+            btn.className = `ds-cat-chip ${isAttivo ? 'ds-cat-chip--active' : ''}`;
+            const countElem = btn.querySelector('.ds-cat-chip__count');
+            if (countElem) {
+                countElem.textContent = String(contaPerCategoria(btn.dataset.cat));
+            }
+        });
 
-        const headbar = el('div', { class: 'ds-prontuario-headbar' }, [
-            barraRicerca,
-            chipsCategorie
-        ]);
-
-        const grigliaFarmaci = el('div', { class: 'ds-prontuario-grid' }, farmaciFiltrati.length === 0
+        const cards = farmaciFiltrati.length === 0
             ? [el('div', { class: 'ds-empty-box' }, [
                 icona('search_off'),
                 el('strong', {}, 'Nessun farmaco corrispondente ai criteri di ricerca'),
                 el('p', { class: 'ds-muted' }, 'Puoi inserire manualmente il farmaco oppure aggiungerlo al prontuario dello studio.')
             ])]
             : farmaciFiltrati.map(f => {
+                const allerte = valutaCompatibilitaFarmaco({
+                    farmaco: f.farmaco,
+                    principioAttivo: f.principio_attivo,
+                    anamnesi,
+                    paziente
+                });
+                const haCritica = allerte.some(a => a.livello === 'critica');
+                const haAttenzione = allerte.some(a => a.livello === 'attenzione');
+
+                let cardClass = 'ds-drug-card';
+                if (f.isStudio) cardClass += ' ds-drug-card--studio';
+                if (haCritica) cardClass += ' ds-drug-card--danger';
+                else if (haAttenzione) cardClass += ' ds-drug-card--warning';
+
                 return el('div', {
-                    class: `ds-drug-card ${f.isStudio ? 'ds-drug-card--studio' : ''}`,
+                    class: cardClass,
                     onClick: () => {
                         chiudiQuestoModale();
                         onSeleziona(f);
@@ -133,6 +118,12 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                         icona('science'),
                         el('span', {}, f.principio_attivo || 'Principio attivo')
                     ]),
+                    allerte.length > 0 ? el('div', {
+                        class: `ds-drug-card__alert-banner ${haCritica ? 'ds-drug-card__alert-banner--critica' : 'ds-drug-card__alert-banner--attenzione'}`
+                    }, [
+                        icona(haCritica ? 'warning' : 'info'),
+                        el('span', {}, allerte[0].titolo)
+                    ]) : null,
                     el('div', { class: 'ds-drug-card__body' }, [
                         f.posologia ? el('div', { class: 'ds-drug-card__poso' }, [
                             icona('schedule'),
@@ -144,38 +135,116 @@ export async function apriSelettoreProntuario({ onSeleziona, anamnesi = {}, pazi
                         ]) : null,
                         f.note ? el('div', { class: 'ds-drug-card__note' }, f.note) : null
                     ].filter(Boolean))
-                ]);
-            }));
+                ].filter(Boolean));
+            });
 
-        const barraAggiunta = el('div', { class: 'ds-prontuario-footer-actions' }, [
-            el('span', { class: 'ds-muted', style: 'font-size: 0.85rem; font-weight: 560;' }, `${farmaciFiltrati.length} farmaci visualizzati (su ${tutti.length} totali)`),
-            bottone({
-                etichetta: 'Aggiungi nuovo farmaco personalizzato allo studio',
-                simbolo: 'add',
-                variante: 'ghost',
-                piccolo: true,
-                onClick: async () => {
-                    await apriFormNuovoFarmaco(async () => {
-                        const ricaricatoRes = await call('prescrizioni.prontuario', {});
-                        const ricaricato = dataOr(ricaricatoRes, (ricaricatoRes && ricaricatoRes.data) || (ricaricatoRes && ricaricatoRes.payload) || ricaricatoRes || {});
-                        if (ricaricato && Array.isArray(ricaricato.personalizzati)) {
-                            personalizzati.length = 0;
-                            personalizzati.push(...ricaricato.personalizzati);
-                            aggiornaVista();
-                        }
-                    });
-                }
-            })
-        ]);
-
-        rimpiazza(corpo, [
-            headbar,
-            grigliaFarmaci,
-            barraAggiunta
-        ]);
+        rimpiazza(grigliaFarmaci, cards);
     };
 
-    aggiornaVista();
+    const inputRicerca = el('input', {
+        type: 'text',
+        class: 'ds-input ds-search-input',
+        placeholder: 'Cerca per nome commerciale (es. Augmentin, Oki, Brufen, Bentelan, Toradol), principio attivo o indicazione...',
+        value: filtroTesto,
+        onInput: e => {
+            filtroTesto = e.target.value;
+            aggiornaGriglia();
+        }
+    });
+
+    const btnPulisci = el('button', {
+        type: 'button',
+        class: 'ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm',
+        style: 'display: none;',
+        onClick: () => {
+            filtroTesto = '';
+            inputRicerca.value = '';
+            btnPulisci.style.display = 'none';
+            inputRicerca.focus();
+            aggiornaGriglia();
+        }
+    }, icona('close'));
+
+    inputRicerca.addEventListener('input', () => {
+        btnPulisci.style.display = inputRicerca.value ? 'inline-flex' : 'none';
+    });
+
+    const barraRicerca = el('div', { class: 'ds-prontuario-search' }, [
+        icona('search'),
+        inputRicerca,
+        btnPulisci
+    ]);
+
+    const chipsCategorie = el('div', { class: 'ds-prontuario-cats' }, [
+        ...categorie.map(c => {
+            const btn = el('button', {
+                type: 'button',
+                class: `ds-cat-chip ${categoriaSelezionata === c.id ? 'ds-cat-chip--active' : ''}`,
+                onClick: () => {
+                    categoriaSelezionata = c.id;
+                    aggiornaGriglia();
+                }
+            }, [
+                icona(c.simbolo || 'medication'),
+                el('span', {}, c.etichetta),
+                el('span', { class: 'ds-cat-chip__count' }, String(contaPerCategoria(c.id)))
+            ]);
+            btn.dataset.cat = c.id;
+            pulsantiCategoria.push(btn);
+            return btn;
+        }),
+        (() => {
+            const btnStudio = el('button', {
+                type: 'button',
+                class: `ds-cat-chip ${categoriaSelezionata === 'studio' ? 'ds-cat-chip--active' : ''}`,
+                onClick: () => {
+                    categoriaSelezionata = 'studio';
+                    aggiornaGriglia();
+                }
+            }, [
+                icona('bookmark'),
+                el('span', {}, 'Personalizzati Studio'),
+                el('span', { class: 'ds-cat-chip__count' }, String(personalizzati.length))
+            ]);
+            btnStudio.dataset.cat = 'studio';
+            pulsantiCategoria.push(btnStudio);
+            return btnStudio;
+        })()
+    ]);
+
+    const headbar = el('div', { class: 'ds-prontuario-headbar' }, [
+        barraRicerca,
+        chipsCategorie
+    ]);
+
+    const barraAggiunta = el('div', { class: 'ds-prontuario-footer-actions' }, [
+        labelContatore,
+        bottone({
+            etichetta: 'Aggiungi nuovo farmaco personalizzato allo studio',
+            simbolo: 'add',
+            variante: 'ghost',
+            piccolo: true,
+            onClick: async () => {
+                await apriFormNuovoFarmaco(async () => {
+                    const ricaricatoRes = await call('prescrizioni.prontuario', {});
+                    const ricaricato = dataOr(ricaricatoRes, (ricaricatoRes && ricaricatoRes.data) || (ricaricatoRes && ricaricatoRes.payload) || ricaricatoRes || {});
+                    if (ricaricato && Array.isArray(ricaricato.personalizzati)) {
+                        personalizzati.length = 0;
+                        personalizzati.push(...ricaricato.personalizzati);
+                        aggiornaGriglia();
+                    }
+                });
+            }
+        })
+    ]);
+
+    rimpiazza(corpo, [
+        headbar,
+        grigliaFarmaci,
+        barraAggiunta
+    ]);
+
+    aggiornaGriglia();
 
     await apriModale({
         titolo: 'Prontuario Farmaceutico Odontoiatrico (100+ Farmaci)',
